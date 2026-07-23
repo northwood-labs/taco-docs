@@ -1,3 +1,48 @@
+# taco-docs
+
+Documentation generator for _**T**erraform **A**utomation and **CO**laboration **S**oftware_. A hard-fork of [terraform-docs](https://terraform-docs.io).
+
+Updated documentation coming soon.
+
+## Why a fork?
+
+By July 2026, `terraform-docs` no longer appeared to be meaningfully maintained. There were 38 open (and unreviewed) pull requests, and 153 open issues (most had no meaningful response). By all appearances, nobody was left to steer the ship.
+
+So, we decided to hard-fork the project, merge a number of pull requests into our fork, and plan for longer-term maintenance over the project moving forward.
+
+## Merged PRs
+
+* https://github.com/terraform-docs/terraform-docs/pull/650
+* https://github.com/terraform-docs/terraform-docs/pull/657
+* https://github.com/terraform-docs/terraform-docs/pull/658
+* https://github.com/terraform-docs/terraform-docs/pull/725
+* https://github.com/terraform-docs/terraform-docs/pull/763
+* https://github.com/terraform-docs/terraform-docs/pull/847
+* https://github.com/terraform-docs/terraform-docs/pull/861
+* https://github.com/terraform-docs/terraform-docs/pull/866
+* https://github.com/terraform-docs/terraform-docs/pull/894
+* https://github.com/terraform-docs/terraform-docs/pull/897
+* https://github.com/terraform-docs/terraform-docs/pull/926
+* https://github.com/terraform-docs/terraform-docs/pull/936
+* https://github.com/terraform-docs/terraform-docs/pull/937
+* https://github.com/terraform-docs/terraform-docs/pull/938
+* https://github.com/terraform-docs/terraform-docs/pull/947
+
+## To be manually merged
+
+* https://github.com/terraform-docs/terraform-docs/pull/571
+* https://github.com/terraform-docs/terraform-docs/pull/700
+* https://github.com/terraform-docs/terraform-docs/pull/709
+* https://github.com/terraform-docs/terraform-docs/pull/723
+* https://github.com/terraform-docs/terraform-docs/pull/820
+* https://github.com/terraform-docs/terraform-docs/pull/893
+* https://github.com/terraform-docs/terraform-docs/pull/905
+* https://github.com/terraform-docs/terraform-docs/pull/935
+
+Original README is below.
+
+---
+
 # terraform-docs
 
 [![Build Status](https://github.com/terraform-docs/terraform-docs/workflows/ci/badge.svg)](https://github.com/terraform-docs/terraform-docs/actions) [![GoDoc](https://pkg.go.dev/badge/github.com/terraform-docs/terraform-docs)](https://pkg.go.dev/github.com/terraform-docs/terraform-docs) [![Go Report Card](https://goreportcard.com/badge/github.com/terraform-docs/terraform-docs)](https://goreportcard.com/report/github.com/terraform-docs/terraform-docs) [![Codecov Report](https://codecov.io/gh/terraform-docs/terraform-docs/branch/master/graph/badge.svg)](https://codecov.io/gh/terraform-docs/terraform-docs) [![License](https://img.shields.io/github/license/terraform-docs/terraform-docs)](https://github.com/terraform-docs/terraform-docs/blob/master/LICENSE) [![Latest release](https://img.shields.io/github/v/release/terraform-docs/terraform-docs)](https://github.com/terraform-docs/terraform-docs/releases) [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/3500/badge)](https://www.bestpractices.dev/projects/3500)
@@ -84,7 +129,7 @@ Check [`output`] configuration for more details and examples.
 
 ### Using docker
 
-> **Note:** terraform-docs container images are published on Quay  
+> **Note:** terraform-docs container images are published on Quay
 > (`quay.io/terraform-docs/terraform-docs`). Docker Hub is not used.
 
 terraform-docs can be run as a container by mounting a directory with `.tf`
