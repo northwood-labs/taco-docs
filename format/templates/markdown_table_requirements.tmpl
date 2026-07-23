@@ -8,10 +8,10 @@
     {{ else }}
         {{- indent 0 "#" }} Requirements{{ if .Config.Settings.AtxClosed }} {{ indent 0 "#" }}{{ end }}
 
-        | Name | Version |
-        | ---- | ------- |
+        | Name | Source | Version |
+        |------|--------|---------|
         {{- range .Module.Requirements }}
-            | {{ anchorNameMarkdown "requirement" .Name }} | {{ tostring .Version | default "n/a" }} |
+            | {{ anchorNameMarkdown "requirement" .Name }} | {{ tostring .Source | default "" }} | {{ tostring .Version | default "n/a" }} |
         {{- end }}
     {{ end }}
 {{ end -}}
