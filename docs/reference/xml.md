@@ -328,7 +328,7 @@ generates the following output:
         <input>
           <name>with-url</name>
           <type>string</type>
-          <description>The description contains url. https://www.domain.com/foo/bar_baz.html</description>
+          <description>The description contains url. <https://www.domain.com/foo/bar_baz.html></description>
           <default></default>
           <required>false</required>
           <sensitive>false</sensitive>
