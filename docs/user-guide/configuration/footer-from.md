@@ -68,3 +68,9 @@ Read `docs/.footer.md` to extract footer:
 ```yaml
 footer-from: "docs/.footer.md"
 ```
+
+Read `https://raw.githubusercontent.com/terraform-docs/terraform-docs/master/terraform/testdata/full-example/doc.md` to extract footer:
+
+```yaml
+header-from: "https://raw.githubusercontent.com/terraform-docs/terraform-docs/master/terraform/testdata/full-example/doc.md"
+```

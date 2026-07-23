@@ -68,3 +68,9 @@ Read `docs/.header.md` to extract header:
 ```yaml
 header-from: "docs/.header.md"
 ```
+
+Read `https://raw.githubusercontent.com/terraform-docs/terraform-docs/master/terraform/testdata/full-example/doc.md` to extract header:
+
+```yaml
+header-from: "https://raw.githubusercontent.com/terraform-docs/terraform-docs/master/terraform/testdata/full-example/doc.md"
+```
