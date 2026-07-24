@@ -13,8 +13,8 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/terraform-docs/terraform-docs/internal/types"
-	"github.com/terraform-docs/terraform-docs/print"
+	"github.com/northwood-labs/taco-docs/internal/types"
+	"github.com/northwood-labs/taco-docs/print"
 )
 
 // ModuleCall represents a submodule called by Terraform module.

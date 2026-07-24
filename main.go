@@ -12,7 +12,7 @@ package main
 import (
 	"os"
 
-	"github.com/terraform-docs/terraform-docs/cmd"
+	"github.com/northwood-labs/taco-docs/cmd"
 )
 
 // main is the process entry point. It delegates immediately to cmd.Execute()

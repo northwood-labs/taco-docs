@@ -15,8 +15,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/terraform-docs/terraform-docs/internal/types"
-	"github.com/terraform-docs/terraform-docs/print"
+	"github.com/northwood-labs/taco-docs/internal/types"
+	"github.com/northwood-labs/taco-docs/print"
 )
 
 // Input represents a Terraform input.

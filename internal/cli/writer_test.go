@@ -17,8 +17,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/terraform-docs/terraform-docs/internal/testutil"
-	"github.com/terraform-docs/terraform-docs/print"
+	"github.com/northwood-labs/taco-docs/internal/testutil"
+	"github.com/northwood-labs/taco-docs/print"
 )
 
 // WHY: Verifies path resolution for output files (relative vs absolute). If broken, generated docs

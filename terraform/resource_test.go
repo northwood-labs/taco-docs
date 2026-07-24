@@ -14,7 +14,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/terraform-docs/terraform-docs/internal/types"
+	"github.com/northwood-labs/taco-docs/internal/types"
 )
 
 // WHY: Verifies Resource.Spec() produces "provider_type.name" format used across all output formatters.

@@ -15,7 +15,7 @@ import (
 	"encoding/xml"
 	"sort"
 
-	"github.com/terraform-docs/terraform-docs/internal/types"
+	"github.com/northwood-labs/taco-docs/internal/types"
 )
 
 // Output represents a Terraform output.

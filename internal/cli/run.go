@@ -23,12 +23,12 @@ import (
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 
-	"github.com/terraform-docs/terraform-docs/format"
-	"github.com/terraform-docs/terraform-docs/internal/plugin"
-	"github.com/terraform-docs/terraform-docs/internal/version"
-	pluginsdk "github.com/terraform-docs/terraform-docs/plugin"
-	"github.com/terraform-docs/terraform-docs/print"
-	"github.com/terraform-docs/terraform-docs/terraform"
+	"github.com/northwood-labs/taco-docs/format"
+	"github.com/northwood-labs/taco-docs/internal/plugin"
+	"github.com/northwood-labs/taco-docs/internal/version"
+	pluginsdk "github.com/northwood-labs/taco-docs/plugin"
+	"github.com/northwood-labs/taco-docs/print"
+	"github.com/northwood-labs/taco-docs/terraform"
 )
 
 // Runtime holds the state accumulated during a single CLI invocation. It bridges

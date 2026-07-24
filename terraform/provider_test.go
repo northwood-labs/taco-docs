@@ -14,7 +14,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/terraform-docs/terraform-docs/internal/types"
+	"github.com/northwood-labs/taco-docs/internal/types"
 )
 
 // WHY: Verifies provider FullName includes alias when present (e.g. "provider.alias").

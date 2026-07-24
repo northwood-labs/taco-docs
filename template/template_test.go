@@ -19,9 +19,9 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/terraform-docs/terraform-docs/internal/types"
-	"github.com/terraform-docs/terraform-docs/print"
-	"github.com/terraform-docs/terraform-docs/terraform"
+	"github.com/northwood-labs/taco-docs/internal/types"
+	"github.com/northwood-labs/taco-docs/print"
+	"github.com/northwood-labs/taco-docs/terraform"
 )
 
 // WHY: Verifies template rendering with custom functions and module data. This tests the core

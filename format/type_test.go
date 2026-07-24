@@ -16,7 +16,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/terraform-docs/terraform-docs/print"
+	"github.com/northwood-labs/taco-docs/print"
 )
 
 // WHY: Validates format name resolution (aliases like "md", "adoc", "tbl" etc.) to concrete formatter

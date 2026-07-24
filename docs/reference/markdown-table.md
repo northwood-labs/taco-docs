@@ -191,4 +191,4 @@ generates the following output:
 
     It looks exactly like a header, but is placed at the end of the document
 
-[examples]: https://github.com/terraform-docs/terraform-docs/tree/master/examples
+[examples]: https://github.com/northwood-labs/taco-docs/tree/master/examples

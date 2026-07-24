@@ -15,19 +15,19 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/terraform-docs/terraform-docs/cmd/asciidoc"
-	"github.com/terraform-docs/terraform-docs/cmd/completion"
-	"github.com/terraform-docs/terraform-docs/cmd/json"
-	"github.com/terraform-docs/terraform-docs/cmd/markdown"
-	"github.com/terraform-docs/terraform-docs/cmd/pretty"
-	"github.com/terraform-docs/terraform-docs/cmd/tfvars"
-	"github.com/terraform-docs/terraform-docs/cmd/toml"
-	versioncmd "github.com/terraform-docs/terraform-docs/cmd/version"
-	"github.com/terraform-docs/terraform-docs/cmd/xml"
-	"github.com/terraform-docs/terraform-docs/cmd/yaml"
-	"github.com/terraform-docs/terraform-docs/internal/cli"
-	"github.com/terraform-docs/terraform-docs/internal/version"
-	"github.com/terraform-docs/terraform-docs/print"
+	"github.com/northwood-labs/taco-docs/cmd/asciidoc"
+	"github.com/northwood-labs/taco-docs/cmd/completion"
+	"github.com/northwood-labs/taco-docs/cmd/json"
+	"github.com/northwood-labs/taco-docs/cmd/markdown"
+	"github.com/northwood-labs/taco-docs/cmd/pretty"
+	"github.com/northwood-labs/taco-docs/cmd/tfvars"
+	"github.com/northwood-labs/taco-docs/cmd/toml"
+	versioncmd "github.com/northwood-labs/taco-docs/cmd/version"
+	"github.com/northwood-labs/taco-docs/cmd/xml"
+	"github.com/northwood-labs/taco-docs/cmd/yaml"
+	"github.com/northwood-labs/taco-docs/internal/cli"
+	"github.com/northwood-labs/taco-docs/internal/version"
+	"github.com/northwood-labs/taco-docs/print"
 )
 
 // Execute is the top-level entry point for the CLI, called by main.main().

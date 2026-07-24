@@ -21,7 +21,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/exp/slices"
 
-	"github.com/terraform-docs/terraform-docs/print"
+	"github.com/northwood-labs/taco-docs/print"
 )
 
 // WHY: End-to-end check that LoadWithOptions correctly populates all module sections (header, inputs,

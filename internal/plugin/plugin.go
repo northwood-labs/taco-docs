@@ -12,7 +12,7 @@ package plugin
 import (
 	goplugin "github.com/hashicorp/go-plugin"
 
-	pluginsdk "github.com/terraform-docs/terraform-docs/plugin"
+	pluginsdk "github.com/northwood-labs/taco-docs/plugin"
 )
 
 // namePrefix is the mandatory prefix for plugin binary names. This naming

@@ -14,8 +14,8 @@ import (
 	jsonsdk "encoding/json"
 	"strings"
 
-	"github.com/terraform-docs/terraform-docs/print"
-	"github.com/terraform-docs/terraform-docs/terraform"
+	"github.com/northwood-labs/taco-docs/print"
+	"github.com/northwood-labs/taco-docs/terraform"
 )
 
 // json represents JSON format.

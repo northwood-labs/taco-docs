@@ -14,7 +14,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/terraform-docs/terraform-docs/internal/types"
+	"github.com/northwood-labs/taco-docs/internal/types"
 )
 
 // Resource represents a managed or data type that is created by the module.

@@ -17,7 +17,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/terraform-docs/terraform-docs/internal/types"
+	"github.com/northwood-labs/taco-docs/internal/types"
 )
 
 // WHY: Verifies output value rendering and HasDefault across all value types (nil, bool, string,

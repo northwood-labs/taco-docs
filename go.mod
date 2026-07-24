@@ -1,4 +1,4 @@
-module github.com/terraform-docs/terraform-docs
+module github.com/northwood-labs/taco-docs
 
 go 1.26.0
 

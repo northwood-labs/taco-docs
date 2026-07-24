@@ -90,11 +90,11 @@ generates the following output:
       Here is some trailing text after code block,
       followed by another line of text.
 
-      | Name | Description     |
-      | ---- | --------------- |
-      | Foo  | Foo description |
-      | Bar  | Bar description |
-    footer: |-
+      | Name    | Description     |
+      |---------|-----------------|
+      | Foo     | Foo description |
+      | Bar     | Bar description |
+      | footer: | -               |
       ## This is an example of a footer
 
       It looks exactly like a header, but is placed at the end of the document
@@ -405,4 +405,4 @@ generates the following output:
         version: latest
         description: null
 
-[examples]: https://github.com/terraform-docs/terraform-docs/tree/master/examples
+[examples]: https://github.com/northwood-labs/taco-docs/tree/master/examples

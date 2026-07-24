@@ -18,7 +18,7 @@ in the root of your Git repo with at least the following content:
 
    ```yaml
    repos:
-     - repo: https://github.com/terraform-docs/terraform-docs
+     - repo: https://github.com/northwood-labs/taco-docs
        rev: "<VERSION, TAG, OR SHA TO USE>"             # e.g. "v0.11.2"
        hooks:
          - id: terraform-docs-go

@@ -16,8 +16,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/terraform-docs/terraform-docs/print"
-	"github.com/terraform-docs/terraform-docs/terraform"
+	"github.com/northwood-labs/taco-docs/print"
+	"github.com/northwood-labs/taco-docs/terraform"
 )
 
 // WHY: Tests the generator's template execution logic, including custom templates with section references,

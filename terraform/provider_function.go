@@ -14,7 +14,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/terraform-docs/terraform-docs/internal/types"
+	"github.com/northwood-labs/taco-docs/internal/types"
 )
 
 // ProviderFunction represents a provider function call that is used by the module.

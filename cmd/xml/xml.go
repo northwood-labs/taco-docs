@@ -12,8 +12,8 @@ package xml
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/terraform-docs/terraform-docs/internal/cli"
-	"github.com/terraform-docs/terraform-docs/print"
+	"github.com/northwood-labs/taco-docs/internal/cli"
+	"github.com/northwood-labs/taco-docs/print"
 )
 
 // NewCommand registers the "xml" subcommand. XML output is provided for

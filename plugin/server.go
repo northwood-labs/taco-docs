@@ -12,8 +12,8 @@ package plugin
 import (
 	goplugin "github.com/hashicorp/go-plugin"
 
-	"github.com/terraform-docs/terraform-docs/print"
-	"github.com/terraform-docs/terraform-docs/terraform"
+	"github.com/northwood-labs/taco-docs/print"
+	"github.com/northwood-labs/taco-docs/terraform"
 )
 
 // Server is an RPC Server acting as a plugin.

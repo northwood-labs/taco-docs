@@ -21,7 +21,7 @@ import (
 	goplugin "github.com/hashicorp/go-plugin"
 	"github.com/mitchellh/go-homedir"
 
-	pluginsdk "github.com/terraform-docs/terraform-docs/plugin"
+	pluginsdk "github.com/northwood-labs/taco-docs/plugin"
 )
 
 // Discover scans well-known directories for plugin binaries and initializes

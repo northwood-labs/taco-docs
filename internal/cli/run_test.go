@@ -17,7 +17,7 @@ import (
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/terraform-docs/terraform-docs/print"
+	"github.com/northwood-labs/taco-docs/print"
 )
 
 // WHY: Ensures config file lookup works with absolute paths. If broken, users specifying --config with

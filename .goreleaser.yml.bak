@@ -6,7 +6,7 @@ builds:
       - CGO_ENABLED=0
     ldflags:
       - -s -w
-      - -X github.com/terraform-docs/terraform-docs/internal/version.commit={{ .ShortCommit }}
+      - -X github.com/northwood-labs/taco-docs/internal/version.commit={{ .ShortCommit }}
     goos:
       - darwin
       - linux
@@ -97,7 +97,7 @@ brews:
     commit_author:
       name: terraform-docs-bot
       email: bot@terraform-docs.io
-    url_template: "https://github.com/terraform-docs/terraform-docs/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
+    url_template: "https://github.com/northwood-labs/taco-docs/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
     homepage: "https://github.com/terraform-docs/"
     description: "Generate documentation from Terraform modules in various output formats"
     test: |
@@ -111,7 +111,7 @@ scoops:
       name: terraform-docs-bot
       email: bot@terraform-docs.io
     commit_msg_template: "Scoop update for {{ .ProjectName }} version {{ .Tag }}"
-    url_template: "https://github.com/terraform-docs/terraform-docs/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
+    url_template: "https://github.com/northwood-labs/taco-docs/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
     homepage: "https://github.com/terraform-docs/"
     description: "Generate documentation from Terraform modules in various output formats"
     license: MIT

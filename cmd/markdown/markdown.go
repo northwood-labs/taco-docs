@@ -12,10 +12,10 @@ package markdown
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/terraform-docs/terraform-docs/cmd/markdown/document"
-	"github.com/terraform-docs/terraform-docs/cmd/markdown/table"
-	"github.com/terraform-docs/terraform-docs/internal/cli"
-	"github.com/terraform-docs/terraform-docs/print"
+	"github.com/northwood-labs/taco-docs/cmd/markdown/document"
+	"github.com/northwood-labs/taco-docs/cmd/markdown/table"
+	"github.com/northwood-labs/taco-docs/internal/cli"
+	"github.com/northwood-labs/taco-docs/print"
 )
 
 // NewCommand registers the "markdown" subcommand and its children ("document"

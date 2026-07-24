@@ -14,8 +14,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/terraform-docs/terraform-docs/internal/plugin"
-	"github.com/terraform-docs/terraform-docs/internal/version"
+	"github.com/northwood-labs/taco-docs/internal/plugin"
+	"github.com/northwood-labs/taco-docs/internal/version"
 )
 
 // NewCommand registers the "version" subcommand. Beyond printing the core

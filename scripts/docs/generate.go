@@ -21,10 +21,10 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/terraform-docs/terraform-docs/cmd"
-	"github.com/terraform-docs/terraform-docs/format"
-	"github.com/terraform-docs/terraform-docs/print"
-	"github.com/terraform-docs/terraform-docs/terraform"
+	"github.com/northwood-labs/taco-docs/cmd"
+	"github.com/northwood-labs/taco-docs/format"
+	"github.com/northwood-labs/taco-docs/print"
+	"github.com/northwood-labs/taco-docs/terraform"
 )
 
 // These are practiaclly a copy/paste of https://github.com/spf13/cobra/blob/master/doc/md_docs.go

@@ -19,7 +19,7 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/terraform-docs/terraform-docs/print"
+	"github.com/northwood-labs/taco-docs/print"
 )
 
 // stdoutWriter writes content to os.Stdout. It appends a trailing newline

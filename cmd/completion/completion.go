@@ -12,9 +12,9 @@ package completion
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/terraform-docs/terraform-docs/cmd/completion/bash"
-	"github.com/terraform-docs/terraform-docs/cmd/completion/fish"
-	"github.com/terraform-docs/terraform-docs/cmd/completion/zsh"
+	"github.com/northwood-labs/taco-docs/cmd/completion/bash"
+	"github.com/northwood-labs/taco-docs/cmd/completion/fish"
+	"github.com/northwood-labs/taco-docs/cmd/completion/zsh"
 )
 
 // NewCommand registers the "completion" subcommand group. Shell completions

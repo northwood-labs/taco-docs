@@ -146,4 +146,4 @@ content: |-
   {{- end }}
 ```
 
-[Terraform module]: https://pkg.go.dev/github.com/terraform-docs/terraform-docs/terraform#Module
+[Terraform module]: https://pkg.go.dev/github.com/northwood-labs/taco-docs/terraform#Module

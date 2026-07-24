@@ -15,8 +15,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/terraform-docs/terraform-docs/internal/testutil"
-	"github.com/terraform-docs/terraform-docs/print"
+	"github.com/northwood-labs/taco-docs/internal/testutil"
+	"github.com/northwood-labs/taco-docs/print"
 )
 
 // WHY: Verifies sorting produces stable, deterministic output for all module items (inputs, outputs, providers, etc.).

@@ -12,8 +12,8 @@ package document
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/terraform-docs/terraform-docs/internal/cli"
-	"github.com/terraform-docs/terraform-docs/print"
+	"github.com/northwood-labs/taco-docs/internal/cli"
+	"github.com/northwood-labs/taco-docs/print"
 )
 
 // NewCommand registers the "markdown document" subcommand. The document format

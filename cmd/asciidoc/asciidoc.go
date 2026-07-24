@@ -12,10 +12,10 @@ package asciidoc
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/terraform-docs/terraform-docs/cmd/asciidoc/document"
-	"github.com/terraform-docs/terraform-docs/cmd/asciidoc/table"
-	"github.com/terraform-docs/terraform-docs/internal/cli"
-	"github.com/terraform-docs/terraform-docs/print"
+	"github.com/northwood-labs/taco-docs/cmd/asciidoc/document"
+	"github.com/northwood-labs/taco-docs/cmd/asciidoc/table"
+	"github.com/northwood-labs/taco-docs/internal/cli"
+	"github.com/northwood-labs/taco-docs/print"
 )
 
 // NewCommand registers the "asciidoc" subcommand and its children ("document"

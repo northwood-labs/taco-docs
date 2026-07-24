@@ -15,9 +15,9 @@ import (
 	"strings"
 	gotemplate "text/template"
 
-	"github.com/terraform-docs/terraform-docs/print"
-	"github.com/terraform-docs/terraform-docs/template"
-	"github.com/terraform-docs/terraform-docs/terraform"
+	"github.com/northwood-labs/taco-docs/print"
+	"github.com/northwood-labs/taco-docs/template"
+	"github.com/northwood-labs/taco-docs/terraform"
 )
 
 // generateFunc configures generator.

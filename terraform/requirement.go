@@ -10,7 +10,7 @@
 package terraform
 
 import (
-	"github.com/terraform-docs/terraform-docs/internal/types"
+	"github.com/northwood-labs/taco-docs/internal/types"
 )
 
 // Requirement represents a requirement for Terraform module.

@@ -97,7 +97,7 @@ generates the following output:
     followed by another line of text.
 
     | Name | Description     |
-    | ---- | --------------- |
+    |------|-----------------|
     | Foo  | Foo description |
     | Bar  | Bar description |
 
@@ -186,8 +186,8 @@ generates the following output:
     ]
     ----
 
-    |`list`
-    |
+    | `list` |
+    |--------|
 
     [source]
     ----
@@ -212,8 +212,8 @@ generates the following output:
 
     |[[input_list-1]] <<input_list-1,list-1>>
     |It's list number one.
-    |`list`
-    |
+    | `list` |
+    |--------|
 
     [source]
     ----
@@ -288,8 +288,8 @@ generates the following output:
 
     |[[input_map-1]] <<input_map-1,map-1>>
     |It's map number one.
-    |`map`
-    |
+    | `map` |
+    |-------|
 
     [source]
     ----
@@ -427,4 +427,4 @@ generates the following output:
 
     It looks exactly like a header, but is placed at the end of the document
 
-[examples]: https://github.com/terraform-docs/terraform-docs/tree/master/examples
+[examples]: https://github.com/northwood-labs/taco-docs/tree/master/examples

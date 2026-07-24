@@ -13,8 +13,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/terraform-docs/terraform-docs/internal/testutil"
-	"github.com/terraform-docs/terraform-docs/print"
+	"github.com/northwood-labs/taco-docs/internal/testutil"
+	"github.com/northwood-labs/taco-docs/print"
 )
 
 // WHY: Golden-file test ensuring tfvars JSON output matches expected fixtures.
