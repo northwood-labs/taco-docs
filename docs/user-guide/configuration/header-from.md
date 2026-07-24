@@ -42,7 +42,7 @@ before any `resource`, `variable`, `module`, etc.
 {{< /alert >}}
 
 {{< alert type="info" >}}
-terraform-docs will never alter line-endings of extracted header text and will assume
+Terraform-docs will never alter line-endings of extracted header text and will assume
 whatever extracted is intended as is. It's up to you to apply any kind of Markdown
 formatting to them (i.e. adding `<SPACE><SPACE>` at the end of lines for break, etc.)
 {{< /alert >}}
@@ -69,8 +69,8 @@ Read `docs/.header.md` to extract header:
 header-from: "docs/.header.md"
 ```
 
-Read `https://raw.githubusercontent.com/terraform-docs/terraform-docs/master/terraform/testdata/full-example/doc.md` to extract header:
+Read `https://raw.githubusercontent.com/terraform-docs/terraform-docs/main/terraform/testdata/full-example/doc.md` to extract header:
 
 ```yaml
-header-from: "https://raw.githubusercontent.com/terraform-docs/terraform-docs/master/terraform/testdata/full-example/doc.md"
+header-from: "https://raw.githubusercontent.com/terraform-docs/terraform-docs/main/terraform/testdata/full-example/doc.md"
 ```

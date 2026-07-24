@@ -1,6 +1,6 @@
 ---
-title: "Generate terraform.tfvars"
-description: "How to generate terraform.tfvars file with terraform-docs"
+title: "Generate Terraform.tfvars"
+description: "How to generate Terraform.tfvars file with Terraform-docs"
 menu:
   docs:
     parent: "how-to"

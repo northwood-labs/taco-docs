@@ -14,9 +14,9 @@ To enable sorting of elements `sort.enabled` can be used. This will indicate
 sorting is enabled or not, but consecutively type of sorting can also be specified
 with `sort.by`. The following sort types are supported:
 
-- `name` (default): name of items
-- `required`: by name of inputs AND show required ones first
-- `type`: type of inputs
+* `name` (default): name of items
+* `required`: by name of inputs AND show required ones first
+* `type`: type of inputs
 
 ## Options
 
@@ -50,7 +50,7 @@ sort:
   enabled: false
 ```
 
-Sort by name (terraform-docs `>= v0.13.0`):
+Sort by name (Terraform-docs `>= v0.13.0`):
 
 ```yaml
 sort:
@@ -58,7 +58,7 @@ sort:
   by: name
 ```
 
-Sort by required (terraform-docs `< v0.13.0`):
+Sort by required (Terraform-docs `< v0.13.0`):
 
 ```yaml
 sort:

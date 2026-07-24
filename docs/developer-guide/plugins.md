@@ -1,6 +1,6 @@
 ---
 title: "Plugins"
-description: "terraform-docs plugin development guide"
+description: "Terraform-docs plugin development guide"
 menu:
   docs:
     parent: "developer-guide"
@@ -13,15 +13,15 @@ is not enough for your use-case, you can write your own plugin.
 
 In order to install a plugin the following steps are needed:
 
-- download the plugin and place it in `~/.tfdocs.d/plugins` (or `./.tfdocs.d/plugins`)
-- make sure the plugin file name is `tfdocs-format-<NAME>`
-- modify [`formatter`] of `.terraform-docs.yml` file to be `<NAME>`
+* download the plugin and place it in `~/.tfdocs.d/plugins` (or `./.tfdocs.d/plugins`)
+* make sure the plugin file name is `tfdocs-format-<NAME>`
+* modify [`formatter`] of `.terraform-docs.yml` file to be `<NAME>`
 
 **Important notes:**
 
-- if the plugin file name is different than the example above, terraform-docs won't
+* if the plugin file name is different than the example above, Terraform-docs won't
 be able to to pick it up nor register it properly
-- you can only use plugin thorough `.terraform-docs.yml` file and it cannot be used
+* you can only use plugin thorough `.terraform-docs.yml` file and it cannot be used
 with CLI arguments
 
 To create a new plugin create a new repository called `tfdocs-format-<NAME>` with

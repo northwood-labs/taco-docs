@@ -1,6 +1,6 @@
 ---
 title: "Installation"
-description: "terraform-docs installation guide"
+description: "Terraform-docs installation guide"
 menu:
   docs:
     parent: "user-guide"
@@ -47,7 +47,7 @@ choco install terraform-docs
 
 ## Docker
 
-terraform-docs can be run as a container by mounting a directory with `.tf`
+Terraform-docs can be run as a container by mounting a directory with `.tf`
 files in it and run the following command:
 
 ```bash
@@ -67,7 +67,7 @@ to HEAD of `master` at any given point in time. And any named version tags are
 identical to the official GitHub releases without leading `v`.
 {{< /alert >}}
 
-## Pre-compiled Binary
+## Pre-compiled binary
 
 Stable binaries are available on the GitHub [Release] page. To install, download
 the file for your platform from "Assets" and place it into your `$PATH`:
@@ -83,7 +83,7 @@ mv terraform-docs /some-dir-in-your-PATH/terraform-docs
 Windows releases are in `ZIP` format.
 {{< /alert >}}
 
-## Go Users
+## Go users
 
 The latest version can be installed using `go install` or `go get`:
 
@@ -113,19 +113,19 @@ Please use the latest Go to do this, minimum `go1.16` is required.
 
 This will put `terraform-docs` in `$(go env GOPATH)/bin`. If you encounter the error
 `terraform-docs: command not found` after installation then you may need to either add
-that directory to your `$PATH` as shown [here] or do a manual installation by cloning
+that directory to your `$PATH` as shown or do a manual installation by cloning
 the repo and run `make build` from the repository which will put `terraform-docs` in:
 
 ```bash
 $(go env GOPATH)/src/github.com/northwood-labs/taco-docs/bin/$(uname | tr '[:upper:]' '[:lower:]')-amd64/terraform-docs
 ```
 
-## Code Completion
+## Code completion
 
 The code completion for `bash` or `zsh` can be installed as follow. Note that shell
 auto-completion is not available on Windows platform.
 
-### bash
+### Bash
 
 ```bash
 terraform-docs completion bash > ~/.terraform-docs-completion
@@ -136,21 +136,21 @@ source ~/.terraform-docs-completion
 source <(terraform-docs completion bash)
 ```
 
-### zsh
+### Zsh
 
 ```zsh
 terraform-docs completion zsh > /usr/local/share/zsh/site-functions/_terraform-docs
 autoload -U compinit && compinit
 ```
 
-### ohmyzsh
+### Ohmyzsh
 
 ```zsh
 terraform-docs completion zsh > ~/.oh-my-zsh/completions/_terraform-docs
 omz reload
 ```
 
-### fish
+### Fish
 
 ```fish
 terraform-docs completion fish > ~/.config/fish/completions/terraform-docs.fish

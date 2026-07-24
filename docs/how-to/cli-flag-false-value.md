@@ -1,6 +1,6 @@
 ---
 title: "CLI Flag 'false' value"
-description: "How to use pass 'false' value to terraform-docs CLI flags"
+description: "How to use pass 'false' value to Terraform-docs CLI flags"
 menu:
   docs:
     parent: "how-to"
@@ -20,5 +20,5 @@ Example:
 
 ```bash
 # disable reading .terraform.lock.hcl
-$ terraform-docs markdown --lockfile=false /path/to/module
+terraform-docs markdown --lockfile=false /path/to/module
 ```

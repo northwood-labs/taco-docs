@@ -10,7 +10,7 @@
 PROJECT_NAME  := terraform-docs
 PROJECT_OWNER := terraform-docs
 DESCRIPTION   := generate documentation from Terraform modules in various output formats
-PROJECT_URL   := https://github.com/$(PROJECT_OWNER)/$(PROJECT_NAME)
+PROJECT_URL   :=
 LICENSE       := MIT
 
 # Build variables

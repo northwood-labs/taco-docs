@@ -148,4 +148,15 @@ exclude = [
   'taplo://',
   'x-access-token',
   # @config-manager:end host-excludes
+
+  'github.com/$',
+  'github.com/northwood-labs/taco-docs',
+  'nih.tld',
+  'pkg.go.dev/github.com/northwood-labs/taco-docs',
+  'registry.acme.com',
+  'registry.terraform.io/providers/%s',
+  'terraform-docs.io',
+  'unreachable',
+  'www.domain.com',
+  'www.foo',
 ]

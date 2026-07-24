@@ -14,11 +14,11 @@ Any type of resources can be ignored from the generated output by prepending the
 with a comment `terraform-docs-ignore`. Supported type of Terraform resources to
 get ignored are:
 
-- `resource`
-- `data`
-- `module`
-- `variable`
-- `output`
+* `resource`
+* `data`
+* `module`
+* `variable`
+* `output`
 
 {{< alert type="info" >}}
 If a `resource` or `data` is ignored, their corresponding discovered provider

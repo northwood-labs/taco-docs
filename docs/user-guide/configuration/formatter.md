@@ -10,30 +10,30 @@ toc: true
 
 Since `v0.10.0`
 
-The following options are supported out of the box by terraform-docs and can be
+The following options are supported out of the box by Terraform-docs and can be
 used for `FORMATTER_NAME`:
 
-- `asciidoc` <sup class="no-top">[reference]({{< ref "asciidoc" >}})</sup>
-- `asciidoc document` <sup class="no-top">[reference]({{< ref "asciidoc-document" >}})</sup>
-- `asciidoc table` <sup class="no-top">[reference]({{< ref "asciidoc-table" >}})</sup>
-- `json` <sup class="no-top">[reference]({{< ref "json" >}})</sup>
-- `markdown` <sup class="no-top">[reference]({{< ref "markdown" >}})</sup>
-- `markdown document` <sup class="no-top">[reference]({{< ref "markdown-document" >}})</sup>
-- `markdown table` <sup class="no-top">[reference]({{< ref "markdown-table" >}})</sup>
-- `pretty` <sup class="no-top">[reference]({{< ref "pretty" >}})</sup>
-- `tfvars hcl` <sup class="no-top">[reference]({{< ref "tfvars-hcl" >}})</sup>
-- `tfvars json` <sup class="no-top">[reference]({{< ref "tfvars-json" >}})</sup>
-- `toml` <sup class="no-top">[reference]({{< ref "toml" >}})</sup>
-- `xml` <sup class="no-top">[reference]({{< ref "xml" >}})</sup>
-- `yaml` <sup class="no-top">[reference]({{< ref "yaml" >}})</sup>
+* `asciidoc` — [reference]({{< ref "asciidoc" >}})
+* `asciidoc document` — [reference]({{< ref "asciidoc-document" >}})
+* `asciidoc table` — [reference]({{< ref "asciidoc-table" >}})
+* `json` — [reference]({{< ref "JSON" >}})
+* `markdown` — [reference]({{< ref "Markdown" >}})
+* `markdown document` — [reference]({{< ref "Markdown-document" >}})
+* `markdown table` — [reference]({{< ref "Markdown-table" >}})
+* `pretty` — [reference]({{< ref "pretty" >}})
+* `tfvars hcl` — [reference]({{< ref "tfvars-hcl" >}})
+* `tfvars json` — [reference]({{< ref "tfvars-JSON" >}})
+* `toml` — [reference]({{< ref "TOML" >}})
+* `xml` — [reference]({{< ref "XML" >}})
+* `yaml` — [reference]({{< ref "YAML" >}})
 
 {{< alert type="info" >}}
 Short version of formatters can also be used:
 
-- `adoc` instead of `asciidoc`
-- `md` instead of `markdown`
-- `doc` instead of `document`
-- `tbl` instead of `table`
+* `adoc` instead of `asciidoc`
+* `md` instead of `markdown`
+* `doc` instead of `document`
+* `tbl` instead of `table`
 {{< /alert >}}
 
 {{< alert type="info" >}}

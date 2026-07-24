@@ -33,91 +33,91 @@ settings:
   type: true
 ```
 
-### anchor
+### Anchor
 
 > since: `v0.12.0`\
 > scope: `asciidoc`, `markdown`
 
 Generate HTML anchor tag for elements.
 
-### color
+### Color
 
 > since: `v0.10.0`\
 > scope: `pretty`
 
 Print colorized version of result in the terminal.
 
-### default
+### Default
 
 > since: `v0.12.0`\
 > scope: `asciidoc`, `markdown`
 
 Show "Default" value as column (in table format) or section (in document format).
 
-### description
+### Description
 
 > since: `v0.13.0`\
 > scope: `tfvars hcl`
 
 Show "Descriptions" as comment on variables.
 
-### escape
+### Escape
 
 > since: `v0.10.0`\
 > scope: `asciidoc`, `json`, `markdown`
 
 Escape special characters (such as `_`, `*` in Markdown and `>`, `<` in JSON)
 
-### hide-empty
+### Hide-empty
 
 > since: `v0.16.0`\
 > scope: `asciidoc`, `markdown`
 
 Hide empty sections.
 
-### html
+### HTML
 
 > since: `v0.14.0`\
 > scope: `markdown`
 
 Generate HTML tags (`a`, `pre`, `br`, ...) in the output.
 
-### indent
+### Indent
 
 > since: `v0.10.0`\
 > scope: `asciidoc`, `markdown`
 
 Indentation level of headings [available: 1, 2, 3, 4, 5].
 
-### lockfile
+### Lockfile
 
 > since: `v0.15.0`\
 > scope: `global`
 
 Read `.terraform.lock.hcl` to extract exact version of providers.
 
-### read-comments
+### Read-comments
 
 > since: `v0.16.0`\
 > scope: `global`
 
 Use comments from `tf` files for "Description" column (for inputs and outputs) when description is empty
 
-### required
+### Required
 
 > since: `v0.10.0`\
 > scope: `asciidoc`, `markdown`
 
 Show "Required" as column (in table format) or section (in document format).
 
-### sensitive
+### Sensitive
 
 > since: `v0.10.0`\
 > scope: `asciidoc`, `markdown`
 
 Show "Sensitive" as column (in table format) or section (in document format).
 
-### type
+### Type
 
 > since: `v0.12.0`\
 > scope: `asciidoc`, `markdown`
@@ -126,7 +126,7 @@ Show "Type" as column (in table format) or section (in document format).
 
 ## Examples
 
-Markdown linters rule [MD033] prohibits using raw HTML in markdown document,
+Markdown linters rule [MD033] prohibits using raw HTML in Markdown document,
 the following can be used to appease it:
 
 ```yaml
@@ -135,7 +135,7 @@ settings:
   html: false
 ```
 
-If `.terraform.lock.hcl` is not checked in the repository, running terraform-docs
+If `.terraform.lock.hcl` is not checked in the repository, running Terraform-docs
 potentially will produce different providers version on each execution, to prevent
 this you can disable it by:
 
@@ -147,7 +147,7 @@ settings:
 For simple modules the generated documentation contains a lot of sections that
 simply say "no outputs", "no resources", etc. It is possible to hide these empty
 sections manually, but if the module changes in the future, they explicitly have
-to be enabled again. The following can be used to let terraform-docs automatically
+to be enabled again. The following can be used to let Terraform-docs automatically
 hide empty sections:
 
 ```yaml

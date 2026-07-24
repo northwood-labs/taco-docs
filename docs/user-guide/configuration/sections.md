@@ -13,24 +13,24 @@ Since `v0.10.0`
 The following options are supported and can be used for `sections.show` and
 `sections.hide`:
 
-- `all` <sup class="no-top">(since v0.15.0)</sup>
-- `data-sources` <sup class="no-top">(since v0.13.0)</sup>
-- `header`
-- `footer` <sup class="no-top">(since v0.12.0)</sup>
-- `inputs`
-- `modules` <sup class="no-top">(since v0.11.0)</sup>
-- `outputs`
-- `providers`
-- `requirements`
-- `resources` <sup class="no-top">(since v0.11.0)</sup>
+* `all` — (since v0.15.0)
+* `data-sources` — (since v0.13.0)
+* `header`
+* `footer` — (since v0.12.0)
+* `inputs`
+* `modules` — (since v0.11.0)
+* `outputs`
+* `providers`
+* `requirements`
+* `resources` — (since v0.11.0)
 
 {{< alert type="warning" >}}
 The following options cannot be used together:
 
-- `sections.hide` and `sections.show`
-- `sections.hide-all` and `sections.show-all`
-- `sections.hide-all` and `sections.hide`
-- `sections.show-all` and `sections.show`
+* `sections.hide` and `sections.show`
+* `sections.hide-all` and `sections.show-all`
+* `sections.hide-all` and `sections.hide`
+* `sections.show-all` and `sections.show`
 {{< /alert >}}
 
 {{< alert type="info" >}}

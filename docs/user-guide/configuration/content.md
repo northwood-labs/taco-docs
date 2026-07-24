@@ -20,14 +20,14 @@ will be ignored for other formatters.
 
 `content` is a Go template with following additional variables:
 
-- `{{ .Header }}`
-- `{{ .Footer }}`
-- `{{ .Inputs }}`
-- `{{ .Modules }}`
-- `{{ .Outputs }}`
-- `{{ .Providers }}`
-- `{{ .Requirements }}`
-- `{{ .Resources }}`
+* `{{ .Header }}`
+* `{{ .Footer }}`
+* `{{ .Inputs }}`
+* `{{ .Modules }}`
+* `{{ .Outputs }}`
+* `{{ .Providers }}`
+* `{{ .Requirements }}`
+* `{{ .Resources }}`
 
 These variables are the generated output of individual sections in the selected
 formatter. For example `{{ .Inputs }}` is Markdown Table representation of _inputs_
@@ -40,12 +40,12 @@ over the `content`.
 
 `content` also has the following functions:
 
-- `{{ include "relative/path/to/file" }}`
-- `{{ include_optional "relative/path/to/file" "fallback" }}`
+* `{{ include "relative/path/to/file" }}`
+* `{{ include_optional "relative/path/to/file" "fallback" }}`
 
 Additionally there's also one extra special variable available to the `content`:
 
-- `{{ .Module }}`
+* `{{ .Module }}`
 
 As opposed to the other variables mentioned above, which are generated sections
 based on a selected formatter, the `{{ .Module }}` variable is just a `struct`

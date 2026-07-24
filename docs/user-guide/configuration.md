@@ -1,6 +1,6 @@
 ---
 title: "Configuration"
-description: "terraform-docs configuration file, i.e. .terraform-docs.yml"
+description: "Terraform-docs configuration file, i.e. .Terraform-docs.yml"
 menu:
   docs:
     parent: "user-guide"
@@ -11,24 +11,24 @@ weight: 120
 toc: true
 ---
 
-The `terraform-docs` configuration file uses the [yaml format](https://yaml.org/) in order to override any default behaviors.
+The `terraform-docs` configuration file uses the [YAML format](https://yaml.org/) in order to override any default behaviors.
 This is a convenient way to share the configuration amongst teammates, CI, or other toolings.
 
-terraform-docs will locate any available configuration file without needing to explicitly pass the `--config` flag.
+Terraform-docs will locate any available configuration file without needing to explicitly pass the `--config` flag.
 
 The default name of the configuration file is `.terraform-docs.yml`.
 The path order for locating it is:
 
 1. root of module directory
-1. `.config/` folder at root of module directory <sup class="no-top">(since v0.15.0)</sup>
-1. current directory
-1. `.config/` folder at current directory <sup class="no-top">(since v0.15.0)</sup>
-1. `$HOME/.tfdocs.d/`
+2. `.config/` folder at root of module directory — (since v0.15.0)
+3. current directory
+4. `.config/` folder at current directory — (since v0.15.0)
+5. `$HOME/.tfdocs.d/`
 
 if `.terraform-docs.yml` is found in any of the folders above, that will take
 precedence and will override the other ones.
 
-Here is an example for how your terraform project file structure might look, and where the `.terraform-docs.yml` file can be placed:
+Here is an example for how your Terraform project file structure might look, and where the `.terraform-docs.yml` file can be placed:
 
 ```bash
 $ tree

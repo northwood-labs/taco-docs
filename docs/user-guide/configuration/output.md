@@ -18,7 +18,7 @@ Save generated output to a file, if `output.file` is not empty.
 
 Saving behavior can be controlled by `output.mode`:
 
-- `inject` (default)
+* `inject` (default)
 
   Partially replace the `output-file` content with generated output.
 
@@ -27,7 +27,7 @@ Saving behavior can be controlled by `output.mode`:
   `output-file` if it doesn't have surrounding comments.
   {{< /alert >}}
 
-- `replace`
+* `replace`
 
   Completely replace the `output-file` with generated output.
 
@@ -53,9 +53,9 @@ The default template value is:
 
 This template consists of at least three lines (all of which are mandatory):
 
-- begin comment
-- `{{ .Content }}` slug
-- end comment
+* begin comment
+* `{{ .Content }}` slug
+* end comment
 
 Wording of the comments may be changed as necessary, but the comment must be
 present in the template. Also note that `SPACE`s inside `{{ }}` are mandatory.
@@ -66,22 +66,22 @@ You may also add as many lines as you'd like before or after `{{ .Content }}` li
 If you want to customize template for mode `replace`, `{{ .Content }}` is mandatory.
 {{< /alert >}}
 
-## Template Comment
+## Template comment
 
 Markdown doesn't officially support inline commenting, there are multiple ways
 to do it as a workaround, though. The following formats are supported as begin
 and end comments of a template:
 
-- `<!-- This is a comment -->`
-- `[]: # (This is a comment)`
-- `[]: # "This is a comment"`
-- `[]: # 'This is a comment'`
-- `[//]: # (This is a comment)`
-- `[comment]: # (This is a comment)`
+* `<!-- This is a comment -->`
+* `[]: # (This is a comment)`
+* `[]: # "This is a comment"`
+* `[]: # 'This is a comment'`
+* `[//]: # (This is a comment)`
+* `[comment]: # (This is a comment)`
 
 The following is also supported for AsciiDoc format:
 
-- `// This is a comment`
+* `// This is a comment`
 
 ## Options
 

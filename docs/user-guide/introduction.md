@@ -27,44 +27,27 @@ Read all about [configuration].
 
 ## Formats
 
-One of the most popular format is [markdown table], which is a very good fit for
+One of the most popular format is [Markdown table], which is a very good fit for
 generating README of module.
 
-{{< img-simple src="markdown-table.png" >}}
+{{< img-simple src="Markdown-table.png" >}}
 
 which produces:
 
-{{< img-simple src="markdown-table-output.png" >}}
+{{< img-simple src="Markdown-table-output.png" >}}
 
 Read all about available [formats].
 
 ## Compatibility
 
-terraform-docs compatibility matrix with Terraform can be found below:
+Terraform-docs compatibility matrix with Terraform can be found below:
 
-<table class="table pure-table">
-  <thead>
-    <tr>
-      <th>terraform-docs</th>
-      <th>Terraform</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td><code>&gt;= 0.13</code></td>
-      <td><code>&gt;= 0.15</code></td>
-    </tr>
-    <tr>
-      <td><code>&gt;= 0.8, &lt; 0.13</code></td>
-      <td><code>&gt;= 0.12, &lt; 0.15</code></td>
-    </tr>
-    <tr>
-      <td><code>&lt; 0.8</code></td>
-      <td><code>&lt; 0.12</code></td>
-    </tr>
-  </tbody>
-</table>
+| `terraform-docs` | Terraform         |
+|------------------|-------------------|
+| `>= 0.13`        | `>= 0.15`         |
+| `>= 0.8, < 0.13` | `>= 0.12, < 0.15` |
+| `< 0.8`          | `< 0.12`          |
 
 [configuration]: {{< ref "configuration" >}}
-[formats]: {{< ref "terraform-docs" >}}
-[markdown table]: {{< ref "markdown-table" >}}
+[formats]: {{< ref "Terraform-docs" >}}
+[Markdown table]: {{< ref "Markdown-table" >}}

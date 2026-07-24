@@ -1,6 +1,6 @@
 ---
 title: "Contributing"
-description: "terraform-docs contributing guide"
+description: "Terraform-docs contributing guide"
 menu:
   docs:
     parent: "developer-guide"

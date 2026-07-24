@@ -1,6 +1,6 @@
 ---
 title: "GitHub Action"
-description: "How to use terraform-docs with GitHub Actions"
+description: "How to use Terraform-docs with GitHub Actions"
 menu:
   docs:
     parent: "how-to"
@@ -8,7 +8,7 @@ weight: 209
 toc: false
 ---
 
-To use terraform-docs GitHub Action, configure a YAML workflow file (e.g.
+To use Terraform-docs GitHub Action, configure a YAML workflow file (e.g.
 `.github/workflows/documentation.yml`) with the following:
 
 ```yaml
@@ -33,7 +33,7 @@ jobs:
         git-push: "true"
 ```
 
-Read more about [terraform-docs GitHub Action] and its configuration and
+Read more about [Terraform-docs GitHub Action] and its configuration and
 examples.
 
 [terraform-docs GitHub Action]: https://github.com/terraform-docs/gh-actions

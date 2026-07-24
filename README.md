@@ -1,6 +1,6 @@
 # taco-docs
 
-A utility to generate documentation from Terraform/OpenTofu modules in various output formats. A hard-fork of [terraform-docs](https://terraform-docs.io).
+A utility to generate documentation from Terraform/OpenTofu modules in various output formats. A hard-fork of [Terraform-docs](https://terraform-docs.io).
 
 **TACOS:** _**T**erraform **A**utomation and **CO**laboration **S**oftware_.
 
@@ -24,33 +24,33 @@ It is Northwood Labs’ intention to maintain this fork moving forward, and merg
 
 Need to apply some manual touching-up here and verify appropriate test coverage.
 
-* https://github.com/northwood-labs/taco-docs/pull/650
-* https://github.com/northwood-labs/taco-docs/pull/657
-* https://github.com/northwood-labs/taco-docs/pull/658
-* https://github.com/northwood-labs/taco-docs/pull/725
-* https://github.com/northwood-labs/taco-docs/pull/763
-* https://github.com/northwood-labs/taco-docs/pull/847
-* https://github.com/northwood-labs/taco-docs/pull/861
-* https://github.com/northwood-labs/taco-docs/pull/866
-* https://github.com/northwood-labs/taco-docs/pull/894
-* https://github.com/northwood-labs/taco-docs/pull/897
-* https://github.com/northwood-labs/taco-docs/pull/926
-* https://github.com/northwood-labs/taco-docs/pull/936
-* https://github.com/northwood-labs/taco-docs/pull/937
-* https://github.com/northwood-labs/taco-docs/pull/938
-* https://github.com/northwood-labs/taco-docs/pull/947
+* <https://github.com/northwood-labs/taco-docs/pull/650>
+* <https://github.com/northwood-labs/taco-docs/pull/657>
+* <https://github.com/northwood-labs/taco-docs/pull/658>
+* <https://github.com/northwood-labs/taco-docs/pull/725>
+* <https://github.com/northwood-labs/taco-docs/pull/763>
+* <https://github.com/northwood-labs/taco-docs/pull/847>
+* <https://github.com/northwood-labs/taco-docs/pull/861>
+* <https://github.com/northwood-labs/taco-docs/pull/866>
+* <https://github.com/northwood-labs/taco-docs/pull/894>
+* <https://github.com/northwood-labs/taco-docs/pull/897>
+* <https://github.com/northwood-labs/taco-docs/pull/926>
+* <https://github.com/northwood-labs/taco-docs/pull/936>
+* <https://github.com/northwood-labs/taco-docs/pull/937>
+* <https://github.com/northwood-labs/taco-docs/pull/938>
+* <https://github.com/northwood-labs/taco-docs/pull/947>
 
 ### To be manually merged
 
 These are either too old, or diverge too much after the aforementioned merges were applied. These will need to be merged by-hand to get the fixes into the source code. We will do our best to preserve attribution for the original committer.
 
-* https://github.com/northwood-labs/taco-docs/pull/571
-* https://github.com/northwood-labs/taco-docs/pull/700
-* https://github.com/northwood-labs/taco-docs/pull/709
-* https://github.com/northwood-labs/taco-docs/pull/723
-* https://github.com/northwood-labs/taco-docs/pull/820
-* https://github.com/northwood-labs/taco-docs/pull/893
-* https://github.com/northwood-labs/taco-docs/pull/905
-* https://github.com/northwood-labs/taco-docs/pull/935
+* <https://github.com/northwood-labs/taco-docs/pull/571>
+* <https://github.com/northwood-labs/taco-docs/pull/700>
+* <https://github.com/northwood-labs/taco-docs/pull/709>
+* <https://github.com/northwood-labs/taco-docs/pull/723>
+* <https://github.com/northwood-labs/taco-docs/pull/820>
+* <https://github.com/northwood-labs/taco-docs/pull/893>
+* <https://github.com/northwood-labs/taco-docs/pull/905>
+* <https://github.com/northwood-labs/taco-docs/pull/935>
 
 The original README has been temporarily removed, as much of it will change.

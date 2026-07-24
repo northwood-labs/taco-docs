@@ -1,6 +1,6 @@
 ---
 title: "pre-commit Hooks"
-description: "How to use pre-commit hooks with terraform-docs"
+description: "How to use pre-commit hooks with Terraform-docs"
 menu:
   docs:
     parent: "how-to"
@@ -27,18 +27,18 @@ in the root of your Git repo with at least the following content:
 
    {{< alert type="info" >}}
    You can also include more than one entry under `hooks:` to update multiple docs.
-   Just be sure to adjust the `args:` to pass the path you want terraform-docs to scan.
+   Just be sure to adjust the `args:` to pass the path you want Terraform-docs to scan.
    {{< /alert >}}
 
-1. install [`pre-commit`] and run `pre-commit install` to activate the hooks.
+2. install [`pre-commit`] and run `pre-commit install` to activate the hooks.
 
-1. make a Terraform change, `git add` and `git commit`.
+3. make a Terraform change, `git add` and `git commit`.
 pre-commit will regenerate your Terraform docs, after which you can
 rerun `git add` and `git commit` to commit the code and doc changes together.
 
 You can also regenerate the docs manually by running `pre-commit -a terraform-docs`.
 
-### pre-commit via Docker
+## Pre-commit via docker
 
 The pre-commit hook can also be run via Docker, for those who don't have Go installed.
 Just use `id: terraform-docs-docker` in the previous example.
@@ -58,9 +58,9 @@ repos:
         pass_filenames: false
 ```
 
-## Git Hook
+## Git hook
 
-A simple git hook (`.git/hooks/pre-commit`) added to your local terraform
+A simple git hook (`.git/hooks/pre-commit`) added to your local Terraform
 repository can keep your Terraform module documentation up to date whenever you
 make a commit. See also [git hooks] documentation.
 
@@ -76,7 +76,7 @@ done
 ```
 
 {{< alert type="warning" >}}
-This is very basic and highly simplified version of [pre-commit-terraform](https://github.com/antonbabenko/pre-commit-terraform).
+This is very basic and highly simplified version of [pre-commit-Terraform](https://github.com/antonbabenko/pre-commit-terraform).
 Please refer to it for complete examples and guides.
 {{< /alert >}}
 
