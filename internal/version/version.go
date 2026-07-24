@@ -15,21 +15,29 @@ import (
 	"runtime"
 )
 
-// current version
+// current version — these are the source-of-truth for the release version.
+// The prerelease field is set to a non-empty string (e.g., "rc1") during
+// pre-release builds and cleared for stable releases. This is the only
+// place version numbers are defined; ldflags injects the commit hash at
+// build time.
 const (
 	coreVersion = "0.24.0"
 	prerelease  = ""
 )
 
-// Provisioned by ldflags
+// commit is provisioned by ldflags at build time (-ldflags "-X ...version.commit=abc123").
+// This allows users and bug reports to identify the exact source revision.
 var commit string
 
-// Core return the core version.
+// Core returns the bare semantic version without pre-release suffix or metadata.
+// This is used for version constraint checking against config files — constraints
+// should match against the stable version number, not the full string.
 func Core() string {
 	return coreVersion
 }
 
-// Short return the version with pre-release, if available.
+// Short returns the version with pre-release suffix (if any). This is appropriate
+// for display in contexts where the commit and platform aren't needed.
 func Short() string {
 	v := coreVersion
 
@@ -40,7 +48,9 @@ func Short() string {
 	return v
 }
 
-// Full return the full version including pre-release, commit hash, runtime os and arch.
+// Full returns the complete version string including pre-release, commit hash,
+// and OS/architecture. This goes into --version output and the User-Agent header,
+// giving complete provenance for debugging environment-specific issues.
 func Full() string {
 	if commit != "" && commit[:1] != " " {
 		commit = " " + commit

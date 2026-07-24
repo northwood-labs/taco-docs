@@ -19,6 +19,7 @@ import (
 	"github.com/terraform-docs/terraform-docs/print"
 )
 
+// WHY: Golden-file test ensuring TOML output matches expected fixtures.
 func TestToml(t *testing.T) {
 	tests := map[string]struct {
 		config print.Config

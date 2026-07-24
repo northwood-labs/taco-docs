@@ -25,15 +25,12 @@ import (
 	pluginsdk "github.com/terraform-docs/terraform-docs/plugin"
 )
 
-// Discover plugins and registers them. The lookup priority of plugins is as
-// follow:
-//
-// 1. `TFDOCS_PLUGIN_DIR` environment variable (if it's set)
-// 2. Current directory (./.tfdocs.d/plugins)
-// 3. Home directory (~/.tfdocs.d/plugins)
-//
-// Files under these directories that satisfy the "tfdocs-format-*" naming
-// convention are treated as plugins.
+// Discover scans well-known directories for plugin binaries and initializes
+// RPC connections to each one. The priority order (env var > local > home)
+// allows CI pipelines to override plugin locations via TFDOCS_PLUGIN_DIR while
+// developers use the conventional local or home-based paths. Only the first
+// matching directory is used — this avoids confusion from loading the same
+// plugin from multiple locations.
 func Discover() (*List, error) {
 	if dir := os.Getenv("TFDOCS_PLUGIN_DIR"); dir != "" {
 		return findPlugins(dir)
@@ -51,7 +48,10 @@ func Discover() (*List, error) {
 	return findPlugins(dir)
 }
 
-// findPlugins finds plugins in a given 'dir' and registers them.
+// findPlugins iterates over all files in a directory, treats each one as a
+// potential plugin binary (based on the naming convention), spawns it as a
+// subprocess, and establishes an RPC connection. The go-plugin library handles
+// the handshake to ensure version compatibility between host and plugin.
 func findPlugins(dir string) (*List, error) {
 	clients := map[string]*goplugin.Client{}
 	formatters := map[string]*pluginsdk.Client{}
@@ -62,14 +62,17 @@ func findPlugins(dir string) (*List, error) {
 	}
 
 	for _, f := range files {
+		// Strip the mandatory prefix to get the formatter name. For example,
+		// "tfdocs-format-custom" becomes "custom" as the formatter identifier.
 		name := strings.ReplaceAll(f.Name(), namePrefix, "")
 		path, err := getPluginPath(dir, name)
 		if err != nil {
 			return nil, err
 		}
 
-		// Accepting variables here is intentional; we need to determine the
-		// path on the fly per directory.
+		// Each plugin runs as a separate process communicating over RPC. This
+		// isolation means a crashing plugin can't bring down the host, and plugins
+		// can be written in any language that implements the protocol.
 		//
 		// nolint:gosec
 		cmd := exec.CommandContext(context.TODO(), path)
@@ -90,6 +93,7 @@ func findPlugins(dir string) (*List, error) {
 
 		formatter := raw.(*pluginsdk.Client)
 
+		// Duplicate plugin names would cause silent shadowing — fail loudly.
 		if _, ok := clients[name]; ok {
 			return nil, fmt.Errorf("plugin %s is already registered", name)
 		}
@@ -101,6 +105,9 @@ func findPlugins(dir string) (*List, error) {
 	return &List{formatters: formatters, clients: clients}, nil
 }
 
+// getPluginPath constructs the expected filesystem path for a plugin binary,
+// including the platform-appropriate executable suffix. It verifies the file
+// exists before returning, producing a clear error for missing plugins.
 func getPluginPath(dir string, name string) (string, error) {
 	suffix := ""
 

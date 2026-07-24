@@ -10,7 +10,12 @@ the root directory of this source tree.
 
 package cli
 
-// Mappings of CLI flags to Viper config
+// flagMappings translates CLI flag names to their corresponding viper config
+// paths. This indirection exists because CLI flags use kebab-case (--output-file)
+// while the config file uses a nested structure (output.file). Without this map,
+// bindFlags() would need hardcoded knowledge of every flag's config path, making
+// it fragile to add new flags. The map also serves as the canonical list of which
+// flags are bindable — unknown flags are silently skipped.
 var flagMappings = map[string]string{
 	"header-from": "header-from",
 	"footer-from": "footer-from",

@@ -11,9 +11,9 @@ the root directory of this source tree.
 package terraform
 
 import (
+	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"fmt"
 	"os"
 	"path/filepath"
 	"sort"
@@ -25,6 +25,8 @@ import (
 	"github.com/terraform-docs/terraform-docs/print"
 )
 
+// WHY: End-to-end check that LoadWithOptions correctly populates all module sections (header, inputs,
+// outputs, providers, etc.). A failure here means the entire doc generation pipeline is broken.
 func TestLoadModuleWithOptions(t *testing.T) {
 	assert := assert.New(t)
 
@@ -54,6 +56,7 @@ func TestLoadModuleWithOptions(t *testing.T) {
 	assert.Equal(false, module.HasHeader())
 }
 
+// WHY: Confirms the HCL parser can load modules from valid paths and fails gracefully for missing ones.
 func TestLoadModule(t *testing.T) {
 	tests := []struct {
 		name    string
@@ -84,6 +87,7 @@ func TestLoadModule(t *testing.T) {
 	}
 }
 
+// WHY: Validates file extension extraction used to determine header/footer file type handling.
 func TestGetFileFormat(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -130,6 +134,8 @@ func TestGetFileFormat(t *testing.T) {
 	}
 }
 
+// WHY: Guards the allow-list of supported file formats (.adoc, .md, .tf, .tofu, .txt). Without this,
+// unsupported formats could slip through silently or supported ones could be accidentally rejected.
 func TestIsFileFormatSupported(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -194,7 +200,8 @@ func TestIsFileFormatSupported(t *testing.T) {
 			wantErr:  true,
 			errText:  "--header-from value is missing",
 			section:  "header",
-		}, {
+		},
+		{
 			name:     "err message changes for footer",
 			filename: "main.doc",
 			expected: false,
@@ -226,6 +233,8 @@ func TestIsFileFormatSupported(t *testing.T) {
 	}
 }
 
+// WHY: Verifies header extraction from .tf comment blocks and external files. If broken, module
+// descriptions in generated docs would be empty or contain raw HCL syntax.
 func TestLoadHeader(t *testing.T) {
 	tests := []struct {
 		name         string
@@ -270,6 +279,7 @@ func TestLoadHeader(t *testing.T) {
 	}
 }
 
+// WHY: Mirrors TestLoadHeader but for footers; ensures footer-from logic works independently.
 func TestLoadFooter(t *testing.T) {
 	tests := []struct {
 		name         string
@@ -318,6 +328,8 @@ func TestLoadFooter(t *testing.T) {
 	}
 }
 
+// WHY: Comprehensive test for section loading from local files, including error cases (missing file,
+// unsupported format). Ensures correct content is extracted from various source formats.
 func TestLoadSections(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -464,6 +476,9 @@ func TestLoadSections(t *testing.T) {
 		})
 	}
 }
+
+// WHY: Validates remote URL fetching for header/footer content. Allows users to share documentation
+// snippets across repos without duplicating files locally.
 func TestLoadSectionsFromUrl(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -499,6 +514,8 @@ func TestLoadSectionsFromUrl(t *testing.T) {
 	}
 }
 
+// WHY: Ensures correct classification of file sources (local vs web). Wrong classification would
+// cause local files to be fetched over HTTP or URLs to be opened as local paths.
 func TestGetSource(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -547,6 +564,7 @@ func TestGetSource(t *testing.T) {
 	}
 }
 
+// WHY: Validates HTTP request handling for remote section loading, including timeout behavior.
 func TestSendHTTPRequest(t *testing.T) {
 	// Create a mock server
 	mockHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -597,6 +615,8 @@ func TestSendHTTPRequest(t *testing.T) {
 	}
 }
 
+// WHY: Verifies correct input count and required/optional classification from HCL.
+// Misclassification would show wrong "required" badges in generated docs.
 func TestLoadInputs(t *testing.T) {
 	type expected struct {
 		inputs    int
@@ -660,6 +680,7 @@ func TestLoadInputs(t *testing.T) {
 	}
 }
 
+// WHY: Confirms module call detection from source blocks. Missing modulecalls means incomplete dependency docs.
 func TestLoadModulecalls(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -690,6 +711,8 @@ func TestLoadModulecalls(t *testing.T) {
 	}
 }
 
+// WHY: Ensures CRLF line endings are normalized to LF in descriptions. Without this, Windows-authored
+// .tf files would produce descriptions with stray \r characters in generated docs.
 func TestLoadInputsLineEnding(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -721,6 +744,7 @@ func TestLoadInputsLineEnding(t *testing.T) {
 	}
 }
 
+// WHY: Verifies output extraction and that ShowValue defaults to false when output values are not enabled.
 func TestLoadOutputs(t *testing.T) {
 	type expected struct {
 		outputs int
@@ -763,6 +787,7 @@ func TestLoadOutputs(t *testing.T) {
 	}
 }
 
+// WHY: Same CRLF normalization test as inputs but for output descriptions.
 func TestLoadOutputsLineEnding(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -794,6 +819,8 @@ func TestLoadOutputsLineEnding(t *testing.T) {
 	}
 }
 
+// WHY: Validates that output values are correctly loaded from a JSON file and displayed. If broken,
+// --output-values would silently produce empty value columns.
 func TestLoadOutputsValues(t *testing.T) {
 	type expected struct {
 		outputs int
@@ -854,6 +881,8 @@ func TestLoadOutputsValues(t *testing.T) {
 	}
 }
 
+// WHY: Verifies provider extraction including version constraints and lock file support. Wrong versions
+// in docs mislead users about actual provider requirements.
 func TestLoadProviders(t *testing.T) {
 	type expected struct {
 		providers []string
@@ -919,6 +948,7 @@ func TestLoadProviders(t *testing.T) {
 	}
 }
 
+// WHY: Ensures terraform/opentofu version constraints and provider requirements are correctly parsed.
 func TestLoadRequirements(t *testing.T) {
 	type expected struct {
 		requirements []string
@@ -959,6 +989,7 @@ func TestLoadRequirements(t *testing.T) {
 	}
 }
 
+// WHY: Confirms resources (managed and data) are correctly identified from HCL configuration.
 func TestLoadResources(t *testing.T) {
 	type expected struct {
 		resources []string
@@ -994,12 +1025,15 @@ func TestLoadResources(t *testing.T) {
 			assert.Equal(len(tt.expected.resources), len(resources))
 
 			for _, r := range resources {
-				assert.True(slices.Contains(tt.expected.resources, fmt.Sprintf("%s_%s.%s", r.ProviderName, r.Type, r.Name)))
+				assert.True(
+					slices.Contains(tt.expected.resources, fmt.Sprintf("%s_%s.%s", r.ProviderName, r.Type, r.Name)),
+				)
 			}
 		})
 	}
 }
 
+// WHY: Validates detection of provider-defined functions (provider::aws::arn_parse syntax).
 func TestLoadProviderFunctions(t *testing.T) {
 	type expected struct {
 		providerFunctions []string
@@ -1042,6 +1076,8 @@ func TestLoadProviderFunctions(t *testing.T) {
 	}
 }
 
+// WHY: Provider ordering must be deterministic across runs. Non-deterministic ordering causes spurious
+// diffs when regenerating docs, even when no actual changes were made to the Terraform module.
 func TestLoadProvidersDeterministic(t *testing.T) {
 	tests := []struct {
 		name        string
@@ -1096,6 +1132,7 @@ func TestLoadProvidersDeterministic(t *testing.T) {
 	}
 }
 
+// WHY: Resource ordering must be deterministic. Same rationale as provider determinism—prevents noisy diffs.
 func TestLoadResourcesDeterministic(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -1129,6 +1166,8 @@ func TestLoadResourcesDeterministic(t *testing.T) {
 	}
 }
 
+// WHY: Verifies comment extraction from .tf files at specific line numbers. These comments become
+// variable/output descriptions when HCL description attributes are missing.
 func TestLoadComments(t *testing.T) {
 	tests := []struct {
 		name       string
@@ -1182,6 +1221,8 @@ func TestLoadComments(t *testing.T) {
 	}
 }
 
+// WHY: Validates that the ReadComments setting controls whether preceding comments are used as
+// descriptions. Users who rely on inline comments for docs need this to work correctly.
 func TestReadComments(t *testing.T) {
 	tests := []struct {
 		name         string
@@ -1227,6 +1268,8 @@ func TestReadComments(t *testing.T) {
 	}
 }
 
+// WHY: Comprehensive test of sorting logic across all item types with different sort modes.
+// Ensures sort-by-name, sort-by-required, and sort-by-type all produce the expected orderings.
 func TestSortItems(t *testing.T) {
 	type expected struct {
 		inputs    []string
@@ -1355,6 +1398,9 @@ func TestSortItems(t *testing.T) {
 		})
 	}
 }
+
+// WHY: Ensures OpenTofu for_each provider blocks are correctly parsed. This is a compatibility check
+// for OpenTofu-specific HCL syntax that differs from standard Terraform.
 func TestLoadOpenTofuProviders(t *testing.T) {
 	assert := assert.New(t)
 

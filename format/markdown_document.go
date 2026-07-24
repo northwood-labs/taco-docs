@@ -23,6 +23,11 @@ import (
 var markdownDocumentFS embed.FS
 
 // markdownDocument represents Markdown Document format.
+//
+// WHY: For modules with lengthy descriptions, complex types, or many
+// validation rules, a table becomes unreadable. The document format
+// gives each input/output its own subsection with full-width rendering,
+// making verbose documentation scannable via a table of contents.
 type markdownDocument struct {
 	*generator
 
@@ -36,6 +41,9 @@ func NewMarkdownDocument(config *print.Config) Type {
 
 	tt := template.New(config, items...)
 	tt.CustomFunc(gotemplate.FuncMap{
+		// WHY: Multi-line types/values need fenced code blocks (```hcl)
+		// for proper syntax highlighting in document view, unlike the
+		// table format which uses inline backticks for compactness.
 		"type": func(t string) string {
 			result, extraline := PrintFencedCodeBlock(t, "hcl")
 			if !extraline {
@@ -53,6 +61,9 @@ func NewMarkdownDocument(config *print.Config) Type {
 			}
 			return result
 		},
+		// WHY: The "Required" badge is only shown when the user opts
+		// in via config, since it adds noise for modules where most
+		// inputs are optional.
 		"isRequired": func() bool {
 			return config.Settings.Required
 		},

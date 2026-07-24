@@ -19,6 +19,8 @@ import (
 	"github.com/terraform-docs/terraform-docs/print"
 )
 
+// WHY: Golden-file test ensuring tfvars HCL output matches expected fixtures. This format generates
+// .tfvars files for use with terraform plan -var-file, so correctness is critical for workflows.
 func TestTfvarsHcl(t *testing.T) {
 	tests := map[string]struct {
 		config print.Config

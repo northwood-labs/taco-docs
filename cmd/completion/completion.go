@@ -18,7 +18,11 @@ import (
 	"github.com/terraform-docs/terraform-docs/cmd/completion/zsh"
 )
 
-// NewCommand returns a new cobra.Command for 'completion' command
+// NewCommand registers the "completion" subcommand group. Shell completions
+// dramatically improve the developer experience for CLI tools by enabling
+// tab-completion of subcommands and flags. This avoids the need to constantly
+// reference --help or documentation. Each shell has its own completion syntax,
+// so separate subcommands handle bash, zsh, and fish respectively.
 func NewCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Args:  cobra.NoArgs,

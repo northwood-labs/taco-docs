@@ -16,7 +16,13 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// NewCommand returns a new cobra.Command for 'completion zsh' command
+// NewCommand registers the "completion zsh" subcommand. Zsh completions use a
+// different format than bash (compdef-based), so they require their own
+// generation function. The output is typically saved to a file in the user's
+// fpath (e.g., /usr/local/share/zsh/site-functions/) and loaded by compinit.
+//
+// Parent().Parent() is used to generate completions from the root command,
+// ensuring the full command tree is represented.
 func NewCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Args:  cobra.NoArgs,

@@ -18,6 +18,9 @@ import (
 	"github.com/terraform-docs/terraform-docs/internal/types"
 )
 
+// WHY: Verifies that input values are correctly rendered as strings (including nil, bool, string, number,
+// list, map) and that HasDefault/Required flags are computed correctly. Wrong rendering here means
+// garbled default values in all output formats.
 func TestInputValue(t *testing.T) {
 	inputName := "input"
 	inputType := types.String("type")
@@ -210,6 +213,8 @@ func TestInputValue(t *testing.T) {
 	}
 }
 
+// WHY: Verifies that inputs can be sorted by name, by required status, and by position in file.
+// Incorrect sort means documentation order doesn't match user expectations or file structure.
 func TestInputsSorted(t *testing.T) {
 	inputs := sampleInputs()
 	tests := map[string]struct {

@@ -20,22 +20,31 @@ import (
 )
 
 // Output represents a Terraform output.
+//
+// WHY: Custom MarshalJSON/XML/YAML methods exist because the --output-values feature conditionally
+// includes or excludes the Value and Sensitive fields. When output values are disabled (default),
+// these fields are omitted so generated docs don't contain misleading empty entries. When enabled,
+// the "withvalue" shadow struct forces serialization of even zero-valued fields (empty string,
+// false) so users see the actual state. The ShowValue flag drives this switch at marshal time.
 type Output struct {
-	Name        string       `json:"name" toml:"name" xml:"name" yaml:"name"`
-	Description types.String `json:"description" toml:"description" xml:"description" yaml:"description"`
-	Value       types.Value  `json:"value,omitempty" toml:"value,omitempty" xml:"value,omitempty" yaml:"value,omitempty"`
+	Name        string       `json:"name"                toml:"name"                xml:"name"                yaml:"name"`
+	Description types.String `json:"description"         toml:"description"         xml:"description"         yaml:"description"`
+	Value       types.Value  `json:"value,omitempty"     toml:"value,omitempty"     xml:"value,omitempty"     yaml:"value,omitempty"`
 	Sensitive   bool         `json:"sensitive,omitempty" toml:"sensitive,omitempty" xml:"sensitive,omitempty" yaml:"sensitive,omitempty"`
-	Position    Position     `json:"-" toml:"-" xml:"-" yaml:"-"`
-	ShowValue   bool         `json:"-" toml:"-" xml:"-" yaml:"-"`
+	Position    Position     `json:"-"                   toml:"-"                   xml:"-"                   yaml:"-"`
+	ShowValue   bool         `json:"-"                   toml:"-"                   xml:"-"                   yaml:"-"`
 }
 
+// WHY: withvalue is a shadow struct identical to Output but without omitempty on Value/Sensitive.
+// Go's encoding packages check struct tags at marshal time, so we need a separate type to force
+// serialization of zero-valued fields when --output-values is active.
 type withvalue struct {
-	Name        string       `json:"name" toml:"name" xml:"name" yaml:"name"`
+	Name        string       `json:"name"        toml:"name"        xml:"name"        yaml:"name"`
 	Description types.String `json:"description" toml:"description" xml:"description" yaml:"description"`
-	Value       types.Value  `json:"value" toml:"value" xml:"value" yaml:"value"`
-	Sensitive   bool         `json:"sensitive" toml:"sensitive" xml:"sensitive" yaml:"sensitive"`
-	Position    Position     `json:"-" toml:"-" xml:"-" yaml:"-"`
-	ShowValue   bool         `json:"-" toml:"-" xml:"-" yaml:"-"`
+	Value       types.Value  `json:"value"       toml:"value"       xml:"value"       yaml:"value"`
+	Sensitive   bool         `json:"sensitive"   toml:"sensitive"   xml:"sensitive"   yaml:"sensitive"`
+	Position    Position     `json:"-"           toml:"-"           xml:"-"           yaml:"-"`
+	ShowValue   bool         `json:"-"           toml:"-"           xml:"-"           yaml:"-"`
 }
 
 // GetValue returns JSON representation of the 'Value', which is an 'interface'.
@@ -144,6 +153,8 @@ func sortOutputsByPosition(x []*Output) {
 
 type outputs []*Output
 
+// WHY: Outputs support only name-based and position-based sorting. Unlike inputs, outputs have
+// no "required" or "type" dimension, so fewer strategies are needed.
 func (oo outputs) sort(enabled bool, by string) { //nolint:unparam
 	if !enabled {
 		sortOutputsByPosition(oo)

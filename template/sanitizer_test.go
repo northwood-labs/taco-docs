@@ -18,6 +18,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// WHY: Ensures underscores in variable/resource names are properly escaped for Markdown rendering.
+// Unescaped underscores would render as italic text in Markdown viewers, mangling names.
 func TestSanitizeName(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -103,6 +105,8 @@ func TestSanitizeName(t *testing.T) {
 	}
 }
 
+// WHY: Verifies multi-line section descriptions are sanitized (escaped chars, preserved code blocks).
+// Broken sanitization would corrupt module descriptions in document-style output.
 func TestSanitizeSection(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -142,6 +146,7 @@ func TestSanitizeSection(t *testing.T) {
 	}
 }
 
+// WHY: Ensures full document output is sanitized while preserving code blocks intact.
 func TestSanitizeDocument(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -188,6 +193,8 @@ func TestSanitizeDocument(t *testing.T) {
 	}
 }
 
+// WHY: Validates Markdown table cell sanitization—pipes, newlines, and special chars must be handled
+// differently inside table cells or the table structure breaks in rendered Markdown.
 func TestSanitizeMarkdownTable(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -249,6 +256,7 @@ func TestSanitizeMarkdownTable(t *testing.T) {
 	}
 }
 
+// WHY: Parallel to Markdown table sanitization but for AsciiDoc format, which has different escaping rules.
 func TestSanitizeAsciidocTable(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -288,6 +296,8 @@ func TestSanitizeAsciidocTable(t *testing.T) {
 	}
 }
 
+// WHY: Verifies multi-line text conversion for both table and non-table contexts (newlines vs <br/> tags).
+// Wrong handling means descriptions are either unreadable in tables or have stray HTML outside tables.
 func TestConvertMultiLineText(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -416,6 +426,8 @@ func TestConvertMultiLineText(t *testing.T) {
 	}
 }
 
+// WHY: Ensures pipe and underscore characters are correctly escaped while preserving content inside
+// backtick-delimited code spans. Without this, table cells break or code examples get garbled.
 func TestEscapeCharacters(t *testing.T) {
 	tests := []struct {
 		name        string
@@ -576,6 +588,8 @@ func TestEscapeCharacters(t *testing.T) {
 	}
 }
 
+// WHY: Validates that escaped underscores inside URLs are normalized back. Without this, links in
+// generated docs would contain backslashes and be unclickable.
 func TestNormalizeURLs(t *testing.T) {
 	tests := []struct {
 		name     string

@@ -19,6 +19,7 @@ import (
 	"github.com/terraform-docs/terraform-docs/print"
 )
 
+// WHY: Golden-file test ensuring XML output matches expected fixtures.
 func TestXml(t *testing.T) {
 	tests := map[string]struct {
 		config print.Config

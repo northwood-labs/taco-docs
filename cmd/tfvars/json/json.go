@@ -17,7 +17,10 @@ import (
 	"github.com/terraform-docs/terraform-docs/print"
 )
 
-// NewCommand returns a new cobra.Command for 'tfvars json' formatter
+// NewCommand registers the "tfvars json" subcommand. JSON is an alternative
+// to HCL for providing variable values (via .tfvars.json files). This format
+// is particularly useful when variable values are programmatically generated
+// by scripts or CI pipelines that naturally produce JSON output.
 func NewCommand(runtime *cli.Runtime, config *print.Config) *cobra.Command {
 	cmd := &cobra.Command{
 		Args:        cobra.ExactArgs(1),

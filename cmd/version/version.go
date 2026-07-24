@@ -19,7 +19,12 @@ import (
 	"github.com/terraform-docs/terraform-docs/internal/version"
 )
 
-// NewCommand returns a new cobra.Command for 'version' command
+// NewCommand registers the "version" subcommand. Beyond printing the core
+// binary version, it also discovers and reports installed formatter plugins.
+// This is essential for debugging — when users report issues, knowing both the
+// core version and plugin versions helps reproduce and diagnose problems.
+// Plugin discovery errors are silently ignored here because a missing plugin
+// directory is a normal state (most users don't use plugins).
 func NewCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Args:  cobra.NoArgs,
@@ -27,6 +32,9 @@ func NewCommand() *cobra.Command {
 		Short: "Print the version number of terraform-docs",
 		Run: func(cmd *cobra.Command, args []string) {
 			fmt.Printf("terraform-docs version %s\n", version.Full())
+
+			// Attempt to list installed plugins so users see a complete picture
+			// of their terraform-docs installation in a single command.
 			plugins, err := plugin.Discover()
 			if err != nil {
 				return

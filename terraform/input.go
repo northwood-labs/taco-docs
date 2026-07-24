@@ -21,14 +21,19 @@ import (
 )
 
 // Input represents a Terraform input.
+//
+// WHY: Multiple sort strategies (name, required, type, position) exist because different
+// audiences organize documentation differently—alphabetical for quick lookup, by-required for
+// onboarding new users who need to know what they must supply, by-type for grouping related
+// variables, and by-position for matching the author's original source order.
 type Input struct {
-	Name        string       `json:"name" toml:"name" xml:"name" yaml:"name"`
-	Type        types.String `json:"type" toml:"type" xml:"type" yaml:"type"`
+	Name        string       `json:"name"        toml:"name"        xml:"name"        yaml:"name"`
+	Type        types.String `json:"type"        toml:"type"        xml:"type"        yaml:"type"`
 	Description types.String `json:"description" toml:"description" xml:"description" yaml:"description"`
-	Default     types.Value  `json:"default" toml:"default" xml:"default" yaml:"default"`
-	Required    bool         `json:"required" toml:"required" xml:"required" yaml:"required"`
-	Position    Position     `json:"-" toml:"-" xml:"-" yaml:"-"`
-	Sensitive   bool         `json:"sensitive" toml:"sensitive" xml:"sensitive" yaml:"sensitive"`
+	Default     types.Value  `json:"default"     toml:"default"     xml:"default"     yaml:"default"`
+	Required    bool         `json:"required"    toml:"required"    xml:"required"    yaml:"required"`
+	Position    Position     `json:"-"           toml:"-"           xml:"-"           yaml:"-"`
+	Sensitive   bool         `json:"sensitive"   toml:"sensitive"   xml:"sensitive"   yaml:"sensitive"`
 }
 
 // GetValue returns JSON representation of the 'Default' value, which is an 'interface'.

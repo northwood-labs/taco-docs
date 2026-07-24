@@ -16,7 +16,13 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// NewCommand returns a new cobra.Command for 'completion fish' command
+// NewCommand registers the "completion fish" subcommand. Fish shell uses its own
+// completion format and stores scripts in ~/.config/fish/completions/. The second
+// argument (true) to GenFishCompletion includes command descriptions alongside
+// completion candidates, providing richer context during tab-completion.
+//
+// Parent().Parent() is used to generate completions from the root command,
+// ensuring the full command tree is represented.
 func NewCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Args:  cobra.NoArgs,

@@ -17,7 +17,11 @@ import (
 	"github.com/terraform-docs/terraform-docs/print"
 )
 
-// NewCommand returns a new cobra.Command for 'tfvars hcl' formatter
+// NewCommand registers the "tfvars hcl" subcommand. HCL is the native format
+// for terraform.tfvars files, so this produces output that can be dropped
+// directly into a .tfvars file. The optional "description" flag includes
+// variable descriptions as inline comments, making the generated file
+// self-documenting for users who may not have the module README open.
 func NewCommand(runtime *cli.Runtime, config *print.Config) *cobra.Command {
 	cmd := &cobra.Command{
 		Args:        cobra.ExactArgs(1),

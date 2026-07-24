@@ -38,7 +38,11 @@ import (
 )
 
 // LoadWithOptions returns new instance of Module with all the inputs and
-// outputs discovered from provided 'path' containing Terraform config
+// outputs discovered from provided 'path' containing Terraform config.
+//
+// WHY: This is the single entry point that orchestrates the full pipeline: parse → enrich → sort.
+// Keeping it as a thin orchestrator makes the loading logic testable in isolation (each load*
+// function) while giving callers a simple one-call API.
 func LoadWithOptions(config *print.Config) (*Module, error) {
 	tfmodule, err := loadModule(config.ModuleRoot)
 	if err != nil {
@@ -53,6 +57,10 @@ func LoadWithOptions(config *print.Config) (*Module, error) {
 	return module, nil
 }
 
+// WHY: loadModule wraps terraform-config-inspect and filters out known-benign diagnostics.
+// OpenTofu supports for_each on provider blocks, which terraform-config-inspect doesn't understand
+// and reports as "Invalid provider reference". Filtering these prevents false-negative failures
+// when documenting OpenTofu modules.
 func loadModule(path string) (*tfconfig.Module, error) {
 	module, diag := tfconfig.LoadModule(path)
 	if diag != nil && diag.HasErrors() {
@@ -75,6 +83,11 @@ func loadModule(path string) (*tfconfig.Module, error) {
 	return module, nil
 }
 
+// WHY: fixOpenTofuProviders is a workaround for OpenTofu's for_each in provider blocks.
+// terraform-config-inspect leaves Provider.Name empty for resources using for_each-iterated
+// providers because it doesn't parse that syntax. We re-read the HCL to find the actual
+// provider reference from the resource's "provider" attribute, restoring correct provider
+// attribution so loadProviders can group resources under the right provider.
 func fixOpenTofuProviders(module *tfconfig.Module) error {
 	resources := []map[string]*tfconfig.Resource{module.ManagedResources, module.DataResources}
 	parser := hclparse.NewParser()
@@ -105,6 +118,8 @@ func fixOpenTofuProviders(module *tfconfig.Module) error {
 	return nil
 }
 
+// WHY: Caching parsed files avoids redundant I/O and parsing when multiple resources in the
+// same file need provider fixup.
 func getParsedFile(parser *hclparse.Parser, filename string, files map[string]*hcl.File) (*hcl.File, error) {
 	if f, ok := files[filename]; ok {
 		return f, nil
@@ -118,6 +133,10 @@ func getParsedFile(parser *hclparse.Parser, filename string, files map[string]*h
 	return f, nil
 }
 
+// WHY: findProviderInFile locates the "provider" attribute in the HCL block starting at the
+// given line and extracts the provider name and optional alias from the expression traversal.
+// This handles both simple references (provider = aws) and indexed references from for_each
+// (provider = aws["key"]) by unwrapping IndexExpr before reading the traversal.
 func findProviderInFile(f *hcl.File, line int) (string, string, bool) {
 	for _, b := range f.Body.(*hclsyntax.Body).Blocks {
 		if b.DefRange().Start.Line != line {
@@ -149,6 +168,9 @@ func findProviderInFile(f *hcl.File, line int) (string, string, bool) {
 	return "", "", false
 }
 
+// WHY: loadModuleItems assembles all sub-loaders into a single Module struct. This function
+// exists to keep LoadWithOptions focused on orchestration (load → sort) while isolating the
+// assembly of individual sections into a testable unit.
 func loadModuleItems(tfmodule *tfconfig.Module, config *print.Config) (*Module, error) {
 	header, err := loadHeader(config)
 	if err != nil {
@@ -281,75 +303,8 @@ func createTempFile(config *print.Config, url string, content string) (string, e
 	return filename, nil
 }
 
-func getSource(filename string) string {
-	// Default source is local
-	source := "local"
-
-	// Identify another source different from the local for the filename
-	if strings.HasPrefix(filename, "http") || strings.HasPrefix(filename, "https") ||
-		strings.HasPrefix(filename, "s3") {
-		source = "web"
-	}
-
-	return source
-}
-
-func sendHTTPRequest(url string) (string, error) {
-	// Creation of context
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	// Send GET request
-	req, err := http.NewRequestWithContext(ctx, "GET", url, nil) // #nosec G107
-	if err != nil {
-		fmt.Println("Error:", err)
-		return "", err
-	}
-
-	client := http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		fmt.Println("Error:", err)
-		return "", err
-	}
-
-	defer func() {
-		errDefer := resp.Body.Close()
-		if errDefer != nil {
-			fmt.Println("Error closing response body:", errDefer)
-		}
-	}()
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		fmt.Println("Error:", err)
-		return "", err
-	}
-
-	return string(body), nil
-}
-
-func createTempFile(config *print.Config, url string, content string) (string, error) {
-	// Creation of context
-	fileFormat := getFileFormat(url)
-	tempFile, err := os.CreateTemp("", "temp-*"+fileFormat) // Pattern with temp-*.* extension
-	if err != nil {
-		fmt.Println("Error creating temporary file:", err)
-		return "", err
-	}
-
-	// overrride file name, otherwise it will use the URL and not the temp file created
-	filename := filepath.Join("/", config.ModuleRoot, tempFile.Name())
-
-	// Write the content to the temporary file
-	if _, err := tempFile.WriteString(content); err != nil {
-		fmt.Println("Error writing to temporary file:", err)
-		return "", err
-	}
-
-	return filename, nil
-}
-
+// WHY: loadHeader is a thin wrapper that short-circuits when the header section is disabled,
+// avoiding unnecessary file I/O for users who don't want a header in their docs.
 func loadHeader(config *print.Config) (string, error) {
 	if !config.Sections.Header {
 		return "", nil
@@ -357,6 +312,8 @@ func loadHeader(config *print.Config) (string, error) {
 	return loadSection(config, config.HeaderFrom, "header")
 }
 
+// WHY: loadFooter mirrors loadHeader for the footer section, keeping the enable/disable logic
+// co-located with the section it controls.
 func loadFooter(config *print.Config) (string, error) {
 	if !config.Sections.Footer {
 		return "", nil
@@ -364,6 +321,10 @@ func loadFooter(config *print.Config) (string, error) {
 	return loadSection(config, config.FooterFrom, "footer")
 }
 
+// WHY: loadSection reads header/footer content from either a .tf/.tofu file (extracting the
+// leading block comment) or a standalone .md/.adoc/.txt file. Supporting multiple formats and
+// remote URLs gives module authors flexibility in where they maintain their documentation prose
+// without coupling to a single convention.
 func loadSection(config *print.Config, file string, section string) (string, error) { //nolint:gocyclo
 	// NOTE(khos2ow): this function is over our cyclomatic complexity goal.
 	// Be wary when adding branches, and look for functionality that could
@@ -444,6 +405,11 @@ func loadSection(config *print.Config, file string, section string) (string, err
 	return strings.Join(sectionText, "\n"), nil
 }
 
+// WHY: loadInputs converts terraform-config-inspect's raw Variable structs into our enriched
+// Input model. Key enrichments: (1) reading comments above the declaration as a fallback
+// description when the variable lacks an explicit description attribute (controlled by
+// readComments), (2) normalizing CRLF to LF for cross-platform consistency, and (3)
+// pre-partitioning into required/optional slices for downstream template convenience.
 func loadInputs(tfmodule *tfconfig.Module, config *print.Config) ([]*Input, []*Input, []*Input) {
 	inputs := make([]*Input, 0, len(tfmodule.Variables))
 	required := make([]*Input, 0, len(tfmodule.Variables))
@@ -488,6 +454,9 @@ func loadInputs(tfmodule *tfconfig.Module, config *print.Config) ([]*Input, []*I
 	return inputs, required, optional
 }
 
+// WHY: formatSource separates an inline "?ref=" version suffix from a module source URL.
+// Many git-sourced modules embed the version in the source string rather than using a separate
+// "version" field, so we extract it to populate Version consistently across all module call types.
 func formatSource(s, v string) (source, version string) {
 	substr := "?ref="
 
@@ -544,6 +513,10 @@ func loadModulecalls(tfmodule *tfconfig.Module, config *print.Config) []*ModuleC
 	return modules
 }
 
+// WHY: loadOutputs enriches raw output declarations with optional actual values from
+// `terraform output -json`. When --output-values is active, it merges the runtime state
+// (value + sensitivity) into the documentation model so users can see what a deployed module
+// actually exports—useful for internal wikis or post-apply documentation.
 func loadOutputs(tfmodule *tfconfig.Module, config *print.Config) ([]*Output, error) {
 	outputs := make([]*Output, 0, len(tfmodule.Outputs))
 	values := make(map[string]*output)
@@ -615,6 +588,11 @@ func loadOutputValues(config *print.Config) (map[string]*output, error) {
 	return terraformOutputs, err
 }
 
+// WHY: loadProviders discovers providers from actual resource usage rather than only from
+// required_providers. This ensures documentation reflects runtime dependencies even when the
+// author forgot to declare a provider in required_providers. It also merges version info from
+// .terraform.lock.hcl (if --lock-file is set) to show the exact installed version, giving
+// readers a more accurate picture than just the constraint string.
 func loadProviders(tfmodule *tfconfig.Module, config *print.Config) []*Provider { //nolint:gocyclo
 	// NOTE(khos2ow): this function is over our cyclomatic complexity goal.
 	// Be wary when adding branches, and look for functionality that could
@@ -699,6 +677,11 @@ func loadProviders(tfmodule *tfconfig.Module, config *print.Config) []*Provider 
 	return providers
 }
 
+// WHY: loadProviderFunctions walks the HCL AST of every .tf file to find "provider::name::func"
+// function call expressions. These are a newer Terraform/OpenTofu feature not tracked by
+// terraform-config-inspect, so we must perform our own AST traversal. Discovering them lets us
+// document which provider-supplied functions a module relies on—information otherwise invisible
+// in standard module interfaces.
 func loadProviderFunctions(tfmodule *tfconfig.Module, config *print.Config) []*ProviderFunction {
 	providerVersions := make(map[string]string)
 	providerSources := make(map[string]string)
@@ -834,14 +817,13 @@ func collectProviderFunctionsFromExpr(
 		if t.KeyExpr != nil {
 			collectProviderFunctionsFromExpr(t.KeyExpr, filename, discovered, versions, sources)
 		}
-		if t.ValueExpr != nil {
-			collectProviderFunctionsFromExpr(t.ValueExpr, filename, discovered, versions, sources)
+		if t.ValExpr != nil {
+			collectProviderFunctionsFromExpr(t.ValExpr, filename, discovered, versions, sources)
 		}
 		collectProviderFunctionsFromExpr(t.CollExpr, filename, discovered, versions, sources)
 		if t.CondExpr != nil {
 			collectProviderFunctionsFromExpr(t.CondExpr, filename, discovered, versions, sources)
 		}
-		collectProviderFunctionsFromExpr(t.ValExpr, filename, discovered, versions, sources)
 	case *hclsyntax.SplatExpr:
 		collectProviderFunctionsFromExpr(t.Source, filename, discovered, versions, sources)
 		if t.Each != nil {
@@ -898,6 +880,10 @@ func loadRequirements(tfmodule *tfconfig.Module) []*Requirement {
 	return requirements
 }
 
+// WHY: loadResources deduplicates resources by a composite key (provider.mode.type.name) because
+// the same resource declaration appears in both ManagedResources and DataResources maps from
+// terraform-config-inspect. Using a map with a stable key prevents duplicate entries in docs
+// while building registry URLs for direct documentation links.
 func loadResources(tfmodule *tfconfig.Module, config *print.Config) []*Resource {
 	allResources := []map[string]*tfconfig.Resource{tfmodule.ManagedResources, tfmodule.DataResources}
 	discovered := make(map[string]*Resource)
@@ -960,6 +946,10 @@ func loadResources(tfmodule *tfconfig.Module, config *print.Config) []*Resource 
 	return resources
 }
 
+// WHY: resourceVersion normalizes the raw version constraint strings into a single version
+// suitable for registry URL construction. It uses the last constraint (most specific) and
+// strips operators to extract a bare version number. Falls back to "latest" when the constraint
+// is too complex or absent, ensuring registry links still resolve to something useful.
 func resourceVersion(constraints []string) string {
 	if len(constraints) == 0 {
 		return "latest"
@@ -982,6 +972,10 @@ func resourceVersion(constraints []string) string {
 	return "latest"
 }
 
+// WHY: loadComments extracts the contiguous block of # or // comments immediately above a
+// declaration. These comments serve as fallback descriptions when the variable/output/resource
+// lacks an explicit "description" attribute—a pattern many module authors use for brevity.
+// Errors are absorbed (returning "") because a missing comment should never break doc generation.
 func loadComments(filename string, lineNum int) string {
 	lines := reader.Lines{
 		FileName: filename,
@@ -1004,6 +998,10 @@ func loadComments(filename string, lineNum int) string {
 	return strings.Join(comment, " ")
 }
 
+// WHY: sortItems applies the user's configured sort preferences to every collection type
+// in the module. Sorting is deferred to this final step (after all loading is complete) so that
+// load functions can append items in discovery order without worrying about ordering, and the
+// sort strategy can be changed without touching any loader logic.
 func sortItems(tfmodule *Module, config *print.Config) {
 	// inputs
 	inputs(tfmodule.Inputs).sort(config.Sort.Enabled, config.Sort.By)

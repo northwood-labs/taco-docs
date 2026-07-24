@@ -30,8 +30,10 @@ type Item struct {
 	TrimSpace bool
 }
 
-// Template represents a new Template with given name and content to be rendered
-// with provided settings with use of built-in and custom functions.
+// Template wraps Go's text/template with terraform-docs-specific concerns:
+// section rendering, config-aware functions, and custom function registration.
+// This abstraction lets formatters focus on defining template text without
+// worrying about function wiring or template composition.
 type Template struct {
 	items  []*Item
 	config *print.Config
@@ -55,8 +57,9 @@ func (t *Template) Funcs() gotemplate.FuncMap {
 	return t.funcMap
 }
 
-// CustomFunc adds new custom functions to the template if functions with the same
-// names didn't exist.
+// CustomFunc allows formatters to add format-specific functions without
+// modifying the base template engine. Functions are only added if they don't
+// already exist, preventing accidental overrides of built-in functions.
 func (t *Template) CustomFunc(funcs gotemplate.FuncMap) {
 	for name, fn := range funcs {
 		if _, found := t.customFunc[name]; !found {
@@ -75,7 +78,8 @@ func (t *Template) applyCustomFunc() {
 	}
 }
 
-// Render template with given Module struct.
+// Render is the high-level convenience method for rendering a terraform.Module.
+// It wraps Module and Config into the standard data structure that templates expect.
 func (t *Template) Render(name string, module *terraform.Module) (string, error) {
 	data := struct {
 		Config *print.Config
@@ -87,8 +91,9 @@ func (t *Template) Render(name string, module *terraform.Module) (string, error)
 	return t.RenderContent(name, data)
 }
 
-// RenderContent template with given data. It can contain anything but most
-// probably it will only contain terraform.Module and print.generator.
+// RenderContent is the low-level rendering method for arbitrary data. Used by
+// generator.Render for content templates where the data isn't necessarily a
+// terraform.Module (e.g., custom content templates with mixed data).
 func (t *Template) RenderContent(name string, data interface{}) (string, error) {
 	if len(t.items) < 1 {
 		return "", fmt.Errorf("base template not found")
@@ -133,6 +138,10 @@ func (t *Template) findByName(name string) *Item {
 	return nil
 }
 
+// builtinFuncs provides the standard function library available in all templates.
+// It includes sprig for rich text processing (date formatting, string manipulation,
+// etc.) as a fallback, while terraform-docs-specific functions take priority to
+// ensure correct behavior for documentation generation.
 func builtinFuncs(config *print.Config) gotemplate.FuncMap { // nolint:gocyclo
 	fns := gotemplate.FuncMap{
 		"default": func(_default string, value string) string {
@@ -230,9 +239,10 @@ func builtinFuncs(config *print.Config) gotemplate.FuncMap { // nolint:gocyclo
 	return fns
 }
 
-// normalize the template and remove any space from all the lines. This makes
-// it possible to have a indented, human-readable template which doesn't affect
-// the rendering of them.
+// normalize strips leading whitespace from template lines so that indented Go
+// source templates don't produce indented output. This makes it possible to
+// write human-readable, well-indented template definitions in .go files without
+// that indentation leaking into the generated documentation.
 func normalize(s string, trimSpace bool) string {
 	if !trimSpace {
 		return s
@@ -244,9 +254,10 @@ func normalize(s string, trimSpace bool) string {
 	return strings.Join(split, "\n")
 }
 
-// GenerateIndentation generates indentation of Markdown and AsciiDoc headers
-// with base level of provided 'settings.IndentLevel' plus any extra level needed
-// for subsection (e.g. 'Required Inputs' which is a subsection of 'Inputs' section)
+// GenerateIndentation generates parameterized heading depth so users can embed
+// generated docs at any nesting level in their documents. For example, if docs
+// are placed under a "## Terraform" section, indent=3 makes inputs/outputs
+// render as "###" headings, maintaining proper document hierarchy.
 func GenerateIndentation(base int, extra int, char string) string {
 	if char == "" {
 		return ""

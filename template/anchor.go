@@ -14,7 +14,10 @@ import (
 	"fmt"
 )
 
-// CreateAnchorMarkdown creates HTML anchor for Markdown format.
+// CreateAnchorMarkdown generates both an <a> anchor tag and a clickable link so
+// that inputs/outputs can be cross-referenced from elsewhere in a document.
+// The dual approach (anchor + link) ensures the item is both a jump target and
+// itself clickable for navigation.
 func CreateAnchorMarkdown(prefix string, value string, anchor bool, escape bool) string {
 	sanitizedName := SanitizeName(value, escape)
 
@@ -28,7 +31,9 @@ func CreateAnchorMarkdown(prefix string, value string, anchor bool, escape bool)
 	return sanitizedName
 }
 
-// CreateAnchorAsciidoc creates HTML anchor for AsciiDoc format.
+// CreateAnchorAsciidoc is the AsciiDoc equivalent using [[id]] and <<id,label>>
+// syntax. AsciiDoc uses different anchor/xref conventions than Markdown, so a
+// separate function keeps format-specific concerns isolated.
 func CreateAnchorAsciidoc(prefix string, value string, anchor bool, escape bool) string {
 	sanitizedName := SanitizeName(value, escape)
 

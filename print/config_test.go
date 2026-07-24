@@ -19,6 +19,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// WHY: Validates mutual exclusivity and valid section names for --show/--hide flags. Without this,
+// users could pass conflicting options and get undefined behavior or silent misconfiguration.
 func TestConfigSections(t *testing.T) {
 	tests := map[string]struct {
 		sections sections
@@ -82,6 +84,8 @@ func TestConfigSections(t *testing.T) {
 	}
 }
 
+// WHY: Verifies section visibility logic (show/hide/all combinations). Incorrect visibility means
+// sections silently appear or disappear from output without user intent.
 func TestConfigVisibility(t *testing.T) {
 	tests := []struct {
 		sections sections
@@ -153,6 +157,8 @@ func TestConfigVisibility(t *testing.T) {
 	}
 }
 
+// WHY: Validates --output-mode and --output-template options including inject template structure
+// (begin/end comments, {{ .Content }} presence). Malformed templates would silently corrupt output files.
 func TestConfigOutput(t *testing.T) {
 	tests := map[string]struct {
 		output  output
@@ -294,6 +300,8 @@ func TestConfigOutput(t *testing.T) {
 	}
 }
 
+// WHY: Verifies that all supported Markdown comment formats (HTML, []: #, [//]: #, etc.) are
+// recognized as inline comments. These markers drive inject-mode begin/end detection.
 func TestIsInlineComment(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -472,6 +480,7 @@ func TestIsInlineComment(t *testing.T) {
 	}
 }
 
+// WHY: Validates sort type options (name, required, type). Invalid sort type must error, not silently default.
 func TestConfigSort(t *testing.T) {
 	tests := map[string]struct {
 		sort    sort
@@ -524,6 +533,8 @@ func TestConfigSort(t *testing.T) {
 	}
 }
 
+// WHY: Validates --output-values and --output-values-from options. A missing "from" path when enabled
+// must error early rather than failing mid-generation.
 func TestConfigOutputvalues(t *testing.T) {
 	tests := map[string]struct {
 		outputvalues outputvalues
@@ -570,6 +581,8 @@ func TestConfigOutputvalues(t *testing.T) {
 	}
 }
 
+// WHY: Guards the complete Config.Validate() logic—ensures all required fields and cross-field
+// constraints are checked before execution begins. Early validation prevents confusing runtime errors.
 func TestConfigValidate(t *testing.T) {
 	tests := map[string]struct {
 		config  func(c *Config)
@@ -640,10 +653,16 @@ func TestConfigValidate(t *testing.T) {
 	}
 }
 
+// WHY: Ensures config file discovery and parsing works. Users rely on .terraform-docs.yml being
+// automatically found and loaded from the module directory.
 func TestReadConfig(t *testing.T) {
 	dir := t.TempDir()
 
-	err := os.WriteFile(filepath.Join(dir, ".terraform-docs.yml"), []byte("formatter: markdown table\nsort:\n  enabled: true\n  by: name\n"), 0644)
+	err := os.WriteFile(
+		filepath.Join(dir, ".terraform-docs.yml"),
+		[]byte("formatter: markdown table\nsort:\n  enabled: true\n  by: name\n"),
+		0o644,
+	)
 	if err != nil {
 		t.Fatal(err)
 	}

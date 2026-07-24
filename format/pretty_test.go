@@ -19,6 +19,7 @@ import (
 	"github.com/terraform-docs/terraform-docs/print"
 )
 
+// WHY: Golden-file test ensuring pretty-print (human-readable, colored) output matches fixtures.
 func TestPretty(t *testing.T) {
 	tests := map[string]struct {
 		config print.Config

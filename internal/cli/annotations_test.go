@@ -16,6 +16,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// WHY: Verifies cobra command annotations are correctly constructed. These annotations are used by
+// the CLI framework to identify formatter subcommands and their associated command strings.
 func TestCommandAnnotations(t *testing.T) {
 	tests := []struct {
 		name    string

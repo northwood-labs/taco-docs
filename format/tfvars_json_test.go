@@ -17,6 +17,7 @@ import (
 	"github.com/terraform-docs/terraform-docs/print"
 )
 
+// WHY: Golden-file test ensuring tfvars JSON output matches expected fixtures.
 func TestTfvarsJson(t *testing.T) {
 	tests := map[string]struct {
 		config print.Config

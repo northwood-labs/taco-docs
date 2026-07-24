@@ -17,7 +17,10 @@ import (
 	"github.com/terraform-docs/terraform-docs/print"
 )
 
-// NewCommand returns a new cobra.Command for 'asciidoc document' formatter
+// NewCommand registers the "asciidoc document" subcommand. The document format
+// renders each input/output as a dedicated subsection rather than a table row.
+// This is better suited for modules with verbose descriptions or complex nested
+// default values that would overflow a table cell in AsciiDoc.
 func NewCommand(runtime *cli.Runtime, config *print.Config) *cobra.Command {
 	cmd := &cobra.Command{
 		Args:        cobra.ExactArgs(1),

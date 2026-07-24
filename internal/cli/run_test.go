@@ -21,11 +21,13 @@ import (
 	"github.com/terraform-docs/terraform-docs/print"
 )
 
+// WHY: Ensures config file lookup works with absolute paths. If broken, users specifying --config with
+// a full path would silently fall back to defaults, producing unexpected output.
 func TestReadConfigAbsolutePath(t *testing.T) {
 	dir := t.TempDir()
 	configFile := filepath.Join(dir, ".terraform-docs.yml")
 
-	err := os.WriteFile(configFile, []byte("formatter: markdown table\n"), 0644)
+	err := os.WriteFile(configFile, []byte("formatter: markdown table\n"), 0o644)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -68,6 +70,8 @@ func TestReadConfigAbsolutePath(t *testing.T) {
 	}
 }
 
+// WHY: Ensures version constraints in config files are enforced. Without this, users running an old
+// terraform-docs version against a newer config would get silent misbehavior instead of a clear error.
 func TestVersionConstraint(t *testing.T) {
 	type tuple struct {
 		constraint string

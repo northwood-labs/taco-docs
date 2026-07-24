@@ -16,6 +16,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// WHY: Validates that empty strings are detected and rendered as "" (quoted empty) in docs rather than null.
 func TestEmpty(t *testing.T) {
 	values := List{""}
 	testPrimitive(t, []testprimitive{
@@ -42,6 +43,7 @@ func TestEmpty(t *testing.T) {
 	})
 }
 
+// WHY: Empty strings are scalar—Length must be 0.
 func TestEmptyLength(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -62,6 +64,7 @@ func TestEmptyLength(t *testing.T) {
 	}
 }
 
+// WHY: Confirms the underlying Go value for Empty type.
 func TestEmptyUnderlying(t *testing.T) {
 	tests := []struct {
 		name  string
@@ -80,6 +83,7 @@ func TestEmptyUnderlying(t *testing.T) {
 	}
 }
 
+// WHY: Ensures Empty marshals to "" in JSON output, not null or the underlying value.
 func TestEmptyMarshalJSON(t *testing.T) {
 	tests := []struct {
 		name     string

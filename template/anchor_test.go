@@ -16,6 +16,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// WHY: Validates Markdown anchor generation with/without escape and anchor flags. Broken anchors
+// mean in-page links don't work in rendered docs, breaking navigation for large modules.
 func TestAnchorMarkdown(t *testing.T) {
 	tests := []struct {
 		typeSection string
@@ -64,6 +66,7 @@ func TestAnchorMarkdown(t *testing.T) {
 	}
 }
 
+// WHY: Same as Markdown anchors but for AsciiDoc's [[id]] <<id,label>> syntax.
 func TestAnchorAsciidoc(t *testing.T) {
 	tests := []struct {
 		typeSection string

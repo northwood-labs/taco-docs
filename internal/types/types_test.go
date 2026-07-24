@@ -44,6 +44,8 @@ type testmap struct {
 	expected expected
 }
 
+// WHY: Verifies the type system's core ValueOf/TypeOf dispatch logic for primitive values. This is the
+// foundation for rendering input defaults—incorrect type detection cascades into wrong output everywhere.
 func testPrimitive(t *testing.T, tests []testprimitive) {
 	for i := range tests {
 		tt := tests[i]

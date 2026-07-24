@@ -25,6 +25,8 @@ import (
 	"github.com/terraform-docs/terraform-docs/terraform"
 )
 
+// WHY: Verifies template rendering with custom functions and module data. This tests the core
+// template engine that powers the --content flag for custom output formatting.
 func TestTemplateRender(t *testing.T) {
 	sectionTpl := `
 	{{- with .Module.Header -}}
@@ -82,6 +84,8 @@ func TestTemplateRender(t *testing.T) {
 	}
 }
 
+// WHY: Validates all built-in template functions (default, trim, name, sanitize*, indent) work correctly.
+// These functions are available in user-facing content templates; broken behavior means corrupt output.
 func TestBuiltinFunc(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -350,7 +354,9 @@ func TestBuiltinFunc(t *testing.T) {
 		{
 			name:     "template builtin functions sanitizeSection",
 			funcName: "sanitizeSection",
-			funcArgs: []string{"\"Example of 'foo_bar' module in `foo_bar.tf`.\n\n| Foo | Bar |\n| --- | --- |\n| foo | bar |\""},
+			funcArgs: []string{
+				"\"Example of 'foo_bar' module in `foo_bar.tf`.\n\n| Foo | Bar |\n| --- | --- |\n| foo | bar |\"",
+			},
 			escape:   true,
 			expected: "Example of 'foo\\_bar' module in `foo_bar.tf`.\n\n| Foo | Bar |\n| --- | --- |\n| foo | bar |",
 		},
@@ -427,7 +433,13 @@ func TestBuiltinFunc(t *testing.T) {
 
 			v := reflect.ValueOf(fn)
 			tp := v.Type()
-			assert.Equalf(len(tt.funcArgs), tp.NumIn(), "invalid number of arguments. got: %v, want: %v", len(tt.funcArgs), tp.NumIn())
+			assert.Equalf(
+				len(tt.funcArgs),
+				tp.NumIn(),
+				"invalid number of arguments. got: %v, want: %v",
+				len(tt.funcArgs),
+				tp.NumIn(),
+			)
 
 			argv := make([]reflect.Value, len(tt.funcArgs))
 
@@ -462,6 +474,8 @@ func TestBuiltinFunc(t *testing.T) {
 	}
 }
 
+// WHY: Verifies heading indentation calculation respects base level and extra depth. Incorrect
+// indentation means generated headings don't nest properly in the document hierarchy.
 func TestGenerateIndentation(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -509,6 +523,8 @@ func TestGenerateIndentation(t *testing.T) {
 	}
 }
 
+// WHY: Validates text normalization (leading whitespace trimming). Used to clean up template output
+// before writing to file.
 func TestNormalize(t *testing.T) {
 	tests := []struct {
 		name     string

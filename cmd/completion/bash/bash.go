@@ -16,7 +16,14 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// NewCommand returns a new cobra.Command for 'completion bash' command
+// NewCommand registers the "completion bash" subcommand. It leverages cobra's
+// built-in bash completion generator which produces a script that integrates
+// with bash-completion. The script is written to stdout so users can redirect
+// it to a file or source it directly in their shell session.
+//
+// We navigate to the root command via Parent().Parent() because the completion
+// script needs the full command tree to generate completions for all subcommands
+// and flags — generating from a leaf command would only produce partial output.
 func NewCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Args:  cobra.NoArgs,

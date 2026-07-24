@@ -19,6 +19,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// WHY: Validates map type detection from various nested structures (flat maps, nested maps, mixed).
 func TestMap(t *testing.T) {
 	values := []Map{
 		{
@@ -78,6 +79,7 @@ func TestMap(t *testing.T) {
 	}
 }
 
+// WHY: Map.Length() returns key count, used to decide rendering strategy.
 func TestMapLength(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -123,6 +125,7 @@ func TestMapLength(t *testing.T) {
 	}
 }
 
+// WHY: Confirms the underlying map[string]interface{} value is accessible.
 func TestMapUnderlying(t *testing.T) {
 	tests := []struct {
 		name  string
@@ -164,6 +167,7 @@ func TestMapUnderlying(t *testing.T) {
 	}
 }
 
+// WHY: Ensures maps serialize to XML with key-named elements and proper nesting. Required for valid xml output.
 func TestMapMarshalXML(t *testing.T) {
 	tests := []struct {
 		name     string

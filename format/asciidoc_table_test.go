@@ -19,6 +19,8 @@ import (
 	"github.com/terraform-docs/terraform-docs/print"
 )
 
+// WHY: Golden-file test ensuring AsciiDoc table output matches expected fixtures. Table format
+// has special cell escaping rules that differ from document format.
 func TestAsciidocTable(t *testing.T) {
 	tests := map[string]struct {
 		config print.Config

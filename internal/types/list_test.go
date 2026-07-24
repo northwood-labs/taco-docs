@@ -19,6 +19,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// WHY: Validates list type detection from various element types (strings, bools, numbers).
 func TestList(t *testing.T) {
 	values := []List{
 		{"foo", "bar", "baz"},
@@ -64,6 +65,7 @@ func TestList(t *testing.T) {
 	}
 }
 
+// WHY: Ensures List.Length() returns element count, used to decide between inline vs block rendering.
 func TestListLength(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -104,6 +106,7 @@ func TestListLength(t *testing.T) {
 	}
 }
 
+// WHY: Confirms the underlying []interface{} value is accessible for serialization.
 func TestListUnderlying(t *testing.T) {
 	tests := []struct {
 		name  string
@@ -134,6 +137,8 @@ func TestListUnderlying(t *testing.T) {
 	}
 }
 
+// WHY: Ensures lists serialize to XML with <item> wrapper elements. Broken serialization means
+// invalid XML in the xml output format.
 func TestListMarshalXML(t *testing.T) {
 	tests := []struct {
 		name     string

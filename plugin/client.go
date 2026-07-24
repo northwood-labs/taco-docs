@@ -22,7 +22,8 @@ import (
 	"github.com/terraform-docs/terraform-docs/terraform"
 )
 
-// Client is an RPC Client for the host.
+// Client wraps RPC calls behind a simple Go interface so host code doesn't
+// have to deal with raw RPC method strings or serialization details.
 type Client struct {
 	rpcClient *rpc.Client
 	broker    *goplugin.MuxBroker
@@ -33,14 +34,18 @@ type ClientOpts struct {
 	Cmd *exec.Cmd
 }
 
-// ExecuteArgs is the collection of arguments being sent by terraform-docs
-// core while executing the plugin command.
+// ExecuteArgs bundles the data the host sends to plugins for generation.
+// Keeping it in a single struct simplifies the RPC contract—one argument, one
+// response—and makes the protocol easy to extend without breaking existing plugins.
 type ExecuteArgs struct {
 	Module *terraform.Module
 	Config *print.Config
 }
 
-// NewClient is a wrapper of plugin.NewClient.
+// NewClient configures hclog to write to stderr so plugin diagnostic logs
+// don't contaminate the generated documentation output on stdout. Log level is
+// controlled via the TFDOCS_LOG environment variable to support debugging
+// without code changes.
 func NewClient(opts *ClientOpts) *goplugin.Client {
 	return goplugin.NewClient(&goplugin.ClientConfig{
 		HandshakeConfig: handshakeConfig,

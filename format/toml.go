@@ -21,6 +21,11 @@ import (
 )
 
 // toml represents TOML format.
+//
+// WHY: TOML is the native configuration language for tools like
+// Cargo, Hugo, and pyproject.toml-based Python workflows. Providing
+// TOML output lets these ecosystems ingest module metadata directly
+// without format conversion.
 type toml struct {
 	*generator
 
@@ -28,6 +33,9 @@ type toml struct {
 }
 
 // NewTOML returns new instance of TOML.
+//
+// WHY: canRender is false because the TOML encoder controls
+// document structure; custom templates can't reorder it.
 func NewTOML(config *print.Config) Type {
 	return &toml{
 		generator: newGenerator(config, false),
@@ -49,7 +57,6 @@ func (t *toml) Generate(module *terraform.Module) error {
 	t.funcs(withContent(strings.TrimSuffix(buffer.String(), "\n")))
 
 	return nil
-
 }
 
 func init() {

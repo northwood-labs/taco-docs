@@ -16,6 +16,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// WHY: Validates the 'contains' helper used internally for section filtering.
 func TestSliceContains(t *testing.T) {
 	list := []string{"foo", "bar", "buzz"}
 	tests := []struct {
@@ -53,6 +54,7 @@ func TestSliceContains(t *testing.T) {
 	}
 }
 
+// WHY: Validates the 'index' helper used to locate items in section lists.
 func TestSliceIndex(t *testing.T) {
 	list := []string{"foo", "bar", "buzz"}
 	tests := []struct {
@@ -90,6 +92,8 @@ func TestSliceIndex(t *testing.T) {
 	}
 }
 
+// WHY: Validates the 'remove' helper used to exclude sections from output. A bug here could leave
+// unwanted sections in the output or panic on missing items.
 func TestSliceRemove(t *testing.T) {
 	list := []string{"foo", "bar", "buzz"}
 	tests := []struct {

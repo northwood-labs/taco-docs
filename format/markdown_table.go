@@ -23,6 +23,12 @@ import (
 var markdownTableFS embed.FS
 
 // markdownTable represents Markdown Table format.
+//
+// WHY: This is the most popular output format because GitHub, GitLab,
+// and Bitbucket all render Markdown tables natively in README files.
+// The compact tabular layout fits modules with many variables while
+// remaining scannable without scrolling through verbose per-variable
+// subsections.
 type markdownTable struct {
 	*generator
 
@@ -36,12 +42,15 @@ func NewMarkdownTable(config *print.Config) Type {
 
 	tt := template.New(config, items...)
 	tt.CustomFunc(gotemplate.FuncMap{
+		// WHY: Types and values must be rendered as inline code so they
+		// don't break table cell alignment or get interpreted as Markdown
+		// formatting (e.g. a type containing `*` would become italic).
 		"type": func(t string) string {
 			inputType, _ := PrintFencedCodeBlock(t, "")
 			return inputType
 		},
 		"value": func(v string) string {
-			var result = "n/a"
+			result := "n/a"
 			if v != "" {
 				result, _ = PrintFencedCodeBlock(v, "")
 			}
@@ -57,6 +66,10 @@ func NewMarkdownTable(config *print.Config) Type {
 }
 
 // Generate a Terraform module as Markdown tables.
+//
+// WHY: forEach renders each section independently so that users with
+// custom content templates can reference individual sections (e.g.
+// {{ .Inputs }}) and reorder them freely.
 func (t *markdownTable) Generate(module *terraform.Module) error {
 	err := t.forEach(func(name string) (string, error) {
 		rendered, err := t.template.Render(name, module)
@@ -71,6 +84,9 @@ func (t *markdownTable) Generate(module *terraform.Module) error {
 	return err
 }
 
+// WHY: Multiple aliases ("markdown", "md", "md table", etc.) are registered
+// because this is the default and most common format. Users expect short
+// names to work, and older tutorials reference different variants.
 func init() {
 	register(map[string]initializerFn{
 		"markdown":       NewMarkdownTable,

@@ -15,24 +15,34 @@ import (
 )
 
 // Module represents a Terraform module. It consists of
+//
+// WHY: Module is the central domain object that every output formatter (markdown, asciidoc, JSON,
+// TOML, XML, YAML) consumes. By aggregating all extracted information into one struct, formatters
+// stay decoupled from the loading/parsing logic and can focus purely on presentation.
 type Module struct {
 	XMLName xml.Name `json:"-" toml:"-" xml:"module" yaml:"-"`
 
-	Header       string         `json:"header" toml:"header" xml:"header" yaml:"header"`
-	Footer       string         `json:"footer" toml:"footer" xml:"footer" yaml:"footer"`
-	Inputs       []*Input       `json:"inputs" toml:"inputs" xml:"inputs>input" yaml:"inputs"`
-	ModuleCalls  []*ModuleCall  `json:"modules" toml:"modules" xml:"modules>module" yaml:"modules"`
-	Outputs         []*Output         `json:"outputs" toml:"outputs" xml:"outputs>output" yaml:"outputs"`
-	Providers       []*Provider       `json:"providers" toml:"providers" xml:"providers>provider" yaml:"providers"`
+	Header            string              `json:"header"             toml:"header"             xml:"header"                               yaml:"header"`
+	Footer            string              `json:"footer"             toml:"footer"             xml:"footer"                               yaml:"footer"`
+	Inputs            []*Input            `json:"inputs"             toml:"inputs"             xml:"inputs>input"                         yaml:"inputs"`
+	ModuleCalls       []*ModuleCall       `json:"modules"            toml:"modules"            xml:"modules>module"                       yaml:"modules"`
+	Outputs           []*Output           `json:"outputs"            toml:"outputs"            xml:"outputs>output"                       yaml:"outputs"`
+	Providers         []*Provider         `json:"providers"          toml:"providers"          xml:"providers>provider"                   yaml:"providers"`
 	ProviderFunctions []*ProviderFunction `json:"provider_functions" toml:"provider_functions" xml:"provider_functions>provider_function" yaml:"provider_functions"`
-	Requirements    []*Requirement    `json:"requirements" toml:"requirements" xml:"requirements>requirement" yaml:"requirements"`
-	Resources       []*Resource       `json:"resources" toml:"resources" xml:"resources>resource" yaml:"resources"`
+	Requirements      []*Requirement      `json:"requirements"       toml:"requirements"       xml:"requirements>requirement"             yaml:"requirements"`
+	Resources         []*Resource         `json:"resources"          toml:"resources"          xml:"resources>resource"                   yaml:"resources"`
 
+	// WHY: RequiredInputs and OptionalInputs are pre-partitioned at load time so that templates
+	// can render separate "Required" and "Optional" sections without re-filtering every render pass.
+	// They are excluded from serialization (json:"-") because they are derived views, not new data.
 	RequiredInputs []*Input `json:"-" toml:"-" xml:"-" yaml:"-"`
 	OptionalInputs []*Input `json:"-" toml:"-" xml:"-" yaml:"-"`
 }
 
 // HasHeader indicates if the module has header.
+//
+// WHY: Has* helpers let Go templates use simple boolean guards ({{if .Module.HasHeader}}) instead
+// of verbose empty-check expressions, keeping templates readable and consistent across formatters.
 func (m *Module) HasHeader() bool {
 	return len(m.Header) > 0
 }

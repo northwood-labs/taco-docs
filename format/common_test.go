@@ -20,6 +20,8 @@ import (
 	"github.com/terraform-docs/terraform-docs/print"
 )
 
+// WHY: Verifies sorting produces stable, deterministic output for all module items (inputs, outputs, providers, etc.).
+// Without this, diffs on regeneration would be noisy and unpredictable depending on filesystem order.
 func TestCommonSort(t *testing.T) {
 	tests := map[string]struct {
 		config print.Config
@@ -92,6 +94,8 @@ func TestCommonSort(t *testing.T) {
 	}
 }
 
+// WHY: Ensures the header content is correctly loaded from various file formats (.adoc, .md, .tf, .txt).
+// If broken, users would get empty or wrong headers in generated docs regardless of source format.
 func TestCommonHeaderFrom(t *testing.T) {
 	tests := map[string]struct {
 		config print.Config
@@ -136,6 +140,8 @@ func TestCommonHeaderFrom(t *testing.T) {
 	}
 }
 
+// WHY: Ensures the footer content is correctly loaded from various file formats.
+// Mirrors header loading but for footers; a regression here means incomplete generated documentation.
 func TestCommonFooterFrom(t *testing.T) {
 	tests := map[string]struct {
 		config print.Config

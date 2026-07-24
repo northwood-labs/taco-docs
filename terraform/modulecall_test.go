@@ -16,6 +16,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// WHY: Verifies module call FullName includes version when present. This affects how module
+// references display in generated documentation.
 func TestModulecallName(t *testing.T) {
 	tests := map[string]struct {
 		module   ModuleCall
@@ -45,6 +47,8 @@ func TestModulecallName(t *testing.T) {
 	}
 }
 
+// WHY: Ensures module calls can be sorted by name, source, and position. Consistent ordering
+// prevents noisy diffs when regenerating docs.
 func TestModulecallSort(t *testing.T) {
 	modules := sampleModulecalls()
 	tests := map[string]struct {

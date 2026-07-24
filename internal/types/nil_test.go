@@ -18,6 +18,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// WHY: Validates nil detection across all type annotations. Nil means "no default"—getting this wrong
+// would show "null" as a default value when the input is actually required.
 func TestNil(t *testing.T) {
 	nils := List{nil}
 	testPrimitive(t, []testprimitive{
@@ -84,6 +86,7 @@ func TestNil(t *testing.T) {
 	})
 }
 
+// WHY: Nil is not a collection—Length must be 0.
 func TestNilLength(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -102,6 +105,7 @@ func TestNilLength(t *testing.T) {
 	}
 }
 
+// WHY: Ensures nil serializes to JSON "null" literal for correct json format output.
 func TestNilMarshalJSON(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -123,6 +127,7 @@ func TestNilMarshalJSON(t *testing.T) {
 	}
 }
 
+// WHY: Ensures nil serializes to xsi:nil="true" in XML for spec-compliant output.
 func TestNilMarshalXML(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -151,6 +156,7 @@ func TestNilMarshalXML(t *testing.T) {
 	}
 }
 
+// WHY: Ensures nil serializes to Go nil for YAML marshaling (renders as "null" or omitted in YAML).
 func TestNilMarshalYAML(t *testing.T) {
 	tests := []struct {
 		name     string

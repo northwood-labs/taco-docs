@@ -16,6 +16,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// WHY: Validates Bool type detection and HasDefault behavior. Booleans must be recognized whether
+// the HCL type annotation is present or empty, so generated docs show "true"/"false" correctly.
 func TestBool(t *testing.T) {
 	values := List{true, false}
 	testPrimitive(t, []testprimitive{
@@ -42,6 +44,7 @@ func TestBool(t *testing.T) {
 	})
 }
 
+// WHY: Booleans are scalar—Length must always be 0 to distinguish from collection types.
 func TestBoolLength(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -67,6 +70,7 @@ func TestBoolLength(t *testing.T) {
 	}
 }
 
+// WHY: Confirms the underlying Go value is accessible for serialization to JSON/XML/YAML.
 func TestBoolUnderlying(t *testing.T) {
 	tests := []struct {
 		name  string

@@ -17,7 +17,12 @@ import (
 	"github.com/terraform-docs/terraform-docs/print"
 )
 
-// NewCommand returns a new cobra.Command for 'yaml' formatter
+// NewCommand registers the "yaml" subcommand. YAML output provides a
+// machine-readable yet human-friendly serialization of the module interface.
+// It serves a similar programmatic role as JSON but is preferred in ecosystems
+// that already use YAML-heavy tooling (e.g., Ansible, Helm, or custom
+// documentation pipelines). No format-specific flags are needed because YAML
+// has no ambiguous encoding choices like HTML escaping.
 func NewCommand(runtime *cli.Runtime, config *print.Config) *cobra.Command {
 	cmd := &cobra.Command{
 		Args:        cobra.ExactArgs(1),

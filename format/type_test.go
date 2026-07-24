@@ -19,6 +19,8 @@ import (
 	"github.com/terraform-docs/terraform-docs/print"
 )
 
+// WHY: Validates format name resolution (aliases like "md", "adoc", "tbl" etc.) to concrete formatter
+// types. If broken, users would get "unknown format" errors for valid format names.
 func TestFormatType(t *testing.T) {
 	tests := []struct {
 		name     string

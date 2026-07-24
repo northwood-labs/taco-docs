@@ -21,6 +21,8 @@ import (
 	"github.com/terraform-docs/terraform-docs/internal/types"
 )
 
+// WHY: Verifies output value rendering and HasDefault across all value types (nil, bool, string,
+// list, map, sensitive). Incorrect rendering means wrong values in every output format.
 func TestOutputValue(t *testing.T) {
 	outputs := sampleOutputs()
 	tests := []struct {
@@ -112,6 +114,7 @@ func TestOutputValue(t *testing.T) {
 	}
 }
 
+// WHY: Ensures outputs serialize correctly to JSON, including sensitive values and ShowValue flag behavior.
 func TestOutputMarshalJSON(t *testing.T) {
 	outputs := sampleOutputs()
 	tests := []struct {
@@ -191,6 +194,7 @@ func TestOutputMarshalJSON(t *testing.T) {
 	}
 }
 
+// WHY: Ensures outputs serialize correctly to XML with proper element structure.
 func TestOutputMarshalXML(t *testing.T) {
 	outputs := sampleOutputs()
 	tests := []struct {
@@ -278,6 +282,7 @@ func TestOutputMarshalXML(t *testing.T) {
 	}
 }
 
+// WHY: Verifies YAML marshaling returns the correct struct type based on ShowValue flag.
 func TestOutputMarshalYAML(t *testing.T) {
 	outputs := sampleOutputs()
 	tests := []struct {
@@ -459,6 +464,7 @@ func sampleOutputs() []Output {
 	}
 }
 
+// WHY: Ensures outputs can be sorted by name and by position for deterministic doc generation.
 func TestOutputsSort(t *testing.T) {
 	outputs := sampleOutputsForSort()
 	tests := map[string]struct {

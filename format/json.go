@@ -20,6 +20,10 @@ import (
 )
 
 // json represents JSON format.
+//
+// WHY: JSON output enables programmatic consumption of module documentation—CI
+// pipelines, custom renderers, and automation tools can parse it without
+// scraping Markdown. It's the canonical machine-readable format.
 type json struct {
 	*generator
 
@@ -27,6 +31,9 @@ type json struct {
 }
 
 // NewJSON returns new instance of JSON.
+//
+// WHY: canRender is false because JSON's structure is dictated by the encoder;
+// custom content templates would produce invalid JSON.
 func NewJSON(config *print.Config) Type {
 	return &json{
 		generator: newGenerator(config, false),
@@ -35,6 +42,10 @@ func NewJSON(config *print.Config) Type {
 }
 
 // Generate a Terraform module as json.
+//
+// WHY: copySections is called first to honor the user's show/hide configuration,
+// then the filtered module is serialized. SetEscapeHTML defers to the user's
+// escape setting so HTML entities in descriptions aren't mangled unless requested.
 func (j *json) Generate(module *terraform.Module) error {
 	copy := copySections(j.config, module)
 

@@ -21,6 +21,11 @@ import (
 )
 
 // yaml represents YAML format.
+//
+// WHY: YAML is the preferred structured data format in many infrastructure
+// toolchains (Ansible, Helm, GitHub Actions). Providing native YAML output
+// lets these ecosystems consume module metadata without a JSON-to-YAML
+// conversion step, preserving human-readability.
 type yaml struct {
 	*generator
 
@@ -28,6 +33,9 @@ type yaml struct {
 }
 
 // NewYAML returns new instance of YAML.
+//
+// WHY: canRender is false because the YAML encoder dictates output structure;
+// custom content templates can't meaningfully reorder a serialized YAML document.
 func NewYAML(config *print.Config) Type {
 	return &yaml{
 		generator: newGenerator(config, false),
@@ -36,6 +44,9 @@ func NewYAML(config *print.Config) Type {
 }
 
 // Generate a Terraform module as YAML.
+//
+// WHY: The 2-space indent matches the YAML community convention and keeps the
+// output consistent with typical Kubernetes/Helm manifests users work with.
 func (y *yaml) Generate(module *terraform.Module) error {
 	copy := copySections(y.config, module)
 

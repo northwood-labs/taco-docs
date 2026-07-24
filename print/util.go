@@ -10,6 +10,10 @@ the root directory of this source tree.
 
 package print
 
+// Simple collection helpers that avoid importing a full generic library for
+// trivial operations. These exist because Go (pre-generics) required hand-written
+// utility functions for basic slice operations on concrete types.
+
 func contains(list []string, name string) bool {
 	for _, v := range list {
 		if v == name {

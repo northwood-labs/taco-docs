@@ -19,15 +19,22 @@ import (
 )
 
 // ModuleCall represents a submodule called by Terraform module.
+//
+// WHY: Module calls document the composition graph—which child modules this module orchestrates.
+// Consumers need to know the source (registry, git, local path) and pinned version to audit
+// supply-chain dependencies without reading HCL directly.
 type ModuleCall struct {
-	Name        string       `json:"name" toml:"name" xml:"name" yaml:"name"`
-	Source      string       `json:"source" toml:"source" xml:"source" yaml:"source"`
-	Version     string       `json:"version" toml:"version" xml:"version" yaml:"version"`
+	Name        string       `json:"name"        toml:"name"        xml:"name"        yaml:"name"`
+	Source      string       `json:"source"      toml:"source"      xml:"source"      yaml:"source"`
+	Version     string       `json:"version"     toml:"version"     xml:"version"     yaml:"version"`
 	Description types.String `json:"description" toml:"description" xml:"description" yaml:"description"`
-	Position    Position     `json:"-" toml:"-" xml:"-" yaml:"-"`
+	Position    Position     `json:"-"           toml:"-"           xml:"-"           yaml:"-"`
 }
 
-// FullName returns full name of the modulecall, with version if available
+// FullName returns full name of the modulecall, with version if available.
+//
+// WHY: Including the version in the display name disambiguates multiple calls to the same source
+// at different versions—a common pattern when migrating modules incrementally.
 func (mc *ModuleCall) FullName() string {
 	if mc.Version != "" {
 		return fmt.Sprintf("%s,%s", mc.Source, mc.Version)
@@ -58,6 +65,9 @@ func sortModulecallsByPosition(x []*ModuleCall) {
 
 type modulecalls []*ModuleCall
 
+// WHY: Module calls support sort-by-name, sort-by-source (type), and sort-by-position.
+// Source-based sorting groups calls to the same registry module together, which is useful when
+// a module instantiates the same child module multiple times with different configurations.
 func (mm modulecalls) sort(enabled bool, by string) {
 	if !enabled {
 		sortModulecallsByPosition(mm)

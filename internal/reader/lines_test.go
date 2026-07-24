@@ -73,6 +73,8 @@ nulla pariatur.
 officia deserunt mollit anim id est laborum
 `
 
+// WHY: Validates comment extraction from files and text by line number. This is the core of how
+// descriptions are read from preceding comments in .tf files for inputs/outputs without description attrs.
 func TestReadLinesFromFile(t *testing.T) {
 	tests := []struct {
 		name       string
@@ -125,7 +127,9 @@ func TestReadLinesFromFile(t *testing.T) {
 				LineNum:  tt.lineNumber,
 				Condition: func(line string) bool {
 					line = strings.TrimSpace(line)
-					return strings.HasPrefix(line, "#") || strings.HasPrefix(line, "/*") || strings.HasPrefix(line, "*") || strings.HasPrefix(line, "*/")
+					return strings.HasPrefix(line, "#") || strings.HasPrefix(line, "/*") ||
+						strings.HasPrefix(line, "*") ||
+						strings.HasPrefix(line, "*/")
 				},
 				Parser: func(line string) (string, bool) {
 					line = strings.TrimSpace(line)
@@ -152,6 +156,8 @@ func TestReadLinesFromFile(t *testing.T) {
 	}
 }
 
+// WHY: Same as file-based extraction but from in-memory text. Tests edge cases like empty content,
+// out-of-range line numbers, and text without leading comments.
 func TestReadLinesFromText(t *testing.T) {
 	tests := []struct {
 		name        string
@@ -249,7 +255,9 @@ func TestReadLinesFromText(t *testing.T) {
 				LineNum: tt.lineNumber,
 				Condition: func(line string) bool {
 					line = strings.TrimSpace(line)
-					return strings.HasPrefix(line, "#") || strings.HasPrefix(line, "/*") || strings.HasPrefix(line, "*") || strings.HasPrefix(line, "*/")
+					return strings.HasPrefix(line, "#") || strings.HasPrefix(line, "/*") ||
+						strings.HasPrefix(line, "*") ||
+						strings.HasPrefix(line, "*/")
 				},
 				Parser: func(line string) (string, bool) {
 					line = strings.TrimSpace(line)

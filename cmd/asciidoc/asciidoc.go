@@ -19,7 +19,14 @@ import (
 	"github.com/terraform-docs/terraform-docs/print"
 )
 
-// NewCommand returns a new cobra.Command for 'asciidoc' formatter
+// NewCommand registers the "asciidoc" subcommand and its children ("document"
+// and "table"). AsciiDoc output is provided for teams whose documentation
+// ecosystems are built on AsciiDoc toolchains (e.g., Antora, Asciidoctor) rather
+// than Markdown. Like Markdown, it supports both table and document sub-formats.
+//
+// The flags mirror the Markdown command because AsciiDoc has the same rendering
+// concerns (anchors, column visibility, section depth), but the template
+// syntax differs.
 func NewCommand(runtime *cli.Runtime, config *print.Config) *cobra.Command {
 	cmd := &cobra.Command{
 		Args:        cobra.ExactArgs(1),
@@ -31,11 +38,13 @@ func NewCommand(runtime *cli.Runtime, config *print.Config) *cobra.Command {
 		RunE:        runtime.RunEFunc,
 	}
 
-	// flags
+	// flags — same rationale as the Markdown counterparts; see cmd/markdown for details.
 	cmd.PersistentFlags().BoolVar(&config.Settings.Anchor, "anchor", true, "create anchor links")
 	cmd.PersistentFlags().BoolVar(&config.Settings.Default, "default", true, "show Default column or section")
-	cmd.PersistentFlags().BoolVar(&config.Settings.HideEmpty, "hide-empty", false, "hide empty sections (default false)")
-	cmd.PersistentFlags().IntVar(&config.Settings.Indent, "indent", 2, "indentation level of AsciiDoc sections [1, 2, 3, 4, 5]")
+	cmd.PersistentFlags().
+		BoolVar(&config.Settings.HideEmpty, "hide-empty", false, "hide empty sections (default false)")
+	cmd.PersistentFlags().
+		IntVar(&config.Settings.Indent, "indent", 2, "indentation level of AsciiDoc sections [1, 2, 3, 4, 5]")
 	cmd.PersistentFlags().BoolVar(&config.Settings.Required, "required", true, "show Required column or section")
 	cmd.PersistentFlags().BoolVar(&config.Settings.Sensitive, "sensitive", true, "show Sensitive column or section")
 	cmd.PersistentFlags().BoolVar(&config.Settings.Type, "type", true, "show Type column or section")

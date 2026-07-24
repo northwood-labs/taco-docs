@@ -21,6 +21,8 @@ import (
 	"github.com/terraform-docs/terraform-docs/terraform"
 )
 
+// WHY: Tests the generator's template execution logic, including custom templates with section references,
+// file includes, and unknown section handling. Ensures the --content flag works correctly.
 func TestExecuteTemplate(t *testing.T) {
 	header := "this is the header"
 	footer := "this is the footer"
@@ -125,6 +127,7 @@ func TestExecuteTemplate(t *testing.T) {
 	}
 }
 
+// WHY: Ensures the withX generator functions correctly set their respective fields on the generator.
 func TestGeneratorFunc(t *testing.T) {
 	text := "foo"
 	tests := map[string]struct {
@@ -182,6 +185,7 @@ func TestGeneratorFunc(t *testing.T) {
 	}
 }
 
+// WHY: Tests withModule generator function to verify module data is correctly loaded from disk.
 func TestGeneratorFuncModule(t *testing.T) {
 	t.Run("withModule", func(t *testing.T) {
 		assert := assert.New(t)
@@ -209,6 +213,8 @@ func TestGeneratorFuncModule(t *testing.T) {
 	})
 }
 
+// WHY: Validates forEach correctly populates all named sections. This is the callback mechanism
+// used by formatters to generate each section independently.
 func TestForEach(t *testing.T) {
 	config := print.DefaultConfig()
 

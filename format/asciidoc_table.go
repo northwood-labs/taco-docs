@@ -23,6 +23,10 @@ import (
 var asciidocTableFS embed.FS
 
 // asciidocTable represents AsciiDoc Table format.
+//
+// WHY: Teams using Asciidoctor or Antora for their documentation sites
+// need native AsciiDoc output rather than embedded Markdown. This is the
+// compact tabular equivalent of markdownTable for the AsciiDoc ecosystem.
 type asciidocTable struct {
 	*generator
 
@@ -34,6 +38,9 @@ type asciidocTable struct {
 func NewAsciidocTable(config *print.Config) Type {
 	items := readTemplateItems(asciidocTableFS, "asciidoc_table")
 
+	// WHY: AsciiDoc has its own escaping rules (e.g. | inside table cells).
+	// Disabling the generic markdown escape prevents double-escaping that
+	// would corrupt the AsciiDoc output.
 	config.Settings.Escape = false
 
 	tt := template.New(config, items...)
@@ -43,7 +50,7 @@ func NewAsciidocTable(config *print.Config) Type {
 			return inputType
 		},
 		"value": func(v string) string {
-			var result = "n/a"
+			result := "n/a"
 			if v != "" {
 				result, _ = PrintFencedCodeBlock(v, "")
 			}
@@ -73,6 +80,8 @@ func (t *asciidocTable) Generate(module *terraform.Module) error {
 	return err
 }
 
+// WHY: Multiple short aliases registered so users can type "adoc" or
+// "asciidoc" interchangeably, matching common community shorthand.
 func init() {
 	register(map[string]initializerFn{
 		"asciidoc":       NewAsciidocTable,

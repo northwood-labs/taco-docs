@@ -23,6 +23,9 @@ type Server struct {
 	broker *goplugin.MuxBroker
 }
 
+// printFunc is a type alias that keeps plugin authors' code simple. They only
+// need to provide a single function with this signature rather than implementing
+// a full interface.
 type printFunc func(*print.Config, *terraform.Module) (string, error)
 
 // ServeOpts is an option for serving a plugin.
@@ -32,7 +35,9 @@ type ServeOpts struct {
 	Printer printFunc
 }
 
-// Serve is a wrapper of plugin.Serve. This is entrypoint of all plugins.
+// Serve is the single entry point for plugin binaries. One call sets up the
+// entire RPC server, handshake, and connection lifecycle. Plugin authors call
+// this from main() and never interact with go-plugin directly.
 func Serve(opts *ServeOpts) {
 	goplugin.Serve(&goplugin.ServeConfig{
 		HandshakeConfig: handshakeConfig,
@@ -41,6 +46,10 @@ func Serve(opts *ServeOpts) {
 		},
 	})
 }
+
+// Name, Version, and Execute map 1:1 to Client calls via go-plugin's RPC
+// contract. The Server receives these calls and delegates to the formatter
+// implementation, bridging the network boundary transparently.
 
 // Name returns the version of the plugin.
 func (s *Server) Name(args interface{}, resp *string) error {

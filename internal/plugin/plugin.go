@@ -16,24 +16,33 @@ import (
 	pluginsdk "github.com/terraform-docs/terraform-docs/plugin"
 )
 
-// namePrefix is the mandatory prefix for name of the plugin file. What
-// comes after this is considered to be identifier of the plugin and in
-// the overall ecosystem should be unique (as much as possible.)
+// namePrefix is the mandatory prefix for plugin binary names. This naming
+// convention (tfdocs-format-<name>) serves as a discovery mechanism — the
+// plugin system can find plugins by scanning a directory for files matching
+// this prefix without requiring a registry or manifest file.
 const namePrefix = "tfdocs-format-"
 
-// homePluginsRoot is the root directory of the plugins
-var homePluginsRoot = "~/.tfdocs.d/plugins"
-var localPluginsRoot = "./.tfdocs.d/plugins"
+// homePluginsRoot and localPluginsRoot define the default search paths for
+// plugin binaries. The local path (./.tfdocs.d/plugins) takes priority over
+// the home path (~/.tfdocs.d/plugins), allowing project-specific plugins to
+// shadow globally installed ones.
+var (
+	homePluginsRoot  = "~/.tfdocs.d/plugins"
+	localPluginsRoot = "./.tfdocs.d/plugins"
+)
 
-// List is an object caching discovered plugins and their corresponding
-// clients. Basically, it is a wrapper for go-plugin and provides an API
-// to handle them collectively.
+// List caches discovered plugins and their corresponding go-plugin clients.
+// Caching prevents repeated filesystem scans and process spawning during a
+// single terraform-docs invocation. The struct wraps both the high-level
+// formatter clients (used to call Execute) and the raw go-plugin clients
+// (needed for process lifecycle management via Kill()).
 type List struct {
 	formatters map[string]*pluginsdk.Client
 	clients    map[string]*goplugin.Client
 }
 
-// All returns all registered plugins.
+// All returns every registered plugin client. This is used by the version
+// command to enumerate installed plugins for display.
 func (l *List) All() []*pluginsdk.Client {
 	all := make([]*pluginsdk.Client, 0)
 	for _, f := range l.formatters {
@@ -42,13 +51,18 @@ func (l *List) All() []*pluginsdk.Client {
 	return all
 }
 
-// Get plugin by its name.
+// Get retrieves a plugin by its formatter name. The boolean return follows
+// Go map-access convention to let callers distinguish "not found" from a
+// nil value.
 func (l *List) Get(name string) (*pluginsdk.Client, bool) {
 	client, ok := l.formatters[name]
 	return client, ok
 }
 
-// Clean is a helper for ending plugin processes.
+// Clean terminates all plugin subprocesses. This should be called during
+// shutdown to avoid leaving orphan processes — go-plugin uses os/exec
+// under the hood and processes won't terminate automatically when the
+// parent exits.
 func (l *List) Clean() {
 	for _, client := range l.clients {
 		client.Kill()

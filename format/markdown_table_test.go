@@ -19,6 +19,8 @@ import (
 	"github.com/terraform-docs/terraform-docs/print"
 )
 
+// WHY: Golden-file test ensuring Markdown table output matches expected fixtures. This is the most
+// commonly used format; regressions here affect the majority of users.
 func TestMarkdownTable(t *testing.T) {
 	tests := map[string]struct {
 		config print.Config

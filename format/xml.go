@@ -19,6 +19,11 @@ import (
 )
 
 // xml represents XML format.
+//
+// WHY: Enterprise and legacy systems (XSLT pipelines, SOAP services,
+// Java-based documentation generators) often require XML input. This
+// formatter bridges Terraform module metadata into those ecosystems
+// without requiring users to write custom converters.
 type xml struct {
 	*generator
 
@@ -26,6 +31,9 @@ type xml struct {
 }
 
 // NewXML returns new instance of XML.
+//
+// WHY: canRender is false because XML's structure is dictated
+// by MarshalIndent; custom templates would break well-formedness.
 func NewXML(config *print.Config) Type {
 	return &xml{
 		generator: newGenerator(config, false),

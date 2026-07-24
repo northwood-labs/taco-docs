@@ -18,25 +18,24 @@ import (
 	"sort"
 )
 
-// Value is a default value of an input or output.
-// it can be of several types:
-//
-// - Nil
-// - String
-// - Empty
-// - Number
-// - Bool
-// - List
-// - Map
+// Value is the interface for all Terraform variable default values. Terraform
+// supports a rich type system (string, number, bool, list, map, null) but
+// terraform-docs needs to serialize these values across multiple output formats
+// (JSON, YAML, XML, TOML, Markdown). By wrapping each Terraform type in a
+// concrete type that implements Value (plus custom marshalers), we get
+// format-specific rendering without polluting the core domain model with
+// serialization logic.
 type Value interface {
 	HasDefault() bool
 	Length() int
 	Raw() interface{}
 }
 
-// ValueOf returns actual value of a variable casted to 'Default' interface.
-// This is done to be able to attach specific marshaller func to the type
-// (if such a custom function was needed)
+// ValueOf wraps a raw Go interface{} (as parsed from HCL) into the appropriate
+// typed Value. This type dispatch is necessary because terraform-config-inspect
+// returns default values as interface{}, but we need concrete types to attach
+// custom JSON/XML/YAML marshalers that produce the correct output representation
+// (e.g., `null` for nil, `""` for explicit empty string).
 func ValueOf(v interface{}) Value {
 	if v == nil {
 		return new(Nil)
@@ -48,6 +47,8 @@ func ValueOf(v interface{}) Value {
 	//nolint:exhaustive
 	switch value.Kind() {
 	case reflect.String:
+		// Distinguish between "no value" (empty string from zero-value) and
+		// "explicitly set to empty string" — these serialize differently.
 		if value.IsZero() {
 			return Empty("")
 		}
@@ -55,6 +56,9 @@ func ValueOf(v interface{}) Value {
 	case reflect.Float32, reflect.Float64:
 		return Number(value.Float())
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		// Terraform's number type is unified — we normalize all integer types
+		// to float64 so that marshaling is consistent regardless of how the
+		// HCL parser decoded the value.
 		return Number(float64(value.Int()))
 	case reflect.Bool:
 		return Bool(value.Bool())
@@ -66,8 +70,11 @@ func ValueOf(v interface{}) Value {
 	return new(Nil)
 }
 
-// TypeOf returns Terraform type of a value based on provided type by
-// terraform-inspect or by looking the underlying type of the value
+// TypeOf determines the Terraform type label for a variable. It prefers the
+// explicitly declared type string from the .tf file (provided by terraform-inspect),
+// falling back to runtime type inference from the default value. The fallback
+// handles cases where type is omitted but a default is set — Terraform infers the
+// type from the default value in this scenario.
 func TypeOf(t string, v interface{}) String {
 	if t != "" {
 		return String(t)
@@ -92,10 +99,14 @@ func TypeOf(t string, v interface{}) String {
 	return String("any")
 }
 
-// Nil represents a 'nil' value which is marshaled to `null` when empty for JSON and YAML
+// Nil represents a variable with no default value. It marshals to `null` in JSON
+// and YAML, and uses xsi:nil="true" in XML. The distinction between Nil and Empty
+// is critical: Nil means "the user must provide a value" (required input), while
+// Empty means "the default value is explicitly an empty string."
 type Nil struct{}
 
-// HasDefault return false for Nil, because there's no value set for the variable
+// HasDefault returns false for Nil because a nil default means the variable is
+// required — the user must supply a value at plan time.
 func (n Nil) HasDefault() bool {
 	return false
 }
@@ -110,24 +121,27 @@ func (n Nil) Raw() interface{} {
 	return nil
 }
 
-// MarshalJSON custom marshal function which sets the value to literal `null`
+// MarshalJSON produces literal `null` to match Terraform's JSON representation.
 func (n Nil) MarshalJSON() ([]byte, error) {
 	return []byte(`null`), nil
 }
 
-// MarshalXML custom marshal function which adds property 'xsi:nil="true"' to a tag
-// of a 'nil' item
+// MarshalXML uses the xsi:nil attribute to represent null values in XML, following
+// the XML Schema Instance convention for absent values.
 func (n Nil) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 	start.Attr = append(start.Attr, xml.Attr{Name: xml.Name{Local: "xsi:nil"}, Value: "true"})
 	return e.EncodeElement(``, start)
 }
 
-// MarshalYAML custom marshal function which sets the value to literal `null`
+// MarshalYAML produces a YAML null value.
 func (n Nil) MarshalYAML() (interface{}, error) {
 	return nil, nil
 }
 
-// String represents a 'string' value which is marshaled to `null` when empty for JSON and YAML
+// String represents a non-empty string value. When the underlying string is empty,
+// it marshals to `null` in JSON/YAML (not `""`) because in this context an empty
+// String means "description/version not specified" rather than "explicitly empty."
+// For explicitly-empty defaults, the Empty type is used instead.
 type String string
 
 // nolint
@@ -150,7 +164,9 @@ func (s String) Raw() interface{} {
 	return s.underlying()
 }
 
-// MarshalJSON custom marshal function which sets the value to literal `null` when empty
+// MarshalJSON produces `null` for empty strings (which represents "no value
+// specified" in fields like description) or the properly escaped JSON string.
+// SetEscapeHTML(false) prevents URLs and HTML in descriptions from being mangled.
 func (s String) MarshalJSON() ([]byte, error) {
 	var buf bytes.Buffer
 	if len(string(s)) == 0 {
@@ -166,8 +182,8 @@ func (s String) MarshalJSON() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-// MarshalXML custom marshal function which adds property 'xsi:nil="true"' to a tag
-// if the underlying item is 'nil'
+// MarshalXML uses xsi:nil for empty strings to signal "no value" in XML output,
+// consistent with the JSON marshaling behavior.
 func (s String) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 	if string(s) == "" {
 		start.Attr = append(start.Attr, xml.Attr{Name: xml.Name{Local: "xsi:nil"}, Value: "true"})
@@ -176,7 +192,8 @@ func (s String) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 	return e.EncodeElement(string(s), start)
 }
 
-// MarshalYAML custom marshal function which sets the value to literal `null` when empty
+// MarshalYAML produces null for empty strings, matching the convention that
+// "no value specified" renders as null across all output formats.
 func (s String) MarshalYAML() (interface{}, error) {
 	if len(string(s)) == 0 || string(s) == `""` {
 		return nil, nil
@@ -184,7 +201,10 @@ func (s String) MarshalYAML() (interface{}, error) {
 	return string(s), nil
 }
 
-// Empty represents an empty 'string' which is marshaled to `""` in JSON and YAML
+// Empty represents a Terraform variable whose default is explicitly set to an
+// empty string (default = ""). This is semantically different from Nil (no default)
+// and from String with empty content (no value specified). Empty marshals to `""`
+// in JSON, preserving the user's explicit intent.
 type Empty string
 
 // nolint
@@ -207,12 +227,15 @@ func (e Empty) Raw() interface{} {
 	return e.underlying()
 }
 
-// MarshalJSON custom marshal function which sets the value to `""`
+// MarshalJSON produces `""` (not `null`) because the user explicitly set the
+// default to an empty string — we must preserve that distinction.
 func (e Empty) MarshalJSON() ([]byte, error) {
 	return []byte(`""`), nil
 }
 
-// Number represents a 'number' value which is marshaled to `null` when empty in JSON and YAML
+// Number represents a Terraform number value (integer or float). All numeric
+// types are unified under float64 because Terraform's type system doesn't
+// distinguish between integers and floats.
 type Number float64
 
 // nolint
@@ -235,7 +258,7 @@ func (n Number) Raw() interface{} {
 	return n.underlying()
 }
 
-// Bool represents a 'bool' value
+// Bool represents a Terraform bool value.
 type Bool bool
 
 // nolint
@@ -258,10 +281,12 @@ func (b Bool) Raw() interface{} {
 	return b.underlying()
 }
 
-// List represents a 'list' of values
+// List represents a Terraform list/tuple default value. It exists as a distinct
+// type (rather than using []interface{} directly) so that custom XML marshaling
+// can wrap items in <item> tags for well-formed structure.
 type List []interface{}
 
-// Underlying returns the underlying elements in the form of '[]interface {}'
+// Underlying returns a defensive copy of the list elements.
 func (l List) Underlying() []interface{} {
 	r := make([]interface{}, 0)
 	for _, i := range l {
@@ -290,8 +315,9 @@ type xmllistentry struct {
 	Value   interface{} `xml:",chardata"`
 }
 
-// MarshalXML custom marshal function which wraps list items in '<default></default>'
-// tag and each items of the list will be wrapped in a '<item></item>' tag
+// MarshalXML wraps each list element in an <item> tag. This is necessary because
+// XML has no native list syntax — without wrapper elements, the structure would be
+// ambiguous when parsed back.
 func (l List) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 	if len(l) == 0 {
 		return e.EncodeElement(``, start)
@@ -306,10 +332,12 @@ func (l List) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 	return e.EncodeToken(start.End())
 }
 
-// Map represents a 'map' of values
+// Map represents a Terraform map/object default value. Like List, it exists as
+// a distinct type to provide custom XML marshaling where map keys become element
+// names and values become element content.
 type Map map[string]interface{}
 
-// Underlying returns the underlying elements in the form of 'map[string]interface {}'
+// Underlying returns a defensive copy of the map.
 func (m Map) Underlying() map[string]interface{} {
 	r := make(map[string]interface{})
 	for k, e := range m {
@@ -338,36 +366,18 @@ type xmlmapentry struct {
 	Value   interface{} `xml:",chardata"`
 }
 
+// sortmapkeys ensures deterministic XML output by sorting map keys alphabetically.
+// Without this, Go's random map iteration would produce non-reproducible output,
+// making diffs noisy and CI checks unreliable.
 type sortmapkeys []string
 
 func (s sortmapkeys) Len() int           { return len(s) }
 func (s sortmapkeys) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
 func (s sortmapkeys) Less(i, j int) bool { return s[i] < s[j] }
 
-// MarshalXML custom marshal function which converts map to its literal
-// XML representation. For example:
-//
-//	m := Map{
-//	    "a": 1,
-//	    "b": 2,
-//	    "c": 3,
-//	}
-//
-//	type foo struct {
-//	    Value Map `xml:"value"`
-//	}
-//
-// will get marshaled to:
-//
-// <foo>
-//
-//	<value>
-//	  <a>1</a>
-//	  <b>2</b>
-//	  <c>3</c>
-//	</value>
-//
-// </foo>
+// MarshalXML converts a map to XML where each key becomes an element name.
+// Nested maps and lists are handled recursively to produce well-formed XML
+// at any depth. Keys are sorted for deterministic output.
 func (m Map) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 	if len(m) == 0 {
 		return e.EncodeElement(``, start)

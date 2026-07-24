@@ -18,9 +18,21 @@ import (
 	"os"
 )
 
-// Lines represents line reader in a given 'FileName' immediately
-// before the given 'LineNum'. Extraction happens when 'Condition'
-// is met and being processed by 'Parser' function.
+// Lines represents a conditional line reader that extracts content from a file
+// based on caller-defined rules. It's the engine behind two key behaviors:
+//
+//  1. Reading comments above Terraform declarations (LineNum is set): it reads
+//     lines immediately preceding the target line, capturing comment blocks that
+//     serve as documentation descriptions.
+//
+//  2. Reading header/footer from .tf files (LineNum is -1): it scans the whole
+//     file looking for the first block-comment, which by convention contains
+//     the module description.
+//
+// The Condition function determines which lines are "interesting" (e.g., comment
+// lines), and Parser transforms each matching line into its final form (e.g.,
+// stripping comment prefixes). This separation of concerns lets the same reader
+// handle multiple comment styles (// and # for inline, /* */ for block).
 type Lines struct {
 	FileName  string
 	LineNum   int // value -1 means scan the whole file and break after finding what we were looking for
@@ -28,8 +40,9 @@ type Lines struct {
 	Parser    func(line string) (string, bool)
 }
 
-// Extract extracts lines in given file and based on the provided
-// condition. returns empty if nothing found.
+// Extract opens the file and delegates to the internal extraction logic.
+// It handles file-level concerns (open, stat, close) separately from the
+// line-by-line parsing, keeping the parsing logic testable with io.Reader.
 func (l *Lines) Extract() ([]string, error) {
 	f, err := os.Open(l.FileName)
 	if err != nil {
@@ -39,6 +52,8 @@ func (l *Lines) Extract() ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
+	// Empty files are a valid case (e.g., placeholder .tf files) — return
+	// empty result rather than erroring.
 	if stat.Size() == 0 {
 		return []string{}, nil
 	}
@@ -48,14 +63,25 @@ func (l *Lines) Extract() ([]string, error) {
 	return l.extract(f)
 }
 
+// extract performs the actual line-by-line reading. The algorithm works by
+// accumulating lines that satisfy Condition and resetting when a non-matching
+// line is encountered. This naturally captures the *last contiguous block* of
+// matching lines before LineNum — which is exactly the comment block immediately
+// above a declaration.
+//
+// When LineNum is -1, it scans the entire file but stops at the first break
+// after finding matching lines. This handles the "first block comment in file"
+// case used for module headers.
 func (l *Lines) extract(r io.Reader) ([]string, error) { //nolint:gocyclo
 	// NOTE(khos2ow): this function is over our cyclomatic complexity goal.
 	// Be wary when adding branches, and look for functionality that could
 	// be reasonably moved into an injected dependency.
 
 	bf := bufio.NewReader(r)
-	var lines = make([]string, 0)
+	lines := make([]string, 0)
 	for lnum := 0; ; lnum++ {
+		// Stop once we've reached the target line — any lines accumulated at
+		// this point are the comment block immediately above the declaration.
 		if l.LineNum != -1 && lnum >= l.LineNum-1 {
 			break
 		}
@@ -80,8 +106,12 @@ func (l *Lines) extract(r io.Reader) ([]string, error) { //nolint:gocyclo
 				lines = append(lines, extracted)
 			}
 		} else if l.LineNum == -1 {
+			// In whole-file scan mode, the first non-matching line after finding
+			// matches means we've captured the entire block — stop scanning.
 			break
 		} else {
+			// In targeted mode, a non-matching line resets the accumulator because
+			// we only want the contiguous block immediately before the target line.
 			lines = nil
 		}
 	}

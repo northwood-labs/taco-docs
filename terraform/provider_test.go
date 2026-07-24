@@ -18,6 +18,7 @@ import (
 	"github.com/terraform-docs/terraform-docs/internal/types"
 )
 
+// WHY: Verifies provider FullName includes alias when present (e.g. "provider.alias").
 func TestProviderName(t *testing.T) {
 	tests := map[string]struct {
 		provider Provider
@@ -50,6 +51,7 @@ func TestProviderName(t *testing.T) {
 	}
 }
 
+// WHY: Ensures providers can be sorted by name and by position, including alias-based ordering.
 func TestProvidersSort(t *testing.T) {
 	providers := sampleProviders()
 	tests := map[string]struct {

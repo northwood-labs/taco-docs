@@ -19,6 +19,8 @@ import (
 	"github.com/terraform-docs/terraform-docs/print"
 )
 
+// WHY: Golden-file test ensuring AsciiDoc document output matches expected fixtures across all config
+// combinations (sections, settings, anchors, output values). Catches regressions in template rendering.
 func TestAsciidocDocument(t *testing.T) {
 	tests := map[string]struct {
 		config print.Config

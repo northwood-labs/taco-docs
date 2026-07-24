@@ -17,7 +17,11 @@ import (
 	"github.com/terraform-docs/terraform-docs/print"
 )
 
-// NewCommand returns a new cobra.Command for 'markdown document' formatter
+// NewCommand registers the "markdown document" subcommand. The document format
+// renders each input/output as its own subsection with a heading, rather than
+// compressing everything into a table. This is preferred when modules have
+// lengthy descriptions, complex default values, or when the documentation will
+// be read on platforms that poorly render wide Markdown tables.
 func NewCommand(runtime *cli.Runtime, config *print.Config) *cobra.Command {
 	cmd := &cobra.Command{
 		Args:        cobra.ExactArgs(1),

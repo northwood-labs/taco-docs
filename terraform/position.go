@@ -11,6 +11,11 @@ the root directory of this source tree.
 package terraform
 
 // Position represents position of Terraform item (input, output, provider, etc) in a file.
+//
+// WHY: Position tracks the original source-file location of each declaration so the sort-by-position
+// strategy can preserve the author's intended ordering. JSON/TOML/XML/YAML tags are all "-" because
+// position is internal metadata for sorting—it is not documentation content and should never appear
+// in generated output.
 type Position struct {
 	Filename string `json:"-" toml:"-" xml:"-" yaml:"-"`
 	Line     int    `json:"-" toml:"-" xml:"-" yaml:"-"`

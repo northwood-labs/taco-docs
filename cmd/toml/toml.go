@@ -17,7 +17,11 @@ import (
 	"github.com/terraform-docs/terraform-docs/print"
 )
 
-// NewCommand returns a new cobra.Command for 'toml' formatter
+// NewCommand registers the "toml" subcommand. TOML output exists for users
+// whose toolchains are TOML-native (e.g., Rust/Cargo ecosystems or tools that
+// parse TOML configs). It provides the same structured module data as JSON and
+// YAML but in TOML syntax. No format-specific flags are required because TOML
+// encoding is unambiguous for the data types terraform-docs produces.
 func NewCommand(runtime *cli.Runtime, config *print.Config) *cobra.Command {
 	cmd := &cobra.Command{
 		Args:        cobra.ExactArgs(1),

@@ -17,7 +17,11 @@ import (
 	"github.com/terraform-docs/terraform-docs/print"
 )
 
-// NewCommand returns a new cobra.Command for 'xml' formatter
+// NewCommand registers the "xml" subcommand. XML output is provided for
+// enterprise environments and legacy systems that require XML-based data
+// exchange (e.g., XSLT transformations, SOAP integrations, or documentation
+// systems that consume XML). No format-specific flags are needed since XML
+// encoding is fully deterministic for the module data model.
 func NewCommand(runtime *cli.Runtime, config *print.Config) *cobra.Command {
 	cmd := &cobra.Command{
 		Args:        cobra.ExactArgs(1),

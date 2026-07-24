@@ -22,6 +22,8 @@ import (
 	"github.com/terraform-docs/terraform-docs/print"
 )
 
+// WHY: Verifies path resolution for output files (relative vs absolute). If broken, generated docs
+// would be written to the wrong location, silently overwriting unintended files.
 func TestFileWriterFullPath(t *testing.T) {
 	tests := map[string]struct {
 		file     string
@@ -54,6 +56,8 @@ func TestFileWriterFullPath(t *testing.T) {
 	}
 }
 
+// WHY: Validates inject/replace modes, template handling, and error detection (missing comments, out-of-date checks).
+// A bug here could corrupt existing README files or silently skip content injection.
 func TestFileWriter(t *testing.T) {
 	content := "Lorem ipsum dolor sit amet, consectetur adipiscing elit"
 	tests := map[string]struct {

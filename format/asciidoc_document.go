@@ -23,6 +23,12 @@ import (
 var asciidocsDocumentFS embed.FS
 
 // asciidocDocument represents AsciiDoc Document format.
+//
+// WHY: The document (subsection) layout in AsciiDoc is needed for modules
+// with verbose descriptions or complex types that don't fit in table cells.
+// It's the AsciiDoc counterpart of markdownDocument, targeting Antora sites
+// and PDF generation via asciidoctor-pdf where full-width sections are
+// standard practice.
 type asciidocDocument struct {
 	*generator
 
@@ -34,10 +40,14 @@ type asciidocDocument struct {
 func NewAsciidocDocument(config *print.Config) Type {
 	items := readTemplateItems(asciidocsDocumentFS, "asciidoc_document")
 
+	// WHY: Same rationale as asciidocTable—disable Markdown-style escaping
+	// to avoid corrupting AsciiDoc syntax.
 	config.Settings.Escape = false
 
 	tt := template.New(config, items...)
 	tt.CustomFunc(gotemplate.FuncMap{
+		// WHY: Multi-line values use AsciiDoc source blocks ([source,hcl])
+		// for proper syntax highlighting in Asciidoctor renderers.
 		"type": func(t string) string {
 			result, extraline := PrintFencedAsciidocCodeBlock(t, "hcl")
 			if !extraline {

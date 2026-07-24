@@ -22,14 +22,21 @@ import (
 // Ensure formatter fully satisfy plugin interface.
 var _ goplugin.Plugin = &formatter{}
 
-// handshakeConfig is used for UX. ProcotolVersion will be updated by incompatible changes.
+// handshakeConfig acts as a magic cookie that prevents users from accidentally
+// executing plugin binaries directly from the command line. go-plugin checks
+// this cookie and refuses to serve if it's absent, providing a clear error
+// instead of cryptic RPC failures. ProtocolVersion is bumped on breaking
+// changes to prevent incompatible host/plugin combinations from connecting.
 var handshakeConfig = goplugin.HandshakeConfig{
 	ProtocolVersion:  7,
 	MagicCookieKey:   "TFDOCS_PLUGIN",
 	MagicCookieValue: "A7U5oTDDJwdL6UKOw6RXATDa86NEo4xLK3rz7QqegT1N4EY66qb6UeAJDSxLwtXH",
 }
 
-// formatter is a wrapper to satisfy the interface of go-plugin.
+// formatter wraps the plugin's name, version, and print function to satisfy
+// go-plugin's Plugin interface (Server/Client factory pattern). This indirection
+// lets go-plugin manage the RPC lifecycle while keeping plugin authors' code
+// focused on the formatting logic itself.
 type formatter struct {
 	name    string
 	version string
@@ -66,6 +73,10 @@ func (*formatter) Client(b *goplugin.MuxBroker, c *rpc.Client) (interface{}, err
 	return &Client{rpcClient: c, broker: b}, nil
 }
 
+// init registers custom types with gob encoding. go-plugin uses gob for RPC
+// serialization; interface values (like terraform.Module fields that hold
+// types.String, types.List, etc.) must be registered upfront or gob will fail
+// to serialize them at runtime with an opaque "gob: type not registered" error.
 func init() {
 	gob.Register(new(types.Bool))
 	gob.Register(new(types.Empty))

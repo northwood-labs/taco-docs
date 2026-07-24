@@ -19,6 +19,8 @@ import (
 	"github.com/terraform-docs/terraform-docs/print"
 )
 
+// WHY: Golden-file test ensuring JSON output matches expected fixtures. JSON is a machine-readable
+// format used by downstream tooling, so structural changes must be intentional.
 func TestJson(t *testing.T) {
 	tests := map[string]struct {
 		config print.Config

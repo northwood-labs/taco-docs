@@ -18,6 +18,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// WHY: Validates String type detection and HasDefault behavior.
 func TestString(t *testing.T) {
 	values := List{"foo", "42", "false", "true"}
 	testPrimitive(t, []testprimitive{
@@ -44,6 +45,7 @@ func TestString(t *testing.T) {
 	})
 }
 
+// WHY: String.Length() returns character count for display decisions.
 func TestStringLength(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -84,6 +86,7 @@ func TestStringLength(t *testing.T) {
 	}
 }
 
+// WHY: Confirms the underlying string value is accessible for serialization.
 func TestStringUnderlying(t *testing.T) {
 	tests := []struct {
 		name  string
@@ -114,6 +117,7 @@ func TestStringUnderlying(t *testing.T) {
 	}
 }
 
+// WHY: Ensures strings are properly quoted/escaped in JSON, including edge cases like regex and empty strings.
 func TestStringMarshalJSON(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -157,6 +161,7 @@ func TestStringMarshalJSON(t *testing.T) {
 	}
 }
 
+// WHY: Ensures special XML characters (<, >, &, quotes) are properly escaped, and empty renders as xsi:nil.
 func TestStringMarshalXML(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -197,6 +202,7 @@ func TestStringMarshalXML(t *testing.T) {
 	}
 }
 
+// WHY: Ensures empty strings marshal to nil in YAML (omitted in output) rather than empty quoted strings.
 func TestStringMarshalYAML(t *testing.T) {
 	tests := []struct {
 		name     string

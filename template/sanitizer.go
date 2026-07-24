@@ -32,7 +32,8 @@ func SanitizeName(name string, escape bool) string {
 
 // SanitizeSection converts passed 'string' to suitable Markdown or AsciiDoc
 // representation for a document. (including line-break, illegal characters,
-// code blocks etc). This is in particular being used for header and footer.
+// code blocks etc). This is used for header and footer content where users
+// control the source text and line-endings must be preserved exactly as written.
 //
 // IMPORTANT: SanitizeSection will never change the line-endings and preserve
 // them as they are provided by the users.
@@ -71,8 +72,9 @@ func SanitizeSection(s string, escape bool, html bool) string {
 }
 
 // SanitizeDocument converts passed 'string' to suitable Markdown or AsciiDoc
-// representation for a document. (including line-break, illegal characters,
-// code blocks etc).
+// representation for a document (including line-break, illegal characters,
+// code blocks etc). Unlike SanitizeSection, this applies Markdown line-break
+// conversion to produce proper multi-line paragraph rendering.
 func SanitizeDocument(s string, escape bool, html bool) string {
 	if s == "" {
 		return "n/a"
@@ -98,8 +100,10 @@ func SanitizeDocument(s string, escape bool, html bool) string {
 	return result
 }
 
-// SanitizeMarkdownTable converts passed 'string' to suitable Markdown representation
-// for a table. (including line-break, illegal characters, code blocks etc).
+// SanitizeMarkdownTable converts passed 'string' to suitable Markdown
+// representation for a table cell. Table cells can't contain literal newlines
+// (they'd break the table structure), so line breaks are converted to <br/> or
+// spaces depending on HTML mode.
 func SanitizeMarkdownTable(s string, escape bool, html bool) string {
 	if s == "" {
 		return "n/a"
@@ -144,8 +148,9 @@ func SanitizeMarkdownTable(s string, escape bool, html bool) string {
 	return result
 }
 
-// SanitizeAsciidocTable converts passed 'string' to suitable AsciiDoc representation
-// for a table. (including line-break, illegal characters, code blocks etc).
+// SanitizeAsciidocTable converts passed 'string' to suitable AsciiDoc
+// representation for a table cell. AsciiDoc tables use different code block
+// syntax ([source]/----) and don't need HTML line-break conversion.
 func SanitizeAsciidocTable(s string, escape bool, html bool) string {
 	if s == "" {
 		return "n/a"
@@ -167,7 +172,10 @@ func SanitizeAsciidocTable(s string, escape bool, html bool) string {
 	return result
 }
 
-// ConvertMultiLineText converts a multi-line text into a suitable Markdown representation.
+// ConvertMultiLineText translates natural line breaks into Markdown-compatible
+// line breaks (double-space or <br/>) depending on whether we're in a table cell.
+// Markdown requires trailing double-spaces for soft line breaks within a paragraph;
+// tables need explicit <br/> tags since whitespace is collapsed in cells.
 func ConvertMultiLineText(s string, isTable bool, isHeader bool, showHTML bool) string {
 	if isTable {
 		s = strings.TrimSpace(s)
@@ -219,8 +227,10 @@ func ConvertOneLineCodeBlock(s string) string {
 	return strings.Join(result, " ")
 }
 
-// EscapeCharacters escapes characters which have special meaning in Markdown into
-// their corresponding literal.
+// EscapeCharacters prevents unintended Markdown formatting (e.g., underscores
+// in variable names becoming italics) while being careful not to escape inside
+// inline code spans. The processSegments split on backticks ensures code spans
+// are left untouched.
 func EscapeCharacters(s string, escape bool, escapePipe bool) string {
 	// Escape pipe (only for 'markdown table' or 'asciidoc table')
 	if escapePipe {
@@ -264,7 +274,11 @@ func EscapeCharacters(s string, escape bool, escapePipe bool) string {
 							i := r.FindAllStringSubmatchIndex(line, -1)
 							for j := range m {
 								for _, k := range c.index {
-									line = line[:i[j][k*2]] + strings.ReplaceAll(m[j][k], char, "‡‡‡DONTESCAPE‡‡‡") + line[i[j][(k*2)+1]:]
+									line = line[:i[j][k*2]] + strings.ReplaceAll(
+										m[j][k],
+										char,
+										"‡‡‡DONTESCAPE‡‡‡",
+									) + line[i[j][(k*2)+1]:]
 								}
 							}
 						}
@@ -285,9 +299,10 @@ func EscapeCharacters(s string, escape bool, escapePipe bool) string {
 	return s
 }
 
-// NormalizeURLs runs after escape function and normalizes URL back to the original
-// state. For example any underscore in the URL which got escaped by 'EscapeCharacters'
-// will be reverted back.
+// NormalizeURLs undoes over-eager escaping inside URLs where backslash-escaped
+// underscores would break links. This runs after EscapeCharacters because URLs
+// are identified by pattern matching and selectively un-escaped—it's simpler
+// than trying to detect URLs before escaping.
 func NormalizeURLs(s string, escape bool) string {
 	if escape {
 		if urls := xurls.Strict().FindAllString(s, -1); len(urls) > 0 {
@@ -302,6 +317,11 @@ func NormalizeURLs(s string, escape bool) string {
 
 type segmentCallbackFn func(string, bool, bool) string
 
+// processSegments is the core strategy for treating code blocks differently
+// from prose. Code blocks must not be escaped or sanitized because they contain
+// literal characters (underscores, pipes, etc.) that would be mangled by
+// escaping logic meant for prose text. Splitting on the delimiter and
+// alternating between normal/code callbacks achieves this cleanly.
 func processSegments(s string, prefix string, normalFn segmentCallbackFn, codeFn segmentCallbackFn) string {
 	// Isolate blocks of code. Dont escape anything inside them
 	nextIsInCodeBlock := strings.HasPrefix(s, prefix)

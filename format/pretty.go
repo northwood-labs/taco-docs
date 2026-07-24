@@ -25,6 +25,11 @@ import (
 var prettyTpl []byte
 
 // pretty represents colorized pretty format.
+//
+// WHY: During local development, authors need a quick visual overview
+// of a module's interface without opening rendered Markdown. Colorized
+// terminal output makes types, defaults, and descriptions easy to scan
+// at a glance—this is the "human preview" format.
 type pretty struct {
 	*generator
 
@@ -40,6 +45,9 @@ func NewPretty(config *print.Config) Type {
 		TrimSpace: true,
 	})
 	tt.CustomFunc(gotemplate.FuncMap{
+		// WHY: colorize wraps text in ANSI escape codes only when
+		// color is enabled, so the same template works for both TTY
+		// and piped/redirected output without conditional template logic.
 		"colorize": func(c string, s string) string {
 			r := "\033[0m"
 			if !config.Settings.Color {
@@ -58,6 +66,10 @@ func NewPretty(config *print.Config) Type {
 }
 
 // Generate a Terraform module document.
+//
+// WHY: Unlike file-based formatters, pretty output goes directly to
+// stdout so trailing newlines must be stripped to avoid blank lines
+// after the last entry when printed in a terminal.
 func (p *pretty) Generate(module *terraform.Module) error {
 	rendered, err := p.template.Render("pretty", module)
 	if err != nil {

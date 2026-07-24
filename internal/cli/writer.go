@@ -23,7 +23,9 @@ import (
 	"github.com/terraform-docs/terraform-docs/print"
 )
 
-// stdoutWriter writes content to os.Stdout.
+// stdoutWriter writes content to os.Stdout. It appends a trailing newline
+// because documentation output should end cleanly when piped or displayed
+// in a terminal — without it, the shell prompt would appear on the same line.
 type stdoutWriter struct{}
 
 // Write content to Stdout
@@ -31,18 +33,17 @@ func (sw *stdoutWriter) Write(p []byte) (int, error) {
 	return os.Stdout.WriteString(string(p) + "\n")
 }
 
-// fileWriter writes content to file.
+// fileWriter handles writing generated documentation to a file on disk. It
+// supports two operational modes that address different workflows:
 //
-// First of all it will process 'content' into provided 'template'.
+//   - "replace" mode: overwrites the entire file with generated content. This is
+//     the simpler model, suitable when the file is fully machine-generated.
 //
-// If 'mode' is 'replace' it replaces the whole content of 'dir/file'
-// with output of executed template. Note that this will create 'dir/file'
-// if it doesn't exist.
-//
-// If 'mode' is 'inject' it will attempt to inject the output of executed
-// template into 'dir/file' between the 'begin' and 'end' comment. Note that
-// this will fail if 'dir/file' doesn't exist, or doesn't contain 'begin' or
-// 'end' comment.
+//   - "inject" mode: inserts generated content between begin/end comment markers
+//     in an existing file. This enables the common pattern where a README has
+//     hand-written sections (project overview, examples) alongside an auto-generated
+//     section for inputs/outputs. The markers (e.g., <!-- BEGIN_TF_DOCS -->) allow
+//     the tool to update only its section without disturbing the rest.
 type fileWriter struct {
 	file string
 	dir  string
@@ -58,49 +59,52 @@ type fileWriter struct {
 	writer io.Writer
 }
 
-// Write content to target file
+// Write content to target file. The logic branches on output mode:
+//   - For "replace": apply template (if any) then write the whole file.
+//   - For "inject": apply template then splice the result between markers in the
+//     existing file content, preserving everything outside the markers.
 func (fw *fileWriter) Write(p []byte) (int, error) {
 	filename := fw.fullFilePath()
 
 	if fw.template == "" {
-		// template is optional for mode replace
+		// template is optional for mode replace — content is written as-is.
 		if fw.mode == print.OutputModeReplace {
 			return fw.write(filename, p)
 		}
 		return 0, errors.New("template is missing")
 	}
 
-	// apply template to generated output
+	// Wrap the raw content in the user's output template (which typically adds
+	// the begin/end comment markers around the generated documentation).
 	buf, err := fw.apply(p)
 	if err != nil {
 		return 0, err
 	}
 
-	// Replace the content of 'filename' with generated output,
-	// no further processing is required for mode 'replace'.
+	// In replace mode, the entire file becomes the templated output.
 	if fw.mode == print.OutputModeReplace {
 		return fw.write(filename, buf.Bytes())
 	}
 
 	content, err := os.ReadFile(filepath.Clean(filename))
 	if err != nil {
-		// In mode 'inject', if target file not found:
-		// create it and save the generated output into it.
+		// In inject mode, if the target file doesn't exist yet, create it with
+		// just the generated content — this bootstraps the initial file.
 		return fw.write(filename, buf.Bytes())
 	}
 
 	if len(content) == 0 {
-		// In mode 'inject', if target file is found BUT it's empty:
-		// save the generated output into it.
+		// An empty target file is treated the same as a missing one for inject mode.
 		return fw.write(filename, buf.Bytes())
 	}
 
 	return fw.inject(filename, string(content), buf.String())
 }
 
-// fullFilePath of the target file. If file is absolute path it will be
-// used as is, otherwise dir (i.e. module root folder) will be joined to
-// it.
+// fullFilePath resolves the output file path. If the configured path is absolute
+// it's used directly; otherwise it's joined with the module root directory. This
+// supports both project-relative paths (common) and absolute paths (rare but needed
+// for cross-project documentation aggregation).
 func (fw *fileWriter) fullFilePath() string {
 	if filepath.IsAbs(fw.file) {
 		return fw.file
@@ -108,7 +112,8 @@ func (fw *fileWriter) fullFilePath() string {
 	return filepath.Join(fw.dir, fw.file)
 }
 
-// apply template to generated output
+// apply wraps the generated content in the user's output template. The template
+// typically contains the begin/end comment markers with {{ .Content }} between them.
 func (fw *fileWriter) apply(p []byte) (bytes.Buffer, error) {
 	type content struct {
 		Content string
@@ -122,51 +127,55 @@ func (fw *fileWriter) apply(p []byte) (bytes.Buffer, error) {
 	return buf, err
 }
 
-// inject generated output into file.
+// inject splices generated content into an existing file between the begin and
+// end comment markers. This preserves any hand-written content above and below
+// the markers. The function validates marker presence and ordering to prevent
+// silent data corruption from malformed files.
 func (fw *fileWriter) inject(filename string, content string, generated string) (int, error) {
 	before := strings.Index(content, fw.begin)
 	after := strings.Index(content, fw.end)
 
-	// current file content doesn't have surrounding
-	// so we're going to append the generated output
-	// to current file.
+	// If neither marker is present, append the generated content to the existing
+	// file — this handles the first-time injection case for files that don't yet
+	// have markers but already have content.
 	if before < 0 && after < 0 {
 		return fw.write(filename, []byte(content+"\n"+generated))
 	}
 
-	// begin comment is missing
 	if before < 0 {
 		return 0, errors.New("begin comment is missing")
 	}
 
 	generated = content[:before] + generated
 
-	// end comment is missing
 	if after < 0 {
 		return 0, errors.New("end comment is missing")
 	}
 
-	// end comment is before begin comment
 	if after < before {
 		return 0, errors.New("end comment is before begin comment")
 	}
 
+	// Preserve everything after the end marker (including the marker itself is
+	// consumed, and content after it is re-appended).
 	generated += content[after+len(fw.end):]
 
 	return fw.write(filename, []byte(generated))
 }
 
-// write the content to io.Writer. If no io.Writer is available,
-// it will be written to 'filename'.
+// write persists content to disk (or to an injected io.Writer for testing). In
+// "check" mode it performs a diff instead of writing — this enables CI pipelines
+// to verify that generated docs are up-to-date without actually modifying files,
+// failing the build if changes are detected.
 func (fw *fileWriter) write(filename string, p []byte) (int, error) {
-	// if run in check mode return exit 1
+	// Check mode: compare against existing file content and report staleness
+	// without modifying anything. This supports CI "lint" workflows.
 	if fw.check {
 		f, err := os.ReadFile(filepath.Clean(filename))
 		if err != nil {
 			return 0, err
 		}
 
-		// check for changes and print changed file
 		if !bytes.Equal(f, p) {
 			return 0, fmt.Errorf("%s is out of date", filename)
 		}
@@ -175,11 +184,12 @@ func (fw *fileWriter) write(filename string, p []byte) (int, error) {
 		return 0, nil
 	}
 
+	// If an io.Writer was injected (for testing), use it instead of the filesystem.
 	if fw.writer != nil {
 		return fw.writer.Write(p)
 	}
 
-	err := os.WriteFile(filename, p, 0644)
+	err := os.WriteFile(filename, p, 0o644)
 	if err == nil {
 		fmt.Printf("%s updated successfully\n", filename)
 	}

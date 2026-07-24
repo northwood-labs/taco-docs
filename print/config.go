@@ -20,8 +20,10 @@ import (
 	"github.com/spf13/viper"
 )
 
-// Config represents all the available config options that can be accessed and
-// passed through CLI.
+// Config is the central data model for all user preferences. It serves as the
+// single source of truth passed to formatters, templates, and plugins.
+// mapstructure tags enable viper to decode YAML config files directly into this
+// struct without manual field-by-field assignment.
 type Config struct {
 	File         string       `mapstructure:"-"`
 	Formatter    string       `mapstructure:"formatter"`
@@ -52,7 +54,10 @@ func NewConfig() *Config {
 	}
 }
 
-// DefaultConfig returns new instance of Config with default values set.
+// DefaultConfig provides safe defaults that produce useful output without any
+// configuration. This implements the "convention over configuration" principle—
+// users get a reasonable result on first run and only need to customize what
+// they want to change.
 func DefaultConfig() *Config {
 	return &Config{
 		File:         "",
@@ -96,17 +101,17 @@ func (r *recursive) validate() error {
 }
 
 const (
-	sectionAll          = "all"
-	sectionDataSources      = "data-sources"
-	sectionFooter           = "footer"
-	sectionHeader           = "header"
-	sectionInputs           = "inputs"
-	sectionModules          = "modules"
-	sectionOutputs          = "outputs"
-	sectionProviders        = "providers"
+	sectionAll               = "all"
+	sectionDataSources       = "data-sources"
+	sectionFooter            = "footer"
+	sectionHeader            = "header"
+	sectionInputs            = "inputs"
+	sectionModules           = "modules"
+	sectionOutputs           = "outputs"
+	sectionProviders         = "providers"
 	sectionProviderFunctions = "provider-functions"
-	sectionRequirements     = "requirements"
-	sectionResources        = "resources"
+	sectionRequirements      = "requirements"
+	sectionResources         = "resources"
 )
 
 var allSections = []string{
@@ -177,6 +182,11 @@ func (s *sections) validate() error {
 	return nil
 }
 
+// visibility implements "show wins over hide" priority logic. When --show is
+// specified, only those sections appear (whitelist). When --hide is specified,
+// everything except those sections appears (blacklist). If neither is set, all
+// sections are visible. This two-mode approach gives users a concise way to
+// either opt-in or opt-out of specific sections.
 func (s *sections) visibility(section string) bool {
 	if len(s.Show) == 0 && len(s.Hide) == 0 {
 		return true
@@ -237,6 +247,10 @@ func defaultOutput() output {
 	}
 }
 
+// validate ensures template markers are well-formed to prevent silent injection
+// failures. Without this check, a malformed template would cause the generated
+// content to be silently dropped or written to the wrong location in the target
+// file when using --output-file with inject mode.
 func (o *output) validate() error {
 	if o.File == "" {
 		return nil
@@ -256,7 +270,9 @@ func (o *output) validate() error {
 	}
 
 	if !strings.Contains(o.Template, OutputContent) {
-		return fmt.Errorf("value of '--output-template' doesn't have '{{ .Content }}' (note that spaces inside '{{ }}' are mandatory)")
+		return fmt.Errorf(
+			"value of '--output-template' doesn't have '{{ .Content }}' (note that spaces inside '{{ }}' are mandatory)",
+		)
 	}
 
 	// No extra validation is needed for mode 'replace',
@@ -303,6 +319,10 @@ func (o *output) validate() error {
 	return nil
 }
 
+// isInlineComment recognizes multiple comment syntaxes so that begin/end
+// markers work correctly in both Markdown and AsciiDoc files. Users can choose
+// whichever comment style their target format supports.
+//
 // Detect if a particular line is a Markdown comment.
 //
 // ref: https://www.jamestharpe.com/markdown-comments/
@@ -426,7 +446,9 @@ func (s *settings) validate() error {
 	return nil
 }
 
-// Parse process config and set sections visibility.
+// Parse translates user-facing show/hide lists into boolean flags that templates
+// can check efficiently. Templates use these booleans to decide which sections
+// to render, avoiding repeated list lookups during template execution.
 func (c *Config) Parse() {
 	// sections
 	c.Sections.DataSources = c.Sections.visibility("data-sources")
@@ -446,7 +468,9 @@ func (c *Config) Parse() {
 	}
 }
 
-// Validate provided Config and check for any misuse or misconfiguration.
+// Validate catches misconfiguration early with clear error messages before
+// expensive module parsing begins. Failing fast here means users don't wait
+// for Terraform file traversal only to discover an invalid option.
 func (c *Config) Validate() error {
 	// formatter
 	if c.Formatter == "" {
@@ -483,9 +507,9 @@ func (c *Config) Validate() error {
 	return nil
 }
 
-// ReadConfig reads config file in `rootDir` with given `filename` and returns
-// instance of Config. It returns error if config file not found or there is a
-// problem with unmarshalling.
+// ReadConfig is a standalone config reader for use outside the CLI (e.g., in
+// tests or the plugin SDK). It encapsulates the full read→unmarshal→validate→parse
+// lifecycle so callers don't need to replicate the sequencing themselves.
 func ReadConfig(rootDir string, filename string) (*Config, error) {
 	cfg := NewConfig()
 

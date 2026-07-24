@@ -16,8 +16,17 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// WHY: Validates Number type detection across all Go numeric types (int, int8, float32, etc.).
 func TestNumber(t *testing.T) {
-	values := List{int(0), int8(42), int16(-1200), int32(1140085647), int64(8922336854775807), float32(13.75), float64(2317483.64)}
+	values := List{
+		int(0),
+		int8(42),
+		int16(-1200),
+		int32(1140085647),
+		int64(8922336854775807),
+		float32(13.75),
+		float64(2317483.64),
+	}
 	testPrimitive(t, []testprimitive{
 		{
 			name:   "value not nil and type number",
@@ -42,6 +51,7 @@ func TestNumber(t *testing.T) {
 	})
 }
 
+// WHY: Numbers are scalar—Length must be 0.
 func TestNumberLength(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -92,6 +102,7 @@ func TestNumberLength(t *testing.T) {
 	}
 }
 
+// WHY: Confirms the underlying float64 value is accessible for serialization.
 func TestNumberUnderlying(t *testing.T) {
 	tests := []struct {
 		name  string

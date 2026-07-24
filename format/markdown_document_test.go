@@ -19,6 +19,8 @@ import (
 	"github.com/terraform-docs/terraform-docs/print"
 )
 
+// WHY: Golden-file test ensuring Markdown document output matches expected fixtures across all config
+// combinations including HTML mode, escape mode, and ATX heading styles.
 func TestMarkdownDocument(t *testing.T) {
 	tests := map[string]struct {
 		config print.Config

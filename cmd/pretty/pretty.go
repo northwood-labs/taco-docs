@@ -17,7 +17,11 @@ import (
 	"github.com/terraform-docs/terraform-docs/print"
 )
 
-// NewCommand returns a new cobra.Command for pretty formatter
+// NewCommand registers the "pretty" subcommand. The pretty formatter produces
+// human-readable, colorized terminal output — it exists primarily for quick
+// local inspection of a module's interface without leaving the terminal. The
+// color flag allows disabling ANSI escape codes when output is piped or
+// captured in environments that don't support them.
 func NewCommand(runtime *cli.Runtime, config *print.Config) *cobra.Command {
 	cmd := &cobra.Command{
 		Args:        cobra.ExactArgs(1),

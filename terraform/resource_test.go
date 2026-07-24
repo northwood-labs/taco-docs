@@ -18,6 +18,7 @@ import (
 	"github.com/terraform-docs/terraform-docs/internal/types"
 )
 
+// WHY: Verifies Resource.Spec() produces "provider_type.name" format used across all output formatters.
 func TestResourceSpec(t *testing.T) {
 	assert := assert.New(t)
 	resource := Resource{
@@ -31,6 +32,7 @@ func TestResourceSpec(t *testing.T) {
 	assert.Equal("tls_private_key.baz", resource.Spec())
 }
 
+// WHY: Verifies resource mode (managed/data/invalid) is correctly mapped to human-readable strings.
 func TestResourceMode(t *testing.T) {
 	tests := map[string]struct {
 		resource    Resource
@@ -76,6 +78,8 @@ func TestResourceMode(t *testing.T) {
 	}
 }
 
+// WHY: Validates Terraform Registry URL construction from provider source. Non-standard sources must
+// return empty URL rather than a broken link.
 func TestResourceURL(t *testing.T) {
 	tests := map[string]struct {
 		resource    Resource
@@ -111,13 +115,29 @@ func TestResourceURL(t *testing.T) {
 	}
 }
 
+// WHY: Ensures resources sort by type (provider_type.name) with correct mode grouping (managed before data).
 func TestResourcesSortedByType(t *testing.T) {
 	assert := assert.New(t)
 	resources := sampleResources()
 
 	sortResourcesByType(resources)
 
-	expected := []string{"a_a.a", "a_f.f", "b_b.b", "b_d.d", "c_c.c", "c_e.c", "c_e.d", "c_e_x.c", "c_e_x.d", "z_z.z", "a_a.a", "z_z.z", "a_a.a", "z_z.z"}
+	expected := []string{
+		"a_a.a",
+		"a_f.f",
+		"b_b.b",
+		"b_d.d",
+		"c_c.c",
+		"c_e.c",
+		"c_e.d",
+		"c_e_x.c",
+		"c_e_x.d",
+		"z_z.z",
+		"a_a.a",
+		"z_z.z",
+		"a_a.a",
+		"z_z.z",
+	}
 	actual := make([]string, len(resources))
 
 	for k, i := range resources {
@@ -127,13 +147,29 @@ func TestResourcesSortedByType(t *testing.T) {
 	assert.Equal(expected, actual)
 }
 
+// WHY: Same as above but verifies mode is correctly appended in the sort output for display purposes.
 func TestResourcesSortedByTypeAndMode(t *testing.T) {
 	assert := assert.New(t)
 	resources := sampleResources()
 
 	sortResourcesByType(resources)
 
-	expected := []string{"a_a.a (r)", "a_f.f (r)", "b_b.b (r)", "b_d.d (r)", "c_c.c (r)", "c_e.c (r)", "c_e.d (r)", "c_e_x.c (r)", "c_e_x.d (r)", "z_z.z (r)", "a_a.a (d)", "z_z.z (d)", "a_a.a", "z_z.z"}
+	expected := []string{
+		"a_a.a (r)",
+		"a_f.f (r)",
+		"b_b.b (r)",
+		"b_d.d (r)",
+		"c_c.c (r)",
+		"c_e.c (r)",
+		"c_e.d (r)",
+		"c_e_x.c (r)",
+		"c_e_x.d (r)",
+		"z_z.z (r)",
+		"a_a.a (d)",
+		"z_z.z (d)",
+		"a_a.a",
+		"z_z.z",
+	}
 	actual := make([]string, len(resources))
 
 	for k, i := range resources {
@@ -150,6 +186,8 @@ func TestResourcesSortedByTypeAndMode(t *testing.T) {
 	assert.Equal(expected, actual)
 }
 
+// WHY: Validates version constraint parsing from provider blocks to determine Registry URL version.
+// Only exact versions should be used; ranges/pessimistic constraints should resolve to "latest".
 func TestResourceVersion(t *testing.T) {
 	tests := map[string]struct {
 		constraint []string

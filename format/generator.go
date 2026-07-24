@@ -22,6 +22,11 @@ import (
 )
 
 // generateFunc configures generator.
+//
+// WHY: Using a functional options pattern lets each formatter compose only the
+// sections it produces (e.g. tfvars only sets content, while markdown sets every
+// section individually). This avoids a large parameter list or mutable setter
+// methods and keeps section assignment both explicit and order-independent.
 type generateFunc func(*generator)
 
 // withContent specifies how the generator should add content.
@@ -109,6 +114,12 @@ func withModule(module *terraform.Module) generateFunc {
 // - asciidoc table
 // - markdown document
 // - markdown table
+//
+// WHY: generator is the shared base struct embedded by every formatter. It holds
+// the rendered section strings and the logic to compose them. By centralizing
+// section storage and the forEach iteration here, each concrete formatter only
+// needs to implement the rendering specifics (template selection, sanitization)
+// without duplicating content assembly or accessor boilerplate.
 type generator struct {
 	// all the content combined
 	content string
@@ -129,6 +140,10 @@ type generator struct {
 	path string         // module's path
 	fns  []generateFunc // generator helper functions
 
+	// WHY: canRender gates whether a formatter supports user-supplied content
+	// templates. Data-only formats (json, yaml, xml, toml) don't support custom
+	// templates because their output structure is fixed by the serialization
+	// format itself—reordering sections would produce invalid documents.
 	canRender bool // indicates if the generator can render with custom template
 }
 
@@ -184,6 +199,10 @@ func (g *generator) Module() *terraform.Module { return g.module }
 
 // funcs adds GenerateFunc to the list of available functions, for further use
 // if need be, and then runs them.
+//
+// WHY: Immediately executing each function (rather than deferring) guarantees
+// sections are populated by the time Generate returns. Storing them also allows
+// future callers or tests to replay or inspect which functions were applied.
 func (g *generator) funcs(fns ...generateFunc) {
 	for _, fn := range fns {
 		g.fns = append(g.fns, fn)
@@ -196,6 +215,13 @@ func (g *generator) Path(root string) {
 	g.path = root
 }
 
+// Render applies a user-supplied content template to the already-generated sections.
+//
+// WHY: Content templates let users control the order and inclusion of sections in
+// the final output (e.g. placing outputs before inputs, or injecting a custom
+// preamble). This method makes that possible by exposing the generator's sections
+// as template data. Formatters that don't support this (canRender=false) simply
+// return their pre-built content unchanged.
 func (g *generator) Render(tpl string) (string, error) {
 	if !g.canRender {
 		return g.content, nil
@@ -210,6 +236,9 @@ func (g *generator) Render(tpl string) (string, error) {
 		Text: tpl,
 	})
 	tt.CustomFunc(gotemplate.FuncMap{
+		// WHY: "include" lets content templates pull in external files (e.g. a
+		// hand-written overview or changelog) relative to the module root, so
+		// documentation can blend generated and manually-authored content.
 		"include": func(s string) string {
 			content, err := os.ReadFile(filepath.Join(g.path, filepath.Clean(s)))
 			if err != nil {
@@ -217,6 +246,9 @@ func (g *generator) Render(tpl string) (string, error) {
 			}
 			return strings.TrimSuffix(string(content), "\n")
 		},
+		// WHY: "include_optional" is the graceful counterpart—missing files
+		// don't break generation, they just fall back to a default string.
+		// This supports optional sections that may not exist in every module.
 		"include_optional": func(s string, fb string) string {
 			content, err := os.ReadFile(filepath.Join(g.path, filepath.Clean(s)))
 			if err != nil {
@@ -251,6 +283,13 @@ type generatorCallback func(string) generateFunc
 // section and create corresponding GeneratorFunc. If there is any error in
 // executing the template for the section forEach function immediately returns
 // it and exits.
+//
+// WHY: Template-based formatters (markdown, asciidoc) render every section
+// independently so each can be accessed in isolation (e.g. via the Content
+// Template's {{ .Inputs }} placeholder). forEach iterates the fixed set of
+// section names, renders each through the formatter's template, and wires the
+// result into the generator. This eliminates repetitive per-section render+store
+// code in every formatter.
 func (g *generator) forEach(render func(string) (string, error)) error {
 	mappings := map[string]generatorCallback{
 		"all":          withContent,

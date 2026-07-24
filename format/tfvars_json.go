@@ -22,6 +22,11 @@ import (
 )
 
 // tfvarsJSON represents Terraform tfvars JSON format.
+//
+// WHY: CI pipelines and automation tools (Terragrunt, Atlantis, custom scripts)
+// often generate variable values programmatically. A JSON .tfvars.json file is
+// easier to produce and parse from code than HCL, making this the preferred
+// format for machine-generated variable definitions.
 type tfvarsJSON struct {
 	*generator
 
@@ -29,6 +34,9 @@ type tfvarsJSON struct {
 }
 
 // NewTfvarsJSON returns new instance of TfvarsJSON.
+//
+// WHY: canRender is false because the output is a flat JSON object of
+// variable-name-to-default-value pairs—there are no sections to reorder.
 func NewTfvarsJSON(config *print.Config) Type {
 	return &tfvarsJSON{
 		generator: newGenerator(config, false),
@@ -37,6 +45,11 @@ func NewTfvarsJSON(config *print.Config) Type {
 }
 
 // Generate a Terraform module as Terraform tfvars JSON.
+//
+// WHY: An ordered map preserves the declaration order of inputs from the
+// module source. This makes diffs stable and the output predictable—users
+// won't see spurious reorderings on regeneration. SetEscapeHTML(false)
+// prevents Go's encoder from mangling URLs or HTML in default values.
 func (j *tfvarsJSON) Generate(module *terraform.Module) error {
 	copy := orderedmap.New()
 	copy.SetEscapeHTML(false)
