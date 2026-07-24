@@ -17,6 +17,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com), adheres t
 * [`903034b`](https://github.com/northwood-labs/taco-docs/commit/903034bd9a2b98caa29fd4e423f92a8fe30150bd): Clarify container image registry ([@Piyushkhobragade](https://github.com/Piyushkhobragade))
 * [`4de00bf`](https://github.com/northwood-labs/taco-docs/commit/4de00bf2713c96b02caa9f87b67bae4079685634): Add taco-docs fork documentation with PR merge status. ([@skyzyx](https://github.com/skyzyx))
 * [`63681a3`](https://github.com/northwood-labs/taco-docs/commit/63681a362ff473c6c1f9c5710a7b7f7c9ab05aaf): Add comprehensive architectural documentation with design rationale. ([@skyzyx](https://github.com/skyzyx))
+* [`0393399`](https://github.com/northwood-labs/taco-docs/commit/039339967ede18dc7e2a7bf9f754ca88847bebc8): Standardize documentation formatting and capitalization. ([@skyzyx](https://github.com/skyzyx))
 
 ### :tractor: Refactor
 
