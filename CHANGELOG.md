@@ -28,6 +28,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com), adheres t
 * [`67d48f8`](https://github.com/northwood-labs/taco-docs/commit/67d48f8a993eeb106de20b0fadda273b702978a0): Setup pre-commit hooks for devs ([@RemoteRabbit](https://github.com/RemoteRabbit))
 * [`909d4d5`](https://github.com/northwood-labs/taco-docs/commit/909d4d598c5a1f67e9bcb4559bf47985293e9781): **terraform**: Added provider function support ([@pillatipriyanka](https://github.com/pillatipriyanka))
 * [`cb0dcdb`](https://github.com/northwood-labs/taco-docs/commit/cb0dcdb4a68b543588179143a142e074ecc9e3b0): Sanitize bare URLs to Markdown format ([@liammoat](https://github.com/liammoat))
+* [`eee490a`](https://github.com/northwood-labs/taco-docs/commit/eee490a0338c33a6cbc221834191f9a12f11a6e8): Modernize codebase with MIT license, Go stdlib updates, and formatting improvements. ([@skyzyx](https://github.com/skyzyx))
 
 ### <!-- 1 -->:bug: Bug Fixes
 
