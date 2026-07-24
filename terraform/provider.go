@@ -1,5 +1,5 @@
-// Copyright 2021 The terraform-docs Authors.
-// Copyright 2026 Northwood Labs, LLC <license@northwood-labs.com>.
+// Copyright 2018-2026 The terraform-docs Authors.
+// Copyright 2026 Northwood Labs, LLC <license@northwood-labs.com>
 //
 // Licensed under the MIT license (the "License"); you may not
 // use this file except in compliance with the License.
@@ -38,6 +38,7 @@ func (p *Provider) FullName() string {
 	if p.Alias != "" {
 		return fmt.Sprintf("%s.%s", p.Name, p.Alias)
 	}
+
 	return p.Name
 }
 
@@ -46,6 +47,7 @@ func sortProvidersByName(x []*Provider) {
 		if x[i].Name == x[j].Name {
 			return x[i].Name == x[j].Name && x[i].Alias < x[j].Alias
 		}
+
 		return x[i].Name < x[j].Name
 	})
 }
@@ -56,8 +58,10 @@ func sortProvidersByPosition(x []*Provider) {
 			if x[i].Position.Line == x[j].Position.Line {
 				return x[i].FullName() < x[j].FullName()
 			}
+
 			return x[i].Position.Line < x[j].Position.Line
 		}
+
 		return x[i].Position.Filename < x[j].Position.Filename
 	})
 }
@@ -71,7 +75,7 @@ func (pp providers) sort(enabled bool, by string) { //nolint:unparam
 	if !enabled {
 		sortProvidersByPosition(pp)
 	} else {
-		// always sort by name if sorting is enabled
+		// always sort by name if sorting is enabled.
 		sortProvidersByName(pp)
 	}
 }

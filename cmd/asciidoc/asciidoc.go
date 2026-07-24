@@ -1,5 +1,5 @@
-// Copyright 2021 The terraform-docs Authors.
-// Copyright 2026 Northwood Labs, LLC <license@northwood-labs.com>.
+// Copyright 2018-2026 The terraform-docs Authors.
+// Copyright 2026 Northwood Labs, LLC <license@northwood-labs.com>
 //
 // Licensed under the MIT license (the "License"); you may not
 // use this file except in compliance with the License.
@@ -48,7 +48,7 @@ func NewCommand(runtime *cli.Runtime, config *print.Config) *cobra.Command {
 	cmd.PersistentFlags().BoolVar(&config.Settings.Sensitive, "sensitive", true, "show Sensitive column or section")
 	cmd.PersistentFlags().BoolVar(&config.Settings.Type, "type", true, "show Type column or section")
 
-	// subcommands
+	// subcommands.
 	cmd.AddCommand(document.NewCommand(runtime, config))
 	cmd.AddCommand(table.NewCommand(runtime, config))
 

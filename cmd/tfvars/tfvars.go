@@ -1,5 +1,5 @@
-// Copyright 2021 The terraform-docs Authors.
-// Copyright 2026 Northwood Labs, LLC <license@northwood-labs.com>.
+// Copyright 2018-2026 The terraform-docs Authors.
+// Copyright 2026 Northwood Labs, LLC <license@northwood-labs.com>
 //
 // Licensed under the MIT license (the "License"); you may not
 // use this file except in compliance with the License.
@@ -35,7 +35,7 @@ func NewCommand(runtime *cli.Runtime, config *print.Config) *cobra.Command {
 		Annotations: cli.Annotations("tfvars"),
 	}
 
-	// subcommands — HCL for native .tfvars format, JSON for .tfvars.json
+	// subcommands — HCL for native .tfvars format, JSON for .tfvars.json.
 	cmd.AddCommand(hcl.NewCommand(runtime, config))
 	cmd.AddCommand(json.NewCommand(runtime, config))
 

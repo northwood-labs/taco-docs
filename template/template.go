@@ -1,5 +1,5 @@
-// Copyright 2021 The terraform-docs Authors.
-// Copyright 2026 Northwood Labs, LLC <license@northwood-labs.com>.
+// Copyright 2018-2026 The terraform-docs Authors.
+// Copyright 2026 Northwood Labs, LLC <license@northwood-labs.com>
 //
 // Licensed under the MIT license (the "License"); you may not
 // use this file except in compliance with the License.
@@ -11,6 +11,7 @@ package template
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"strings"
 	gotemplate "text/template"
@@ -34,11 +35,10 @@ type Item struct {
 // This abstraction lets formatters focus on defining template text without
 // worrying about function wiring or template composition.
 type Template struct {
-	items  []*Item
-	config *print.Config
-
+	config     *print.Config
 	funcMap    gotemplate.FuncMap
 	customFunc gotemplate.FuncMap
+	items      []*Item
 }
 
 // New returns new instance of Template.
@@ -65,6 +65,7 @@ func (t *Template) CustomFunc(funcs gotemplate.FuncMap) {
 			t.customFunc[name] = fn
 		}
 	}
+
 	t.applyCustomFunc()
 }
 
@@ -87,15 +88,16 @@ func (t *Template) Render(name string, module *terraform.Module) (string, error)
 		Config: t.config,
 		Module: module,
 	}
+
 	return t.RenderContent(name, data)
 }
 
 // RenderContent is the low-level rendering method for arbitrary data. Used by
 // generator.Render for content templates where the data isn't necessarily a
 // terraform.Module (e.g., custom content templates with mixed data).
-func (t *Template) RenderContent(name string, data interface{}) (string, error) {
+func (t *Template) RenderContent(name string, data any) (string, error) {
 	if len(t.items) < 1 {
-		return "", fmt.Errorf("base template not found")
+		return "", errors.New("base template not found")
 	}
 
 	item := t.findByName(name)
@@ -127,13 +129,16 @@ func (t *Template) findByName(name string) *Item {
 		if len(t.items) > 0 {
 			return t.items[0]
 		}
+
 		return nil
 	}
+
 	for _, i := range t.items {
 		if i.Name == name {
 			return i
 		}
 	}
+
 	return nil
 }
 
@@ -143,10 +148,11 @@ func (t *Template) findByName(name string) *Item {
 // ensure correct behavior for documentation generation.
 func builtinFuncs(config *print.Config) gotemplate.FuncMap { // nolint:gocyclo
 	fns := gotemplate.FuncMap{
-		"default": func(_default string, value string) string {
+		"default": func(_default, value string) string {
 			if value != "" {
 				return value
 			}
+
 			return _default
 		},
 		"indent": func(extra int, char string) string {
@@ -155,8 +161,9 @@ func builtinFuncs(config *print.Config) gotemplate.FuncMap { // nolint:gocyclo
 		"name": func(name string) string {
 			return SanitizeName(name, config.Settings.Escape)
 		},
-		"ternary": func(condition interface{}, trueValue string, falseValue string) string {
+		"ternary": func(condition any, trueValue, falseValue string) string {
 			var c bool
+
 			switch x := fmt.Sprintf("%T", condition); x {
 			case "string":
 				c = condition.(string) != ""
@@ -165,48 +172,55 @@ func builtinFuncs(config *print.Config) gotemplate.FuncMap { // nolint:gocyclo
 			case "bool":
 				c = condition.(bool)
 			}
+
 			if c {
 				return trueValue
 			}
+
 			return falseValue
 		},
 		"tostring": func(s types.String) string {
 			return string(s)
 		},
 
-		// trim
-		"trim": func(cut string, s string) string {
+		// trim.
+		"trim": func(cut, s string) string {
 			if s != "" {
 				return strings.Trim(s, cut)
 			}
+
 			return s
 		},
-		"trimLeft": func(cut string, s string) string {
+		"trimLeft": func(cut, s string) string {
 			if s != "" {
 				return strings.TrimLeft(s, cut)
 			}
+
 			return s
 		},
-		"trimRight": func(cut string, s string) string {
+		"trimRight": func(cut, s string) string {
 			if s != "" {
 				return strings.TrimRight(s, cut)
 			}
+
 			return s
 		},
-		"trimPrefix": func(prefix string, s string) string {
+		"trimPrefix": func(prefix, s string) string {
 			if s != "" {
 				return strings.TrimPrefix(s, prefix)
 			}
+
 			return s
 		},
-		"trimSuffix": func(suffix string, s string) string {
+		"trimSuffix": func(suffix, s string) string {
 			if s != "" {
 				return strings.TrimSuffix(s, suffix)
 			}
+
 			return s
 		},
 
-		// sanitize
+		// sanitize.
 		"sanitizeSection": func(s string) string {
 			return SanitizeSection(s, config.Settings.Escape, config.Settings.HTML)
 		},
@@ -220,11 +234,11 @@ func builtinFuncs(config *print.Config) gotemplate.FuncMap { // nolint:gocyclo
 			return SanitizeAsciidocTable(s, config.Settings.Escape, config.Settings.HTML)
 		},
 
-		// anchors
-		"anchorNameMarkdown": func(prefix string, value string) string {
+		// anchors.
+		"anchorNameMarkdown": func(prefix, value string) string {
 			return CreateAnchorMarkdown(prefix, value, config.Settings.Anchor, config.Settings.Escape)
 		},
-		"anchorNameAsciidoc": func(prefix string, value string) string {
+		"anchorNameAsciidoc": func(prefix, value string) string {
 			return CreateAnchorAsciidoc(prefix, value, config.Settings.Anchor, config.Settings.Escape)
 		},
 	}
@@ -246,10 +260,12 @@ func normalize(s string, trimSpace bool) string {
 	if !trimSpace {
 		return s
 	}
+
 	split := strings.Split(s, "\n")
 	for i, v := range split {
 		split[i] = strings.TrimSpace(v)
 	}
+
 	return strings.Join(split, "\n")
 }
 
@@ -257,16 +273,19 @@ func normalize(s string, trimSpace bool) string {
 // generated docs at any nesting level in their documents. For example, if docs
 // are placed under a "## Terraform" section, indent=3 makes inputs/outputs
 // render as "###" headings, maintaining proper document hierarchy.
-func GenerateIndentation(base int, extra int, char string) string {
+func GenerateIndentation(base, extra int, char string) string {
 	if char == "" {
 		return ""
 	}
+
 	if base < 1 || base > 5 {
 		base = 2
 	}
-	var indent string
-	for i := 0; i < base+extra; i++ {
-		indent += char
+
+	var indent strings.Builder
+	for range base + extra {
+		indent.WriteString(char)
 	}
-	return indent
+
+	return indent.String()
 }

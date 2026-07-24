@@ -1,5 +1,5 @@
-// Copyright 2021 The terraform-docs Authors.
-// Copyright 2026 Northwood Labs, LLC <license@northwood-labs.com>.
+// Copyright 2018-2026 The terraform-docs Authors.
+// Copyright 2026 Northwood Labs, LLC <license@northwood-labs.com>
 //
 // Licensed under the MIT license (the "License"); you may not
 // use this file except in compliance with the License.
@@ -11,6 +11,7 @@ package format
 
 import (
 	"fmt"
+	"maps"
 
 	"github.com/northwood-labs/taco-docs/print"
 	"github.com/northwood-labs/taco-docs/terraform"
@@ -24,18 +25,18 @@ import (
 // Render allows custom content templates to recompose those sections in user-defined
 // order. This polymorphism keeps the command layer format-agnostic.
 type Type interface {
-	Generate(*terraform.Module) error // generate the Terraform module
+	Generate(*terraform.Module) error // generate the Terraform module.
 
-	Content() string // all the sections combined based on the underlying format
+	Content() string // all the sections combined based on the underlying format.
 
-	Header() string       // header section based on the underlying format
-	Footer() string       // footer section based on the underlying format
-	Inputs() string       // inputs section based on the underlying format
-	Modules() string      // modules section based on the underlying format
-	Outputs() string      // outputs section based on the underlying format
-	Providers() string    // providers section based on the underlying format
-	Requirements() string // requirements section based on the underlying format
-	Resources() string    // resources section based on the underlying format
+	Header() string       // header section based on the underlying format.
+	Footer() string       // footer section based on the underlying format.
+	Inputs() string       // inputs section based on the underlying format.
+	Modules() string      // modules section based on the underlying format.
+	Outputs() string      // outputs section based on the underlying format.
+	Providers() string    // providers section based on the underlying format.
+	Requirements() string // requirements section based on the underlying format.
+	Resources() string    // resources section based on the underlying format.
 
 	Render(tmpl string) (string, error)
 }
@@ -60,9 +61,8 @@ func register(e map[string]initializerFn) {
 	if e == nil {
 		return
 	}
-	for k, v := range e {
-		initializers[k] = v
-	}
+
+	maps.Copy(initializers, e)
 }
 
 // New initializes and returns the concrete implementation of
@@ -75,9 +75,11 @@ func register(e map[string]initializerFn) {
 // constructor, keeping the command layer ignorant of which formatters exist.
 func New(config *print.Config) (Type, error) {
 	name := config.Formatter
+
 	fn, ok := initializers[name]
 	if !ok {
 		return nil, fmt.Errorf("formatter '%s' not found", name)
 	}
+
 	return fn(config), nil
 }

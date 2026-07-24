@@ -1,5 +1,5 @@
-// Copyright 2021 The terraform-docs Authors.
-// Copyright 2026 Northwood Labs, LLC <license@northwood-labs.com>.
+// Copyright 2018-2026 The terraform-docs Authors.
+// Copyright 2026 Northwood Labs, LLC <license@northwood-labs.com>
 //
 // Licensed under the MIT license (the "License"); you may not
 // use this file except in compliance with the License.
@@ -21,9 +21,9 @@ func TestAnchorMarkdown(t *testing.T) {
 	tests := []struct {
 		typeSection string
 		name        string
+		expected    string
 		anchor      bool
 		escape      bool
-		expected    string
 	}{
 		{
 			typeSection: "module",
@@ -70,9 +70,9 @@ func TestAnchorAsciidoc(t *testing.T) {
 	tests := []struct {
 		typeSection string
 		name        string
+		expected    string
 		anchor      bool
 		escape      bool
-		expected    string
 	}{
 		{
 			typeSection: "module",

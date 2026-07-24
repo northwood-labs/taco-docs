@@ -1,0 +1,19 @@
+---
+# See https://aquasecurity.github.io/trivy/latest/docs/configuration/filtering/#trivyignore
+
+misconfigurations:
+  - statement: >
+      This is a test-only container. It is not deployed to production and is
+      only used for testing. Allowing privileged containers is acceptable in
+      this context.
+    id: DS-0002
+  - statement: >
+      This is a test-only container. It is not deployed to production and is
+      only used for testing. Allowing privileged containers is acceptable in
+      this context.
+    id: DS-0026
+  - statement: >
+      This is not real Terraform configuration that is used for production
+      services. It is only used for testing purposes.
+    paths:
+      - "terraform/testdata/**/*.tf"

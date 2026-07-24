@@ -1,5 +1,5 @@
-// Copyright 2021 The terraform-docs Authors.
-// Copyright 2026 Northwood Labs, LLC <license@northwood-labs.com>.
+// Copyright 2018-2026 The terraform-docs Authors.
+// Copyright 2026 Northwood Labs, LLC <license@northwood-labs.com>
 //
 // Licensed under the MIT license (the "License"); you may not
 // use this file except in compliance with the License.
@@ -33,7 +33,7 @@ type xml struct {
 //
 // WHY: canRender is false because XML's structure is dictated
 // by MarshalIndent; custom templates would break well-formedness.
-func NewXML(config *print.Config) Type {
+func NewXML(config *print.Config) *xml {
 	return &xml{
 		generator: newGenerator(config, false),
 		config:    config,

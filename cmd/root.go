@@ -1,5 +1,5 @@
-// Copyright 2021 The terraform-docs Authors.
-// Copyright 2026 Northwood Labs, LLC <license@northwood-labs.com>.
+// Copyright 2018-2026 The terraform-docs Authors.
+// Copyright 2026 Northwood Labs, LLC <license@northwood-labs.com>
 //
 // Licensed under the MIT license (the "License"); you may not
 // use this file except in compliance with the License.
@@ -39,6 +39,7 @@ func Execute() error {
 		fmt.Fprintf(os.Stderr, "Error: %s\n", err.Error())
 		return err
 	}
+
 	return nil
 }
 
@@ -76,7 +77,12 @@ func NewCommand() *cobra.Command {
 	cmd.PersistentFlags().
 		BoolVar(&config.Recursive.IncludeMain, "recursive-include-main", true, "include the main module")
 	cmd.PersistentFlags().
-		StringSliceVar(&config.Recursive.Exclude, "recursive-exclude", []string{}, "exclude directories from recursive update")
+		StringSliceVar(
+			&config.Recursive.Exclude,
+			"recursive-exclude",
+			[]string{},
+			"exclude directories from recursive update",
+		)
 
 	// Show/hide flags let users cherry-pick documentation sections without
 	// editing the config file — useful for CI pipelines that need different
@@ -94,7 +100,12 @@ func NewCommand() *cobra.Command {
 		StringVar(&config.Output.Mode, "output-mode", "inject", "output to file method ["+print.OutputModes+"]")
 	cmd.PersistentFlags().StringVar(&config.Output.Template, "output-template", print.OutputTemplate, "output template")
 	cmd.PersistentFlags().
-		BoolVar(&config.Output.Check, "output-check", false, "check if content of output file is up to date (default false)")
+		BoolVar(
+			&config.Output.Check,
+			"output-check",
+			false,
+			"check if content of output file is up to date (default false)",
+		)
 
 	cmd.PersistentFlags().BoolVar(&config.Sort.Enabled, "sort", true, "sort items")
 	cmd.PersistentFlags().StringVar(&config.Sort.By, "sort-by", "name", "sort items by criteria ["+print.SortTypes+"]")
@@ -110,12 +121,27 @@ func NewCommand() *cobra.Command {
 	// (from `terraform output -json`) into the documentation, giving readers
 	// visibility into current state alongside the schema.
 	cmd.PersistentFlags().
-		BoolVar(&config.OutputValues.Enabled, "output-values", false, "inject output values into outputs (default false)")
+		BoolVar(
+			&config.OutputValues.Enabled,
+			"output-values",
+			false,
+			"inject output values into outputs (default false)",
+		)
 	cmd.PersistentFlags().
-		StringVar(&config.OutputValues.From, "output-values-from", "", "inject output values from file into outputs (default \"\")")
+		StringVar(
+			&config.OutputValues.From,
+			"output-values-from",
+			"",
+			"inject output values from file into outputs (default \"\")",
+		)
 
 	cmd.PersistentFlags().
-		BoolVar(&config.Settings.ReadComments, "read-comments", true, "use comments as description when description is empty")
+		BoolVar(
+			&config.Settings.ReadComments,
+			"read-comments",
+			true,
+			"use comments as description when description is empty",
+		)
 
 	// Each formatter subcommand represents a distinct output format. They share
 	// the same runtime and config so that flag values and config-file settings

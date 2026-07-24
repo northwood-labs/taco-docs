@@ -1,5 +1,5 @@
-// Copyright 2021 The terraform-docs Authors.
-// Copyright 2026 Northwood Labs, LLC <license@northwood-labs.com>.
+// Copyright 2018-2026 The terraform-docs Authors.
+// Copyright 2026 Northwood Labs, LLC <license@northwood-labs.com>
 //
 // Licensed under the MIT license (the "License"); you may not
 // use this file except in compliance with the License.
@@ -59,20 +59,20 @@ func TestFileWriterFullPath(t *testing.T) {
 // A bug here could corrupt existing README files or silently skip content injection.
 func TestFileWriter(t *testing.T) {
 	content := "Lorem ipsum dolor sit amet, consectetur adipiscing elit"
+
 	tests := map[string]struct {
+		writer   io.Writer
 		file     string
 		mode     string
-		check    bool
 		template string
 		begin    string
 		end      string
-		writer   io.Writer
-
 		expected string
-		wantErr  bool
 		errMsg   string
+		check    bool
+		wantErr  bool
 	}{
-		// Successful writes
+		// Successful writes.
 		"ModeInject": {
 			file:     "mode-inject.md",
 			mode:     "inject",
@@ -191,7 +191,7 @@ func TestFileWriter(t *testing.T) {
 			errMsg:   "",
 		},
 
-		// Error writes
+		// Error writes.
 		"EmptyTemplate": {
 			file:     "not-applicable.md",
 			mode:     "inject",
@@ -280,16 +280,16 @@ func TestFileWriter(t *testing.T) {
 			_, err := io.WriteString(writer, content)
 
 			if tt.wantErr {
-				assert.NotNil(err)
+				assert.Error(err)
 				assert.Equal(tt.errMsg, err.Error())
 			} else {
-				assert.Nil(err)
+				assert.NoError(err)
 
 				w, ok := tt.writer.(*bytes.Buffer)
 				assert.True(ok, "tt.writer is not a valid bytes.Buffer")
 
 				expected, err := testutil.GetExpected("writer", tt.expected)
-				assert.Nil(err)
+				assert.NoError(err)
 
 				assert.Equal(expected, w.String())
 			}

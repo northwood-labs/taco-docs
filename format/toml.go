@@ -1,5 +1,5 @@
-// Copyright 2021 The terraform-docs Authors.
-// Copyright 2026 Northwood Labs, LLC <license@northwood-labs.com>.
+// Copyright 2018-2026 The terraform-docs Authors.
+// Copyright 2026 Northwood Labs, LLC <license@northwood-labs.com>
 //
 // Licensed under the MIT license (the "License"); you may not
 // use this file except in compliance with the License.
@@ -35,7 +35,7 @@ type toml struct {
 //
 // WHY: canRender is false because the TOML encoder controls
 // document structure; custom templates can't reorder it.
-func NewTOML(config *print.Config) Type {
+func NewTOML(config *print.Config) *toml {
 	return &toml{
 		generator: newGenerator(config, false),
 		config:    config,

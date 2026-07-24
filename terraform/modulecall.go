@@ -1,5 +1,5 @@
-// Copyright 2021 The terraform-docs Authors.
-// Copyright 2026 Northwood Labs, LLC <license@northwood-labs.com>.
+// Copyright 2018-2026 The terraform-docs Authors.
+// Copyright 2026 Northwood Labs, LLC <license@northwood-labs.com>
 //
 // Licensed under the MIT license (the "License"); you may not
 // use this file except in compliance with the License.
@@ -38,6 +38,7 @@ func (mc *ModuleCall) FullName() string {
 	if mc.Version != "" {
 		return fmt.Sprintf("%s,%s", mc.Source, mc.Version)
 	}
+
 	return mc.Source
 }
 
@@ -52,6 +53,7 @@ func sortModulecallsBySource(x []*ModuleCall) {
 		if x[i].Source == x[j].Source {
 			return x[i].Name < x[j].Name
 		}
+
 		return x[i].Source < x[j].Source
 	})
 }

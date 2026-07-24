@@ -1,5 +1,5 @@
-// Copyright 2021 The terraform-docs Authors.
-// Copyright 2026 Northwood Labs, LLC <license@northwood-labs.com>.
+// Copyright 2018-2026 The terraform-docs Authors.
+// Copyright 2026 Northwood Labs, LLC <license@northwood-labs.com>
 //
 // Licensed under the MIT license (the "License"); you may not
 // use this file except in compliance with the License.
@@ -35,7 +35,7 @@ type markdownDocument struct {
 }
 
 // NewMarkdownDocument returns new instance of Markdown Document.
-func NewMarkdownDocument(config *print.Config) Type {
+func NewMarkdownDocument(config *print.Config) *markdownDocument {
 	items := readTemplateItems(markdownDocumentFS, "markdown_document")
 
 	tt := template.New(config, items...)
@@ -48,16 +48,19 @@ func NewMarkdownDocument(config *print.Config) Type {
 			if !extraline {
 				result += "\n"
 			}
+
 			return result
 		},
 		"value": func(v string) string {
 			if v == "n/a" {
 				return v
 			}
+
 			result, extraline := PrintFencedCodeBlock(v, "json")
 			if !extraline {
 				result += "\n"
 			}
+
 			return result
 		},
 		// WHY: The "Required" badge is only shown when the user opts
@@ -82,6 +85,7 @@ func (d *markdownDocument) Generate(module *terraform.Module) error {
 		if err != nil {
 			return "", err
 		}
+
 		return sanitize(rendered), nil
 	})
 

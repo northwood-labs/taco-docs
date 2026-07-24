@@ -1,5 +1,5 @@
-// Copyright 2021 The terraform-docs Authors.
-// Copyright 2026 Northwood Labs, LLC <license@northwood-labs.com>.
+// Copyright 2018-2026 The terraform-docs Authors.
+// Copyright 2026 Northwood Labs, LLC <license@northwood-labs.com>
 //
 // Licensed under the MIT license (the "License"); you may not
 // use this file except in compliance with the License.
@@ -37,13 +37,11 @@ import (
 // instance is shared across PreRunE and RunE so that config parsing only happens
 // once and the resolved state is available to the generation step.
 type Runtime struct {
-	rootDir string
-
-	formatter string
-	config    *print.Config
-
+	config        *print.Config
 	cmd           *cobra.Command
 	isFlagChanged func(string) bool
+	rootDir       string
+	formatter     string
 }
 
 // NewRuntime returns a new instance of Runtime. A nil config is tolerated so
@@ -53,6 +51,7 @@ func NewRuntime(config *print.Config) *Runtime {
 	if config == nil {
 		config = print.DefaultConfig()
 	}
+
 	return &Runtime{config: config}
 }
 
@@ -80,7 +79,7 @@ func (r *Runtime) PreRunEFunc(cmd *cobra.Command, args []string) error {
 	// An empty --config value is an explicit user error (they passed -c ""),
 	// not a missing-file situation. Fail early with a clear message.
 	if r.config.File == "" {
-		return fmt.Errorf("value of '--config' can't be empty")
+		return errors.New("value of '--config' can't be empty")
 	}
 
 	// Viper handles the layered config file search. A new instance is created
@@ -105,8 +104,8 @@ func (r *Runtime) PreRunEFunc(cmd *cobra.Command, args []string) error {
 // module pairs a filesystem path with its resolved configuration. Each module
 // (root or sub) may have its own .terraform-docs.yml that overrides the root config.
 type module struct {
-	rootDir string
 	config  *print.Config
+	rootDir string
 }
 
 // RunEFunc is cobra's main execution hook. It orchestrates the end-to-end flow:
@@ -114,13 +113,13 @@ type module struct {
 // generate + write output for each one. The recursive mode exists because many
 // Terraform repos contain a top-level module plus submodules under a "modules/"
 // directory, and users want all of them documented in a single command.
-func (r *Runtime) RunEFunc(cmd *cobra.Command, args []string) error { //nolint:gocyclo
+func (r *Runtime) RunEFunc(cmd *cobra.Command, args []string) error {
 	modules := []module{}
 
 	// Include the main module unless the user explicitly excluded it via config.
 	// This gives users control over documenting only submodules when needed.
 	if !r.config.Recursive.Enabled || r.config.Recursive.IncludeMain {
-		modules = append(modules, module{r.rootDir, r.config})
+		modules = append(modules, module{config: r.config, rootDir: r.rootDir})
 	}
 
 	// Recursive discovery scans the configured path for Terraform submodules.
@@ -153,7 +152,7 @@ func (r *Runtime) RunEFunc(cmd *cobra.Command, args []string) error { //nolint:g
 		// Recursive mode without an output file would produce concatenated stdout
 		// with no separator between modules — an unusable result. Fail explicitly.
 		if r.config.Recursive.Enabled && cfg.Output.File == "" {
-			return fmt.Errorf("value of '--output-file' cannot be empty with '--recursive'")
+			return errors.New("value of '--output-file' cannot be empty with '--recursive'")
 		}
 
 		if err := generateContent(cfg); err != nil {
@@ -169,13 +168,14 @@ func (r *Runtime) RunEFunc(cmd *cobra.Command, args []string) error { //nolint:g
 //   - If --config was explicitly provided, use that exact file (fail if missing).
 //   - Otherwise, search module root, then CWD, then user home — this supports both
 //     per-module configs and global user defaults without requiring any flags.
-func (r *Runtime) readConfig(v *viper.Viper, file string, submoduleDir string) error {
+func (r *Runtime) readConfig(v *viper.Viper, file, submoduleDir string) error {
 	if r.isFlagChanged("config") {
 		// User explicitly specified a config file — resolve it absolutely so that
 		// relative paths work regardless of CWD vs. module path.
 		if absFile, err := filepath.Abs(file); err == nil {
 			file = absFile
 		}
+
 		v.SetConfigFile(file)
 	} else {
 		v.SetConfigName(".terraform-docs")
@@ -196,13 +196,11 @@ func (r *Runtime) readConfig(v *viper.Viper, file string, submoduleDir string) e
 	v.AddConfigPath("$HOME/.tfdocs.d")
 
 	if err := v.ReadInConfig(); err != nil {
-		var perr *os.PathError
-		if errors.As(err, &perr) {
+		if _, ok := errors.AsType[*os.PathError](err); ok {
 			return fmt.Errorf("config file %s not found", file)
 		}
 
-		var cerr viper.ConfigFileNotFoundError
-		if !errors.As(err, &cerr) {
+		if _, ok := errors.AsType[viper.ConfigFileNotFoundError](err); !ok {
 			return err
 		}
 
@@ -245,7 +243,7 @@ func (r *Runtime) unmarshalConfig(v *viper.Viper, config *print.Config) error {
 // flag values don't accidentally override config-file settings. The special
 // handling of show/hide ensures that CLI flags fully replace (not merge with)
 // config-file section lists, which matches user expectations of "I said --show
-// inputs, so only show inputs."
+// inputs, so only show inputs.".
 func (r *Runtime) bindFlags(v *viper.Viper) {
 	sectionsCleared := false
 	fs := r.cmd.Flags()
@@ -262,6 +260,7 @@ func (r *Runtime) bindFlags(v *viper.Viper) {
 			if !sectionsCleared {
 				v.Set("sections.show", []string{})
 				v.Set("sections.hide", []string{})
+
 				sectionsCleared = true
 			}
 
@@ -269,6 +268,7 @@ func (r *Runtime) bindFlags(v *viper.Viper) {
 			if err != nil {
 				return
 			}
+
 			v.Set(flagMappings[f.Name], items)
 		case "sort-by-required", "sort-by-type":
 			// Legacy flags that set the sort criteria by their mere presence.
@@ -277,6 +277,7 @@ func (r *Runtime) bindFlags(v *viper.Viper) {
 			if _, ok := flagMappings[f.Name]; !ok {
 				return
 			}
+
 			v.Set(flagMappings[f.Name], f.Value)
 		}
 	})
@@ -417,6 +418,7 @@ func (r *Runtime) loadModuleConfig(path string) (*print.Config, error) {
 			return nil, err
 		}
 	}
+
 	return cfg, nil
 }
 
@@ -424,7 +426,7 @@ func (r *Runtime) loadModuleConfig(path string) (*print.Config, error) {
 // prevents silent misbehavior when a config file uses features from a newer
 // terraform-docs version — instead the user gets an explicit error with the
 // constraint and current version, guiding them to upgrade.
-func checkConstraint(versionRange string, currentVersion string) error {
+func checkConstraint(versionRange, currentVersion string) error {
 	if versionRange == "" {
 		return nil
 	}
@@ -484,7 +486,7 @@ func generateContent(config *print.Config) error {
 	}
 
 	// Render applies the user's custom content template (if provided) to the
-	// generated sections. An empty template means "use default section order."
+	// generated sections. An empty template means "use default section order.".
 	content, err := formatter.Render(config.Content)
 	if err != nil {
 		return err

@@ -1,5 +1,5 @@
-// Copyright 2021 The terraform-docs Authors.
-// Copyright 2026 Northwood Labs, LLC <license@northwood-labs.com>.
+// Copyright 2018-2026 The terraform-docs Authors.
+// Copyright 2026 Northwood Labs, LLC <license@northwood-labs.com>
 //
 // Licensed under the MIT license (the "License"); you may not
 // use this file except in compliance with the License.
@@ -28,8 +28,8 @@ func TestInputValue(t *testing.T) {
 
 	tests := []struct {
 		name           string
-		input          Input
 		expectValue    string
+		input          Input
 		expectDefault  bool
 		expectRequired bool
 	}{
@@ -216,6 +216,7 @@ func TestInputValue(t *testing.T) {
 // Incorrect sort means documentation order doesn't match user expectations or file structure.
 func TestInputsSorted(t *testing.T) {
 	inputs := sampleInputs()
+
 	tests := map[string]struct {
 		sortType func([]*Input)
 		expected []string

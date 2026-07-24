@@ -1,5 +1,5 @@
-// Copyright 2021 The terraform-docs Authors.
-// Copyright 2026 Northwood Labs, LLC <license@northwood-labs.com>.
+// Copyright 2018-2026 The terraform-docs Authors.
+// Copyright 2026 Northwood Labs, LLC <license@northwood-labs.com>
 //
 // Licensed under the MIT license (the "License"); you may not
 // use this file except in compliance with the License.
@@ -15,11 +15,11 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"slices"
 	"sort"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"golang.org/x/exp/slices"
 
 	"github.com/northwood-labs/taco-docs/print"
 )
@@ -30,29 +30,30 @@ func TestLoadModuleWithOptions(t *testing.T) {
 	assert := assert.New(t)
 
 	config := print.NewConfig()
+
 	config.ModuleRoot = filepath.Join("testdata", "full-example")
 	config.Sections.Header = true
 
 	module, err := LoadWithOptions(config)
 
-	assert.Nil(err)
-	assert.Equal(true, module.HasHeader())
-	assert.Equal(false, module.HasFooter())
-	assert.Equal(true, module.HasInputs())
-	assert.Equal(true, module.HasOutputs())
-	assert.Equal(true, module.HasModuleCalls())
-	assert.Equal(true, module.HasProviders())
-	assert.Equal(true, module.HasRequirements())
-	assert.Equal(true, module.HasResources())
+	assert.NoError(err)
+	assert.True(module.HasHeader())
+	assert.False(module.HasFooter())
+	assert.True(module.HasInputs())
+	assert.True(module.HasOutputs())
+	assert.True(module.HasModuleCalls())
+	assert.True(module.HasProviders())
+	assert.True(module.HasRequirements())
+	assert.True(module.HasResources())
 
 	config.Sections.Header = false
 	config.Sections.Footer = true
 	config.FooterFrom = "doc.tf"
 
 	module, err = LoadWithOptions(config)
-	assert.Nil(err)
-	assert.Equal(true, module.HasFooter())
-	assert.Equal(false, module.HasHeader())
+	assert.NoError(err)
+	assert.True(module.HasFooter())
+	assert.False(module.HasHeader())
 }
 
 // WHY: Confirms the HCL parser can load modules from valid paths and fails gracefully for missing ones.
@@ -76,11 +77,12 @@ func TestLoadModule(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			assert := assert.New(t)
+
 			_, err := loadModule(filepath.Join("testdata", tt.path))
 			if tt.wantErr {
-				assert.NotNil(err)
+				assert.Error(err)
 			} else {
-				assert.Nil(err)
+				assert.NoError(err)
 			}
 		})
 	}
@@ -139,10 +141,10 @@ func TestIsFileFormatSupported(t *testing.T) {
 	tests := []struct {
 		name     string
 		filename string
-		expected bool
-		wantErr  bool
 		errText  string
 		section  string
+		expected bool
+		wantErr  bool
 	}{
 		{
 			name:     "is file format supported",
@@ -220,12 +222,13 @@ func TestIsFileFormatSupported(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			assert := assert.New(t)
+
 			actual, err := isFileFormatSupported(tt.filename, tt.section)
 			if tt.wantErr {
-				assert.NotNil(err)
+				assert.Error(err)
 				assert.Equal(tt.errText, err.Error())
 			} else {
-				assert.Nil(err)
+				assert.NoError(err)
 				assert.Equal(tt.expected, actual)
 			}
 		})
@@ -236,10 +239,10 @@ func TestIsFileFormatSupported(t *testing.T) {
 // descriptions in generated docs would be empty or contain raw HCL syntax.
 func TestLoadHeader(t *testing.T) {
 	tests := []struct {
+		expectedData func() (string, error)
 		name         string
 		testData     string
 		showHeader   bool
-		expectedData func() (string, error)
 	}{
 		{
 			name:       "loadHeader should return a string from file",
@@ -248,6 +251,7 @@ func TestLoadHeader(t *testing.T) {
 			expectedData: func() (string, error) {
 				path := filepath.Join("testdata", "expected", "full-example-mainTf-Header.golden")
 				data, err := os.ReadFile(path)
+
 				return string(data), err
 			},
 		},
@@ -265,14 +269,15 @@ func TestLoadHeader(t *testing.T) {
 			assert := assert.New(t)
 
 			config := print.NewConfig()
+
 			config.ModuleRoot = filepath.Join("testdata", tt.testData)
 			config.Sections.Header = tt.showHeader
 
 			expected, err := tt.expectedData()
-			assert.Nil(err)
+			assert.NoError(err)
 
 			header, err := loadHeader(config)
-			assert.Nil(err)
+			assert.NoError(err)
 			assert.Equal(expected, header)
 		})
 	}
@@ -281,11 +286,11 @@ func TestLoadHeader(t *testing.T) {
 // WHY: Mirrors TestLoadHeader but for footers; ensures footer-from logic works independently.
 func TestLoadFooter(t *testing.T) {
 	tests := []struct {
+		expectedData func() (string, error)
 		name         string
 		testData     string
 		footerFile   string
 		showFooter   bool
-		expectedData func() (string, error)
 	}{
 		{
 			name:       "loadFooter should return a string from file",
@@ -295,6 +300,7 @@ func TestLoadFooter(t *testing.T) {
 			expectedData: func() (string, error) {
 				path := filepath.Join("testdata", "expected", "full-example-mainTf-Header.golden")
 				data, err := os.ReadFile(path)
+
 				return string(data), err
 			},
 		},
@@ -313,15 +319,16 @@ func TestLoadFooter(t *testing.T) {
 			assert := assert.New(t)
 
 			config := print.NewConfig()
+
 			config.ModuleRoot = filepath.Join("testdata", tt.testData)
 			config.Sections.Footer = tt.showFooter
 			config.FooterFrom = tt.footerFile
 
 			expected, err := tt.expectedData()
-			assert.Nil(err)
+			assert.NoError(err)
 
 			header, err := loadFooter(config)
-			assert.Nil(err)
+			assert.NoError(err)
 			assert.Equal(expected, header)
 		})
 	}
@@ -335,9 +342,9 @@ func TestLoadSections(t *testing.T) {
 		path     string
 		file     string
 		expected string
-		wantErr  bool
 		errText  string
 		section  string
+		wantErr  bool
 	}{
 		{
 			name:     "load module header from path",
@@ -462,14 +469,15 @@ func TestLoadSections(t *testing.T) {
 			assert := assert.New(t)
 
 			config := print.NewConfig()
+
 			config.ModuleRoot = filepath.Join("testdata", tt.path)
 
 			actual, err := loadSection(config, tt.file, tt.section)
 			if tt.wantErr {
-				assert.NotNil(err)
+				assert.Error(err)
 				assert.Equal(tt.errText, err.Error())
 			} else {
-				assert.Nil(err)
+				assert.NoError(err)
 				assert.Equal(tt.expected, actual)
 			}
 		})
@@ -483,9 +491,9 @@ func TestLoadSectionsFromUrl(t *testing.T) {
 		name     string
 		file     string
 		expected string
-		wantErr  bool
 		errText  string
 		section  string
+		wantErr  bool
 	}{
 		{
 			name:     "load module header from url",
@@ -501,12 +509,13 @@ func TestLoadSectionsFromUrl(t *testing.T) {
 			assert := assert.New(t)
 
 			config := print.NewConfig()
+
 			actual, err := loadSection(config, tt.file, tt.section)
 			if tt.wantErr {
-				assert.NotNil(err)
+				assert.Error(err)
 				assert.Equal(tt.errText, err.Error())
 			} else {
-				assert.Nil(err)
+				assert.NoError(err)
 				assert.Equal(tt.expected, actual)
 			}
 		})
@@ -565,20 +574,21 @@ func TestGetSource(t *testing.T) {
 
 // WHY: Validates HTTP request handling for remote section loading, including timeout behavior.
 func TestSendHTTPRequest(t *testing.T) {
-	// Create a mock server
+	// Create a mock server.
 	mockHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("Mock response"))
 	})
+
 	mockServer := httptest.NewServer(mockHandler)
 	defer mockServer.Close()
 
 	tests := []struct {
 		name          string
 		url           string
-		responseCode  int
 		responseBody  string
 		expectedBody  string
+		responseCode  int
 		expectedError bool
 	}{
 		{
@@ -592,7 +602,7 @@ func TestSendHTTPRequest(t *testing.T) {
 		{
 			name:          "Timeout",
 			url:           "http://unreachable",
-			responseCode:  0, // No response code due to timeout
+			responseCode:  0, // No response code due to timeout.
 			responseBody:  "",
 			expectedBody:  "",
 			expectedError: true,
@@ -622,6 +632,7 @@ func TestLoadInputs(t *testing.T) {
 		requireds int // codespell:ignore requireds
 		optionals int
 	}
+
 	tests := []struct {
 		name     string
 		path     string
@@ -672,9 +683,9 @@ func TestLoadInputs(t *testing.T) {
 			module, _ := loadModule(filepath.Join("testdata", tt.path))
 			inputs, requireds, optionals := loadInputs(module, config) // codespell:ignore requireds
 
-			assert.Equal(tt.expected.inputs, len(inputs))
-			assert.Equal(tt.expected.requireds, len(requireds)) // codespell:ignore requireds
-			assert.Equal(tt.expected.optionals, len(optionals))
+			assert.Len(inputs, tt.expected.inputs)
+			assert.Len(requireds, tt.expected.requireds) // codespell:ignore requireds
+			assert.Len(optionals, tt.expected.optionals)
 		})
 	}
 }
@@ -705,7 +716,7 @@ func TestLoadModulecalls(t *testing.T) {
 			module, _ := loadModule(filepath.Join("testdata", tt.path))
 			modulecalls := loadModulecalls(module, config)
 
-			assert.Equal(tt.expected, len(modulecalls))
+			assert.Len(modulecalls, tt.expected)
 		})
 	}
 }
@@ -737,7 +748,7 @@ func TestLoadInputsLineEnding(t *testing.T) {
 			module, _ := loadModule(filepath.Join("testdata", tt.path))
 			inputs, _, _ := loadInputs(module, config)
 
-			assert.Equal(1, len(inputs))
+			assert.Len(inputs, 1)
 			assert.Equal(tt.expected, string(inputs[0].Description))
 		})
 	}
@@ -748,6 +759,7 @@ func TestLoadOutputs(t *testing.T) {
 	type expected struct {
 		outputs int
 	}
+
 	tests := []struct {
 		name     string
 		path     string
@@ -776,11 +788,11 @@ func TestLoadOutputs(t *testing.T) {
 			module, _ := loadModule(filepath.Join("testdata", tt.path))
 			outputs, err := loadOutputs(module, config)
 
-			assert.Nil(err)
-			assert.Equal(tt.expected.outputs, len(outputs))
+			assert.NoError(err)
+			assert.Len(outputs, tt.expected.outputs)
 
 			for _, v := range outputs {
-				assert.Equal(false, v.ShowValue)
+				assert.False(v.ShowValue)
 			}
 		})
 	}
@@ -812,7 +824,7 @@ func TestLoadOutputsLineEnding(t *testing.T) {
 			module, _ := loadModule(filepath.Join("testdata", tt.path))
 			outputs, _ := loadOutputs(module, config)
 
-			assert.Equal(1, len(outputs))
+			assert.Len(outputs, 1)
 			assert.Equal(tt.expected, string(outputs[0].Description))
 		})
 	}
@@ -824,6 +836,7 @@ func TestLoadOutputsValues(t *testing.T) {
 	type expected struct {
 		outputs int
 	}
+
 	tests := []struct {
 		name       string
 		path       string
@@ -860,6 +873,7 @@ func TestLoadOutputsValues(t *testing.T) {
 			assert := assert.New(t)
 
 			config := print.NewConfig()
+
 			config.OutputValues.Enabled = true
 			config.OutputValues.From = filepath.Join("testdata", tt.path, tt.outputPath)
 
@@ -867,13 +881,13 @@ func TestLoadOutputsValues(t *testing.T) {
 			outputs, err := loadOutputs(module, config)
 
 			if tt.wantErr {
-				assert.NotNil(err)
+				assert.Error(err)
 			} else {
-				assert.Nil(err)
-				assert.Equal(tt.expected.outputs, len(outputs))
+				assert.NoError(err)
+				assert.Len(outputs, tt.expected.outputs)
 
 				for _, v := range outputs {
-					assert.Equal(true, v.ShowValue)
+					assert.True(v.ShowValue)
 				}
 			}
 		})
@@ -886,11 +900,12 @@ func TestLoadProviders(t *testing.T) {
 	type expected struct {
 		providers []string
 	}
+
 	tests := []struct {
 		name     string
 		path     string
-		lockfile bool
 		expected expected
+		lockfile bool
 	}{
 		{
 			name:     "load module providers from path",
@@ -929,6 +944,7 @@ func TestLoadProviders(t *testing.T) {
 			assert := assert.New(t)
 
 			config := print.NewConfig()
+
 			config.ModuleRoot = filepath.Join("testdata", tt.path)
 			config.Settings.LockFile = tt.lockfile
 
@@ -940,6 +956,7 @@ func TestLoadProviders(t *testing.T) {
 			for _, p := range providers {
 				actual = append(actual, p.FullName()+"-"+string(p.Version))
 			}
+
 			sort.Strings(actual)
 
 			assert.Equal(tt.expected.providers, actual)
@@ -952,6 +969,7 @@ func TestLoadRequirements(t *testing.T) {
 	type expected struct {
 		requirements []string
 	}
+
 	tests := []struct {
 		name     string
 		path     string
@@ -979,7 +997,7 @@ func TestLoadRequirements(t *testing.T) {
 			module, _ := loadModule(filepath.Join("testdata", tt.path))
 			requirements := loadRequirements(module)
 
-			assert.Equal(len(tt.expected.requirements), len(requirements))
+			assert.Len(requirements, len(tt.expected.requirements))
 
 			for i, r := range tt.expected.requirements {
 				assert.Equal(r, fmt.Sprintf("%s %s", requirements[i].Name, requirements[i].Version))
@@ -993,6 +1011,7 @@ func TestLoadResources(t *testing.T) {
 	type expected struct {
 		resources []string
 	}
+
 	tests := []struct {
 		name     string
 		path     string
@@ -1021,7 +1040,7 @@ func TestLoadResources(t *testing.T) {
 			module, _ := loadModule(filepath.Join("testdata", tt.path))
 			resources := loadResources(module, config)
 
-			assert.Equal(len(tt.expected.resources), len(resources))
+			assert.Len(resources, len(tt.expected.resources))
 
 			for _, r := range resources {
 				assert.True(
@@ -1037,6 +1056,7 @@ func TestLoadProviderFunctions(t *testing.T) {
 	type expected struct {
 		providerFunctions []string
 	}
+
 	tests := []struct {
 		name     string
 		path     string
@@ -1062,11 +1082,13 @@ func TestLoadProviderFunctions(t *testing.T) {
 			assert := assert.New(t)
 
 			config := print.NewConfig()
+
 			config.ModuleRoot = filepath.Join("testdata", tt.path)
+
 			module, _ := loadModule(filepath.Join("testdata", tt.path))
 			providerFunctions := loadProviderFunctions(module, config)
 
-			assert.Equal(len(tt.expected.providerFunctions), len(providerFunctions))
+			assert.Len(providerFunctions, len(tt.expected.providerFunctions))
 
 			for _, pf := range providerFunctions {
 				assert.True(slices.Contains(tt.expected.providerFunctions, pf.Spec()))
@@ -1081,8 +1103,8 @@ func TestLoadProvidersDeterministic(t *testing.T) {
 	tests := []struct {
 		name        string
 		path        string
-		sortenabled bool
 		expected    []string
+		sortenabled bool
 	}{
 		{
 			name:        "position sort is deterministic when a provider has multiple resources",
@@ -1115,9 +1137,9 @@ func TestLoadProvidersDeterministic(t *testing.T) {
 
 			config := print.NewConfig()
 			module, err := loadModule(filepath.Join("testdata", tt.path))
-			assert.Nil(err)
+			assert.NoError(err)
 
-			for i := 0; i < 100; i++ {
+			for i := range 100 {
 				pp := loadProviders(module, config)
 				providers(pp).sort(tt.sortenabled, "")
 
@@ -1125,6 +1147,7 @@ func TestLoadProvidersDeterministic(t *testing.T) {
 				for j, p := range pp {
 					actual[j] = p.FullName()
 				}
+
 				assert.Equal(tt.expected, actual, "iteration %d", i)
 			}
 		})
@@ -1150,15 +1173,16 @@ func TestLoadResourcesDeterministic(t *testing.T) {
 
 			config := print.NewConfig()
 			module, err := loadModule(filepath.Join("testdata", tt.path))
-			assert.Nil(err)
+			assert.NoError(err)
 
-			for i := 0; i < 100; i++ {
+			for i := range 100 {
 				rr := loadResources(module, config)
 
 				actual := make([]string, len(rr))
 				for j, r := range rr {
 					actual[j] = r.Spec()
 				}
+
 				assert.Equal(tt.expected, actual, "iteration %d", i)
 			}
 		})
@@ -1172,8 +1196,8 @@ func TestLoadComments(t *testing.T) {
 		name       string
 		path       string
 		fileName   string
-		lineNumber int
 		expected   string
+		lineNumber int
 	}{
 		{
 			name:       "load resource comment from file",
@@ -1227,8 +1251,8 @@ func TestReadComments(t *testing.T) {
 		name         string
 		path         string
 		fileName     string
-		readComments bool
 		expected     string
+		readComments bool
 	}{
 		{
 			name:         "Validate description when 'ReadComments' is false",
@@ -1250,18 +1274,19 @@ func TestReadComments(t *testing.T) {
 			assert := assert.New(t)
 
 			config := print.NewConfig()
+
 			config.Settings.ReadComments = tt.readComments
 
 			module, err := loadModule(filepath.Join("testdata", tt.path))
 
-			assert.Nil(err)
+			assert.NoError(err)
 
 			inputs, _, _ := loadInputs(module, config)
-			assert.Equal(1, len(inputs))
+			assert.Len(inputs, 1)
 			assert.Equal(tt.expected, string(inputs[0].Description))
 
 			outputs, _ := loadOutputs(module, config)
-			assert.Equal(1, len(outputs))
+			assert.Len(outputs, 1)
 			assert.Equal(tt.expected, string(outputs[0].Description))
 		})
 	}
@@ -1277,12 +1302,13 @@ func TestSortItems(t *testing.T) {
 		outputs   []string
 		providers []string
 	}
+
 	tests := []struct {
 		name        string
 		path        string
-		sortenabled bool
 		sorttype    string
 		expected    expected
+		sortenabled bool
 	}{
 		{
 			name:        "sort module items",
@@ -1369,6 +1395,7 @@ func TestSortItems(t *testing.T) {
 			path := filepath.Join("testdata", tt.path)
 
 			config := print.NewConfig()
+
 			config.ModuleRoot = path
 			config.Sort.Enabled = tt.sortenabled
 			config.Sort.By = tt.sorttype
@@ -1376,21 +1403,25 @@ func TestSortItems(t *testing.T) {
 			tfmodule, _ := loadModule(path)
 			module, err := loadModuleItems(tfmodule, config)
 
-			assert.Nil(err)
+			assert.NoError(err)
 			sortItems(module, config)
 
 			for i, v := range module.Inputs {
 				assert.Equal(tt.expected.inputs[i], v.Name)
 			}
+
 			for i, v := range module.RequiredInputs {
 				assert.Equal(tt.expected.required[i], v.Name)
 			}
+
 			for i, v := range module.OptionalInputs {
 				assert.Equal(tt.expected.optional[i], v.Name)
 			}
+
 			for i, v := range module.Outputs {
 				assert.Equal(tt.expected.outputs[i], v.Name)
 			}
+
 			for i, v := range module.Providers {
 				assert.Equal(tt.expected.providers[i], v.Name)
 			}
@@ -1404,22 +1435,25 @@ func TestLoadOpenTofuProviders(t *testing.T) {
 	assert := assert.New(t)
 
 	config := print.NewConfig()
+
 	config.ModuleRoot = filepath.Join("testdata", "opentofu-for-each")
 
 	module, err := LoadWithOptions(config)
-	assert.Nil(err)
-	assert.Equal(true, module.HasProviders())
+	assert.NoError(err)
+	assert.True(module.HasProviders())
 
 	found := false
+
 	for _, p := range module.Providers {
 		if p.Name == "aws" && string(p.Alias) == "main" {
 			found = true
 			break
 		}
 	}
+
 	assert.True(found, "aws.main provider should be found")
 
-	assert.Equal(true, module.HasResources())
-	assert.Equal(1, len(module.Resources))
+	assert.True(module.HasResources())
+	assert.Len(module.Resources, 1)
 	assert.Equal("aws", module.Resources[0].ProviderName)
 }

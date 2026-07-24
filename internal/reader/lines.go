@@ -1,5 +1,5 @@
-// Copyright 2021 The terraform-docs Authors.
-// Copyright 2026 Northwood Labs, LLC <license@northwood-labs.com>.
+// Copyright 2018-2026 The terraform-docs Authors.
+// Copyright 2026 Northwood Labs, LLC <license@northwood-labs.com>
 //
 // Licensed under the MIT license (the "License"); you may not
 // use this file except in compliance with the License.
@@ -33,10 +33,10 @@ import (
 // stripping comment prefixes). This separation of concerns lets the same reader
 // handle multiple comment styles (// and # for inline, /* */ for block).
 type Lines struct {
-	FileName  string
-	LineNum   int // value -1 means scan the whole file and break after finding what we were looking for
 	Condition func(line string) bool
 	Parser    func(line string) (string, bool)
+	FileName  string
+	LineNum   int
 }
 
 // Extract opens the file and delegates to the internal extraction logic.
@@ -47,6 +47,7 @@ func (l *Lines) Extract() ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	stat, err := f.Stat()
 	if err != nil {
 		return nil, err
@@ -56,9 +57,11 @@ func (l *Lines) Extract() ([]string, error) {
 	if stat.Size() == 0 {
 		return []string{}, nil
 	}
+
 	defer func() {
 		_ = f.Close()
 	}()
+
 	return l.extract(f)
 }
 
@@ -71,19 +74,20 @@ func (l *Lines) Extract() ([]string, error) {
 // When LineNum is -1, it scans the entire file but stops at the first break
 // after finding matching lines. This handles the "first block comment in file"
 // case used for module headers.
-func (l *Lines) extract(r io.Reader) ([]string, error) { //nolint:gocyclo
+func (l *Lines) extract(r io.Reader) ([]string, error) {
 	// NOTE(khos2ow): this function is over our cyclomatic complexity goal.
 	// Be wary when adding branches, and look for functionality that could
 	// be reasonably moved into an injected dependency.
-
 	bf := bufio.NewReader(r)
 	lines := make([]string, 0)
+
 	for lnum := 0; ; lnum++ {
 		// Stop once we've reached the target line — any lines accumulated at
 		// this point are the comment block immediately above the declaration.
 		if l.LineNum != -1 && lnum >= l.LineNum-1 {
 			break
 		}
+
 		line, err := bf.ReadString('\n')
 		if errors.Is(err, io.EOF) && line == "" {
 			switch lnum {
@@ -95,6 +99,7 @@ func (l *Lines) extract(r io.Reader) ([]string, error) { //nolint:gocyclo
 				if l.LineNum == -1 {
 					break
 				}
+
 				return nil, fmt.Errorf("only %d lines", lnum)
 			}
 		}
@@ -114,5 +119,6 @@ func (l *Lines) extract(r io.Reader) ([]string, error) { //nolint:gocyclo
 			lines = nil
 		}
 	}
+
 	return lines, nil
 }

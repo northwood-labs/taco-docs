@@ -1,5 +1,5 @@
-// Copyright 2021 The terraform-docs Authors.
-// Copyright 2026 Northwood Labs, LLC <license@northwood-labs.com>.
+// Copyright 2018-2026 The terraform-docs Authors.
+// Copyright 2026 Northwood Labs, LLC <license@northwood-labs.com>
 //
 // Licensed under the MIT license (the "License"); you may not
 // use this file except in compliance with the License.
@@ -36,7 +36,7 @@ type tfvarsJSON struct {
 //
 // WHY: canRender is false because the output is a flat JSON object of
 // variable-name-to-default-value pairs—there are no sections to reorder.
-func NewTfvarsJSON(config *print.Config) Type {
+func NewTfvarsJSON(config *print.Config) *tfvarsJSON {
 	return &tfvarsJSON{
 		generator: newGenerator(config, false),
 		config:    config,
@@ -52,6 +52,7 @@ func NewTfvarsJSON(config *print.Config) Type {
 func (j *tfvarsJSON) Generate(module *terraform.Module) error {
 	copy := orderedmap.New()
 	copy.SetEscapeHTML(false)
+
 	for _, i := range module.Inputs {
 		copy.Set(i.Name, i.Default)
 	}

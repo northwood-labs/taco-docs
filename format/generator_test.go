@@ -1,5 +1,5 @@
-// Copyright 2021 The terraform-docs Authors.
-// Copyright 2026 Northwood Labs, LLC <license@northwood-labs.com>.
+// Copyright 2018-2026 The terraform-docs Authors.
+// Copyright 2026 Northwood Labs, LLC <license@northwood-labs.com>
 //
 // Licensed under the MIT license (the "License"); you may not
 // use this file except in compliance with the License.
@@ -25,11 +25,12 @@ import (
 func TestExecuteTemplate(t *testing.T) {
 	header := "this is the header"
 	footer := "this is the footer"
+
 	tests := map[string]struct {
-		complex  bool
 		content  string
 		template string
 		expected string
+		complex  bool
 		wantErr  bool
 	}{
 		"Compatible without template": {
@@ -110,6 +111,7 @@ func TestExecuteTemplate(t *testing.T) {
 			config := print.DefaultConfig()
 
 			generator := newGenerator(config, tt.complex)
+
 			generator.content = tt.content
 			generator.header = header
 			generator.footer = footer
@@ -117,9 +119,9 @@ func TestExecuteTemplate(t *testing.T) {
 			actual, err := generator.Render(tt.template)
 
 			if tt.wantErr {
-				assert.NotNil(err)
+				assert.Error(err)
 			} else {
-				assert.Nil(err)
+				assert.NoError(err)
 				assert.Equal(tt.expected, actual)
 			}
 		})
@@ -129,6 +131,7 @@ func TestExecuteTemplate(t *testing.T) {
 // WHY: Ensures the withX generator functions correctly set their respective fields on the generator.
 func TestGeneratorFunc(t *testing.T) {
 	text := "foo"
+
 	tests := map[string]struct {
 		fn     func(string) generateFunc
 		actual func(*generator) string
@@ -175,6 +178,7 @@ func TestGeneratorFunc(t *testing.T) {
 			assert := assert.New(t)
 
 			config := print.DefaultConfig()
+
 			config.Sections.Footer = true
 
 			generator := newGenerator(config, false, tt.fn(text))
@@ -190,25 +194,26 @@ func TestGeneratorFuncModule(t *testing.T) {
 		assert := assert.New(t)
 
 		config := print.DefaultConfig()
+
 		config.ModuleRoot = filepath.Join("..", "terraform", "testdata", "full-example")
 
 		module, err := terraform.LoadWithOptions(config)
 
-		assert.Nil(err)
+		assert.NoError(err)
 
 		generator := newGenerator(config, true, withModule(module))
 
 		path := filepath.Join("..", "terraform", "testdata", "expected", "full-example-mainTf-Header.golden")
 		data, err := os.ReadFile(path)
 
-		assert.Nil(err)
+		assert.NoError(err)
 
 		expected := string(data)
 
 		assert.Equal(expected, generator.module.Header)
-		assert.Equal("", generator.module.Footer)
-		assert.Equal(7, len(generator.module.Inputs))
-		assert.Equal(4, len(generator.module.Outputs))
+		assert.Empty(generator.module.Footer)
+		assert.Len(generator.module.Inputs, 7)
+		assert.Len(generator.module.Outputs, 4)
 	})
 }
 

@@ -1,5 +1,5 @@
-// Copyright 2021 The terraform-docs Authors.
-// Copyright 2026 Northwood Labs, LLC <license@northwood-labs.com>.
+// Copyright 2018-2026 The terraform-docs Authors.
+// Copyright 2026 Northwood Labs, LLC <license@northwood-labs.com>
 //
 // Licensed under the MIT license (the "License"); you may not
 // use this file except in compliance with the License.
@@ -17,6 +17,7 @@ import (
 
 func baseConfig() print.Config {
 	base := print.NewConfig()
+
 	base.Settings.ReadComments = true
 
 	return *base
@@ -68,6 +69,7 @@ func WithDefaultSections(override ...print.Config) print.Config {
 // WithHTML sets HTML to provided print.Config.
 func WithHTML(override ...print.Config) print.Config {
 	base := baseConfig()
+
 	base.Settings.HTML = true
 
 	return apply(base, override...)
@@ -76,6 +78,7 @@ func WithHTML(override ...print.Config) print.Config {
 // WithHideEmpty sets HideEmpty to provided print.Config.
 func WithHideEmpty(override ...print.Config) print.Config {
 	base := baseConfig()
+
 	base.Settings.HideEmpty = true
 
 	return apply(base, override...)
@@ -88,5 +91,6 @@ func apply(base print.Config, override ...print.Config) print.Config { //nolint:
 			return base
 		}
 	}
+
 	return dest
 }

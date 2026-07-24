@@ -1,5 +1,5 @@
-// Copyright 2021 The terraform-docs Authors.
-// Copyright 2026 Northwood Labs, LLC <license@northwood-labs.com>.
+// Copyright 2018-2026 The terraform-docs Authors.
+// Copyright 2026 Northwood Labs, LLC <license@northwood-labs.com>
 //
 // Licensed under the MIT license (the "License"); you may not
 // use this file except in compliance with the License.
@@ -23,8 +23,8 @@ func TestSanitizeName(t *testing.T) {
 	tests := []struct {
 		name     string
 		input    string
-		escape   bool
 		expected string
+		escape   bool
 	}{
 		{
 			name:     "sanitize name with escape character",
@@ -133,12 +133,12 @@ func TestSanitizeSection(t *testing.T) {
 			assert := assert.New(t)
 
 			bytes, err := os.ReadFile(filepath.Join("testdata", "section", tt.filename+".golden"))
-			assert.Nil(err)
+			assert.NoError(err)
 
 			actual := SanitizeSection(string(bytes), tt.escape, false)
 
 			expected, err := os.ReadFile(filepath.Join("testdata", "section", tt.filename+".expected"))
-			assert.Nil(err)
+			assert.NoError(err)
 
 			assert.Equal(string(expected), actual)
 		})
@@ -150,8 +150,8 @@ func TestSanitizeDocument(t *testing.T) {
 	tests := []struct {
 		name     string
 		filename string
-		escape   bool
 		expected string
+		escape   bool
 	}{
 		{
 			name:     "sanitize document item empty",
@@ -178,15 +178,18 @@ func TestSanitizeDocument(t *testing.T) {
 			assert := assert.New(t)
 
 			bytes, err := os.ReadFile(filepath.Join("testdata", "document", tt.filename+".golden"))
-			assert.Nil(err)
+			assert.NoError(err)
 
 			actual := SanitizeDocument(string(bytes), tt.escape, false)
+
 			expected := tt.expected
 			if expected == "" {
 				b, err := os.ReadFile(filepath.Join("testdata", "document", tt.filename+".expected"))
-				assert.Nil(err)
+				assert.NoError(err)
+
 				expected = string(b)
 			}
+
 			assert.Equal(expected, actual)
 		})
 	}
@@ -243,12 +246,12 @@ func TestSanitizeMarkdownTable(t *testing.T) {
 			assert := assert.New(t)
 
 			bytes, err := os.ReadFile(filepath.Join("testdata", "table", tt.filename+".golden"))
-			assert.Nil(err)
+			assert.NoError(err)
 
 			actual := SanitizeMarkdownTable(string(bytes), tt.escape, tt.html)
 
 			expected, err := os.ReadFile(filepath.Join("testdata", "table", tt.expected+".markdown.expected"))
-			assert.Nil(err)
+			assert.NoError(err)
 
 			assert.Equal(string(expected), actual)
 		})
@@ -283,12 +286,12 @@ func TestSanitizeAsciidocTable(t *testing.T) {
 			assert := assert.New(t)
 
 			bytes, err := os.ReadFile(filepath.Join("testdata", "table", tt.filename+".golden"))
-			assert.Nil(err)
+			assert.NoError(err)
 
 			actual := SanitizeAsciidocTable(string(bytes), tt.escape, false)
 
 			expected, err := os.ReadFile(filepath.Join("testdata", "table", tt.filename+".asciidoc.expected"))
-			assert.Nil(err)
+			assert.NoError(err)
 
 			assert.Equal(string(expected), actual)
 		})
@@ -301,9 +304,9 @@ func TestConvertMultiLineText(t *testing.T) {
 	tests := []struct {
 		name     string
 		filename string
+		expected string
 		isTable  bool
 		showHTML bool
-		expected string
 	}{
 		{
 			name:     "convert multi-line newline-single",
@@ -417,7 +420,7 @@ func TestConvertMultiLineText(t *testing.T) {
 
 			path := filepath.Join("testdata", "multiline", tt.filename+".golden")
 			bytes, err := os.ReadFile(path)
-			assert.Nil(err)
+			assert.NoError(err)
 
 			actual := ConvertMultiLineText(string(bytes), tt.isTable, false, tt.showHTML)
 			assert.Equal(tt.expected, actual)
@@ -431,9 +434,9 @@ func TestEscapeCharacters(t *testing.T) {
 	tests := []struct {
 		name        string
 		input       string
+		expected    string
 		escapePipe  bool
 		escapeChars bool
-		expected    string
 	}{
 		{
 			name:        "escape pipe",
@@ -593,8 +596,8 @@ func TestNormalizeURLs(t *testing.T) {
 	tests := []struct {
 		name     string
 		input    string
-		escape   bool
 		expected string
+		escape   bool
 	}{
 		{
 			name:     "normalize url with escape character",

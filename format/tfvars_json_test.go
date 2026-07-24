@@ -1,7 +1,10 @@
 /*
-Copyright 2021 The terraform-docs Authors.
+Copyright 2018-2026 The terraform-docs Authors.
+Copyright 2026 Northwood Labs, LLC <license@northwood-labs.com>
+
 Licensed under the MIT license (the "License"); you may not
 use this file except in compliance with the License.
+
 You may obtain a copy of the License at the LICENSE file in
 the root directory of this source tree.
 */
@@ -22,7 +25,7 @@ func TestTfvarsJson(t *testing.T) {
 	tests := map[string]struct {
 		config print.Config
 	}{
-		// Base
+		// Base.
 		"Base": {
 			config: testutil.WithSections(),
 		},
@@ -34,7 +37,7 @@ func TestTfvarsJson(t *testing.T) {
 			),
 		},
 
-		// Settings
+		// Settings.
 		"EscapeCharacters": {
 			config: testutil.With(func(c *print.Config) {
 				c.Settings.Escape = true
@@ -65,7 +68,7 @@ func TestTfvarsJson(t *testing.T) {
 			),
 		},
 
-		// No section
+		// No section.
 		"NoInputs": {
 			config: testutil.WithSections(
 				testutil.With(func(c *print.Config) {
@@ -79,15 +82,15 @@ func TestTfvarsJson(t *testing.T) {
 			assert := assert.New(t)
 
 			expected, err := testutil.GetExpected("tfvars", "json-"+name)
-			assert.Nil(err)
+			assert.NoError(err)
 
 			module, err := testutil.GetModule(&tt.config)
-			assert.Nil(err)
+			assert.NoError(err)
 
 			formatter := NewTfvarsJSON(&tt.config)
 
 			err = formatter.Generate(module)
-			assert.Nil(err)
+			assert.NoError(err)
 
 			assert.Equal(expected, formatter.Content())
 		})

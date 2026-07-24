@@ -1,5 +1,7 @@
 /*
-Copyright 2021 The terraform-docs Authors.
+Copyright 2018-2026 The terraform-docs Authors.
+Copyright 2026 Northwood Labs, LLC <license@northwood-labs.com>
+
 Licensed under the MIT license (the "License"); you may not
 use this file except in compliance with the License.
 
@@ -45,7 +47,7 @@ type tfvarsHCL struct {
 var padding []int
 
 // NewTfvarsHCL returns new instance of TfvarsHCL.
-func NewTfvarsHCL(config *print.Config) Type {
+func NewTfvarsHCL(config *print.Config) *tfvarsHCL {
 	tt := template.New(config, &template.Item{
 		Name:      "tfvars",
 		Text:      string(tfvarsHCLTpl),
@@ -64,6 +66,7 @@ func NewTfvarsHCL(config *print.Config) Type {
 			if s == "" {
 				return "\"\""
 			}
+
 			return s
 		},
 		// WHY: Descriptions are rendered as HCL comments (# prefix) above
@@ -111,6 +114,7 @@ func (h *tfvarsHCL) Generate(module *terraform.Module) error {
 func isMultilineFormat(input *terraform.Input) bool {
 	isList := input.Type == "list" || reflect.TypeOf(input.Default).Name() == "List"
 	isMap := input.Type == "map" || reflect.TypeOf(input.Default).Name() == "Map"
+
 	return (isList || isMap) && input.Default.Length() > 0
 }
 
@@ -122,10 +126,13 @@ func isMultilineFormat(input *terraform.Input) bool {
 // values or descriptions, computing the max name length within each run.
 func alignments(inputs []*terraform.Input, config *print.Config) {
 	padding = make([]int, len(inputs))
+
 	maxlen := 0
 	index := 0
+
 	for i, input := range inputs {
 		isDescribed := config.Settings.Description && input.Description.Length() > 0
+
 		l := len(input.Name)
 		if isMultilineFormat(input) || isDescribed {
 			// WHY: When we hit a boundary (multi-line or described input),
@@ -134,6 +141,7 @@ func alignments(inputs []*terraform.Input, config *print.Config) {
 			for j := index; j < i; j++ {
 				padding[j] = maxlen
 			}
+
 			padding[i] = l
 			maxlen = 0
 			index = i + 1

@@ -1,5 +1,5 @@
-// Copyright 2021 The terraform-docs Authors.
-// Copyright 2026 Northwood Labs, LLC <license@northwood-labs.com>.
+// Copyright 2018-2026 The terraform-docs Authors.
+// Copyright 2026 Northwood Labs, LLC <license@northwood-labs.com>
 //
 // Licensed under the MIT license (the "License"); you may not
 // use this file except in compliance with the License.
@@ -24,7 +24,7 @@ func TestTfvarsHcl(t *testing.T) {
 	tests := map[string]struct {
 		config print.Config
 	}{
-		// Base
+		// Base.
 		"Base": {
 			config: testutil.WithSections(),
 		},
@@ -36,7 +36,7 @@ func TestTfvarsHcl(t *testing.T) {
 			),
 		},
 
-		// Settings
+		// Settings.
 		"EscapeCharacters": {
 			config: testutil.With(func(c *print.Config) {
 				c.Settings.Escape = true
@@ -74,7 +74,7 @@ func TestTfvarsHcl(t *testing.T) {
 			),
 		},
 
-		// No section
+		// No section.
 		"NoInputs": {
 			config: testutil.WithSections(
 				testutil.With(func(c *print.Config) {
@@ -88,15 +88,15 @@ func TestTfvarsHcl(t *testing.T) {
 			assert := assert.New(t)
 
 			expected, err := testutil.GetExpected("tfvars", "hcl-"+name)
-			assert.Nil(err)
+			assert.NoError(err)
 
 			module, err := testutil.GetModule(&tt.config)
-			assert.Nil(err)
+			assert.NoError(err)
 
 			formatter := NewTfvarsHCL(&tt.config)
 
 			err = formatter.Generate(module)
-			assert.Nil(err)
+			assert.NoError(err)
 
 			assert.Equal(expected, formatter.Content())
 		})

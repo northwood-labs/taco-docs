@@ -1,5 +1,5 @@
-// Copyright 2021 The terraform-docs Authors.
-// Copyright 2026 Northwood Labs, LLC <license@northwood-labs.com>.
+// Copyright 2018-2026 The terraform-docs Authors.
+// Copyright 2026 Northwood Labs, LLC <license@northwood-labs.com>
 //
 // Licensed under the MIT license (the "License"); you may not
 // use this file except in compliance with the License.
@@ -24,10 +24,11 @@ import (
 // list, map, sensitive). Incorrect rendering means wrong values in every output format.
 func TestOutputValue(t *testing.T) {
 	outputs := sampleOutputs()
+
 	tests := []struct {
 		name          string
-		output        Output
 		expectValue   string
+		output        Output
 		expectDefault bool
 	}{
 		{
@@ -116,10 +117,11 @@ func TestOutputValue(t *testing.T) {
 // WHY: Ensures outputs serialize correctly to JSON, including sensitive values and ShowValue flag behavior.
 func TestOutputMarshalJSON(t *testing.T) {
 	outputs := sampleOutputs()
+
 	tests := []struct {
 		name     string
-		output   Output
 		expected string
+		output   Output
 	}{
 		{
 			name:     "output marshal JSON",
@@ -187,7 +189,7 @@ func TestOutputMarshalJSON(t *testing.T) {
 			assert := assert.New(t)
 			actual, err := tt.output.MarshalJSON()
 
-			assert.Nil(err)
+			assert.NoError(err)
 			assert.Equal(tt.expected, string(actual))
 		})
 	}
@@ -196,10 +198,11 @@ func TestOutputMarshalJSON(t *testing.T) {
 // WHY: Ensures outputs serialize correctly to XML with proper element structure.
 func TestOutputMarshalXML(t *testing.T) {
 	outputs := sampleOutputs()
+
 	tests := []struct {
 		name     string
-		output   Output
 		expected string
+		output   Output
 	}{
 		{
 			name:     "output marshal XML",
@@ -265,17 +268,19 @@ func TestOutputMarshalXML(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			assert := assert.New(t)
+
 			var b bytes.Buffer
+
 			encoder := xml.NewEncoder(&b)
 			start := xml.StartElement{Name: xml.Name{Local: "output"}}
 
 			err := tt.output.MarshalXML(encoder, start)
-			assert.Nil(err)
+			assert.NoError(err)
 
 			err = encoder.Flush()
-			assert.Nil(err)
+			assert.NoError(err)
 
-			assert.Nil(err)
+			assert.NoError(err)
 			assert.Equal(tt.expected, b.String())
 		})
 	}
@@ -284,10 +289,11 @@ func TestOutputMarshalXML(t *testing.T) {
 // WHY: Verifies YAML marshaling returns the correct struct type based on ShowValue flag.
 func TestOutputMarshalYAML(t *testing.T) {
 	outputs := sampleOutputs()
+
 	tests := []struct {
 		name     string
-		output   Output
 		expected string
+		output   Output
 	}{
 		{
 			name:     "output marshal JSON",
@@ -355,7 +361,7 @@ func TestOutputMarshalYAML(t *testing.T) {
 			assert := assert.New(t)
 			actual, err := tt.output.MarshalYAML()
 
-			assert.Nil(err)
+			assert.NoError(err)
 			assert.Equal(tt.expected, reflect.TypeOf(actual).String())
 		})
 	}
@@ -365,6 +371,7 @@ func sampleOutputs() []Output {
 	name := "output"
 	description := types.String("description")
 	position := Position{Filename: "foo.tf", Line: 13}
+
 	return []Output{
 		{
 			Name:        name,
@@ -466,6 +473,7 @@ func sampleOutputs() []Output {
 // WHY: Ensures outputs can be sorted by name and by position for deterministic doc generation.
 func TestOutputsSort(t *testing.T) {
 	outputs := sampleOutputsForSort()
+
 	tests := map[string]struct {
 		sortType func([]*Output)
 		expected []string

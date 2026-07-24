@@ -1,5 +1,5 @@
-// Copyright 2021 The terraform-docs Authors.
-// Copyright 2026 Northwood Labs, LLC <license@northwood-labs.com>.
+// Copyright 2018-2026 The terraform-docs Authors.
+// Copyright 2026 Northwood Labs, LLC <license@northwood-labs.com>
 //
 // Licensed under the MIT license (the "License"); you may not
 // use this file except in compliance with the License.
@@ -64,6 +64,7 @@ func findPlugins(dir string) (*List, error) {
 		// Strip the mandatory prefix to get the formatter name. For example,
 		// "tfdocs-format-custom" becomes "custom" as the formatter identifier.
 		name := strings.ReplaceAll(f.Name(), namePrefix, "")
+
 		path, err := getPluginPath(dir, name)
 		if err != nil {
 			return nil, err
@@ -73,7 +74,7 @@ func findPlugins(dir string) (*List, error) {
 		// isolation means a crashing plugin can't bring down the host, and plugins
 		// can be written in any language that implements the protocol.
 		//
-		// nolint:gosec
+		//nolint:gosec
 		cmd := exec.CommandContext(context.TODO(), path)
 
 		client := pluginsdk.NewClient(&pluginsdk.ClientOpts{
@@ -107,7 +108,7 @@ func findPlugins(dir string) (*List, error) {
 // getPluginPath constructs the expected filesystem path for a plugin binary,
 // including the platform-appropriate executable suffix. It verifies the file
 // exists before returning, producing a clear error for missing plugins.
-func getPluginPath(dir string, name string) (string, error) {
+func getPluginPath(dir, name string) (string, error) {
 	suffix := ""
 
 	if runtime.GOOS == "windows" {

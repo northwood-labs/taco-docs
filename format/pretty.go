@@ -1,5 +1,5 @@
-// Copyright 2021 The terraform-docs Authors.
-// Copyright 2026 Northwood Labs, LLC <license@northwood-labs.com>.
+// Copyright 2018-2026 The terraform-docs Authors.
+// Copyright 2026 Northwood Labs, LLC <license@northwood-labs.com>
 //
 // Licensed under the MIT license (the "License"); you may not
 // use this file except in compliance with the License.
@@ -37,7 +37,7 @@ type pretty struct {
 }
 
 // NewPretty returns new instance of Pretty.
-func NewPretty(config *print.Config) Type {
+func NewPretty(config *print.Config) *pretty {
 	tt := template.New(config, &template.Item{
 		Name:      "pretty",
 		Text:      string(prettyTpl),
@@ -47,12 +47,14 @@ func NewPretty(config *print.Config) Type {
 		// WHY: colorize wraps text in ANSI escape codes only when
 		// color is enabled, so the same template works for both TTY
 		// and piped/redirected output without conditional template logic.
-		"colorize": func(c string, s string) string {
+		"colorize": func(c, s string) string {
 			r := "\033[0m"
+
 			if !config.Settings.Color {
 				c = ""
 				r = ""
 			}
+
 			return fmt.Sprintf("%s%s%s", c, s, r)
 		},
 	})

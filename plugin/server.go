@@ -1,5 +1,5 @@
-// Copyright 2021 The terraform-docs Authors.
-// Copyright 2026 Northwood Labs, LLC <license@northwood-labs.com>.
+// Copyright 2018-2026 The terraform-docs Authors.
+// Copyright 2026 Northwood Labs, LLC <license@northwood-labs.com>
 //
 // Licensed under the MIT license (the "License"); you may not
 // use this file except in compliance with the License.
@@ -29,9 +29,9 @@ type printFunc func(*print.Config, *terraform.Module) (string, error)
 
 // ServeOpts is an option for serving a plugin.
 type ServeOpts struct {
+	Printer printFunc
 	Name    string
 	Version string
-	Printer printFunc
 }
 
 // Serve is the single entry point for plugin binaries. One call sets up the
@@ -51,13 +51,13 @@ func Serve(opts *ServeOpts) {
 // implementation, bridging the network boundary transparently.
 
 // Name returns the version of the plugin.
-func (s *Server) Name(args interface{}, resp *string) error {
+func (s *Server) Name(args any, resp *string) error {
 	*resp = s.impl.Name()
 	return nil
 }
 
 // Version returns the version of the plugin.
-func (s *Server) Version(args interface{}, resp *string) error {
+func (s *Server) Version(args any, resp *string) error {
 	*resp = s.impl.Version()
 	return nil
 }
@@ -65,6 +65,8 @@ func (s *Server) Version(args interface{}, resp *string) error {
 // Execute returns the generated output.
 func (s *Server) Execute(args *ExecuteArgs, resp *string) error {
 	r, err := s.impl.Execute(args)
+
 	*resp = r
+
 	return err
 }

@@ -1,5 +1,5 @@
-// Copyright 2021 The terraform-docs Authors.
-// Copyright 2026 Northwood Labs, LLC <license@northwood-labs.com>.
+// Copyright 2018-2026 The terraform-docs Authors.
+// Copyright 2026 Northwood Labs, LLC <license@northwood-labs.com>
 //
 // Licensed under the MIT license (the "License"); you may not
 // use this file except in compliance with the License.
@@ -51,6 +51,7 @@ func ignore(cmd *cobra.Command) bool {
 	case cmd.Annotations["kind"] != "formatter":
 		return true
 	}
+
 	return false
 }
 
@@ -59,7 +60,9 @@ func generate(cmd *cobra.Command, weight int, basename string) error {
 		if ignore(c) {
 			continue
 		}
+
 		b := extractFilename(c.CommandPath())
+
 		baseWeight++
 		if err := generate(c, baseWeight, b); err != nil {
 			return err
@@ -67,6 +70,7 @@ func generate(cmd *cobra.Command, weight int, basename string) error {
 	}
 
 	filename := filepath.Join("docs", "reference", basename+".md")
+
 	f, err := os.Create(filepath.Clean(filename))
 	if err != nil {
 		return err
@@ -76,27 +80,29 @@ func generate(cmd *cobra.Command, weight int, basename string) error {
 	if _, err := f.WriteString(""); err != nil {
 		return err
 	}
+
 	if err := generateMarkdown(cmd, weight, f); err != nil {
 		return err
 	}
+
 	return nil
 }
 
 type reference struct {
-	Name             string
-	Command          string
+	InheritedOptions string
+	Usage            string
 	Description      string
 	Parent           string
 	Synopsis         string
-	Runnable         bool
-	HasChildren      bool
 	UseLine          string
 	Options          string
-	InheritedOptions string
-	Usage            string
 	Example          string
+	Command          string
+	Name             string
 	Subcommands      []command
 	Weight           int
+	HasChildren      bool
+	Runnable         bool
 }
 
 type command struct {
@@ -136,12 +142,12 @@ func generateMarkdown(cmd *cobra.Command, weight int, w io.Writer) error {
 		Weight:      weight,
 	}
 
-	// Options
+	// Options.
 	if f := cmd.NonInheritedFlags(); f.HasAvailableFlags() {
 		ref.Options = f.FlagUsages()
 	}
 
-	// Inherited Options
+	// Inherited Options.
 	if f := cmd.InheritedFlags(); f.HasAvailableFlags() {
 		ref.InheritedOptions = f.FlagUsages()
 	}
@@ -169,6 +175,7 @@ func example(ref *reference) error {
 	ref.Usage = fmt.Sprintf("%s%s ./examples/", ref.Command, flag)
 
 	config := print.DefaultConfig()
+
 	config.ModuleRoot = "./examples"
 	config.Formatter = ref.Name
 	config.Settings.Color = false
@@ -193,6 +200,7 @@ func example(ref *reference) error {
 
 	segments := strings.Split(formatter.Content(), "\n")
 	buf := new(bytes.Buffer)
+
 	for _, s := range segments {
 		if s == "" {
 			buf.WriteString("\n")
@@ -200,6 +208,7 @@ func example(ref *reference) error {
 			fmt.Fprintf(buf, "    %s\n", s)
 		}
 	}
+
 	ref.Example = buf.String()
 
 	return nil
@@ -207,28 +216,37 @@ func example(ref *reference) error {
 
 func subcommands(ref *reference, children []*cobra.Command) {
 	subs := []command{}
+
 	for _, child := range children {
 		if ignore(child) {
 			continue
 		}
+
 		subchild := []command{}
+
 		for _, c := range child.Commands() {
 			if ignore(c) {
 				continue
 			}
+
 			cname := c.CommandPath()
 			link := extractFilename(cname)
+
 			subchild = append(subchild, command{Name: cname, Link: link})
 		}
+
 		cname := child.CommandPath()
 		link := extractFilename(cname)
+
 		subs = append(subs, command{Name: cname, Link: link, Children: subchild})
 	}
+
 	ref.Subcommands = subs
 }
 
 func extractFilename(s string) string {
 	s = strings.ReplaceAll(s, " ", "-")
 	s = strings.ReplaceAll(s, "terraform-docs-", "")
+
 	return s
 }

@@ -1,5 +1,5 @@
-// Copyright 2021 The terraform-docs Authors.
-// Copyright 2026 Northwood Labs, LLC <license@northwood-labs.com>.
+// Copyright 2018-2026 The terraform-docs Authors.
+// Copyright 2026 Northwood Labs, LLC <license@northwood-labs.com>
 //
 // Licensed under the MIT license (the "License"); you may not
 // use this file except in compliance with the License.
@@ -24,20 +24,19 @@ import (
 // mapstructure tags enable viper to decode YAML config files directly into this
 // struct without manual field-by-field assignment.
 type Config struct {
-	File         string       `mapstructure:"-"`
-	Formatter    string       `mapstructure:"formatter"`
-	Version      string       `mapstructure:"version"`
+	Output       output       `mapstructure:"output"`
+	Sort         sort         `mapstructure:"sort"`
+	OutputValues outputvalues `mapstructure:"output-values"`
 	HeaderFrom   string       `mapstructure:"header-from"`
 	FooterFrom   string       `mapstructure:"footer-from"`
-	Recursive    recursive    `mapstructure:"recursive"`
 	Content      string       `mapstructure:"content"`
-	Sections     sections     `mapstructure:"sections"`
-	Output       output       `mapstructure:"output"`
-	OutputValues outputvalues `mapstructure:"output-values"`
-	Sort         sort         `mapstructure:"sort"`
-	Settings     settings     `mapstructure:"settings"`
-
-	ModuleRoot string
+	File         string       `mapstructure:"-"`
+	Version      string       `mapstructure:"version"`
+	Formatter    string       `mapstructure:"formatter"`
+	ModuleRoot   string
+	Recursive    recursive `mapstructure:"recursive"`
+	Sections     sections  `mapstructure:"sections"`
+	Settings     settings  `mapstructure:"settings"`
 }
 
 // NewConfig returns neew instancee of Config with empty values.
@@ -77,10 +76,10 @@ func DefaultConfig() *Config {
 }
 
 type recursive struct {
-	Enabled     bool     `mapstructure:"enabled"`
 	Path        string   `mapstructure:"path"`
-	IncludeMain bool     `mapstructure:"include-main"`
 	Exclude     []string `mapstructure:"exclude"`
+	Enabled     bool     `mapstructure:"enabled"`
+	IncludeMain bool     `mapstructure:"include-main"`
 }
 
 func defaultRecursive() recursive {
@@ -94,8 +93,9 @@ func defaultRecursive() recursive {
 
 func (r *recursive) validate() error {
 	if r.Enabled && r.Path == "" {
-		return fmt.Errorf("value of '--recursive-path' can't be empty")
+		return errors.New("value of '--recursive-path' can't be empty")
 	}
+
 	return nil
 }
 
@@ -166,18 +166,21 @@ func defaultSections() sections {
 
 func (s *sections) validate() error {
 	if len(s.Show) > 0 && len(s.Hide) > 0 {
-		return fmt.Errorf("'--show' and '--hide' can't be used together")
+		return errors.New("'--show' and '--hide' can't be used together")
 	}
+
 	for _, item := range s.Show {
 		if !contains(allSections, item) {
 			return fmt.Errorf("'%s' is not a valid section", item)
 		}
 	}
+
 	for _, item := range s.Hide {
 		if !contains(allSections, item) {
 			return fmt.Errorf("'%s' is not a valid section", item)
 		}
 	}
+
 	return nil
 }
 
@@ -190,11 +193,13 @@ func (s *sections) visibility(section string) bool {
 	if len(s.Show) == 0 && len(s.Hide) == 0 {
 		return true
 	}
+
 	for _, n := range s.Show {
 		if n == sectionAll || n == section {
 			return true
 		}
 	}
+
 	for _, n := range s.Hide {
 		if n == sectionAll || n == section {
 			return false
@@ -221,17 +226,16 @@ const (
 // Output to file template and modes.
 var (
 	OutputTemplate = fmt.Sprintf("%s\n%s\n%s", OutputBeginComment, OutputContent, OutputEndComment)
-	OutputModes    = strings.Join([]string{OutputModeInject, OutputModeReplace}, ", ")
+	OutputModes    = OutputModeInject + ", " + OutputModeReplace
 )
 
 type output struct {
-	File     string `mapstructure:"file"`
-	Mode     string `mapstructure:"mode"`
-	Template string `mapstructure:"template"`
-	Check    bool
-
+	File         string `mapstructure:"file"`
+	Mode         string `mapstructure:"mode"`
+	Template     string `mapstructure:"template"`
 	BeginComment string
 	EndComment   string
+	Check        bool
 }
 
 func defaultOutput() output {
@@ -256,20 +260,20 @@ func (o *output) validate() error {
 	}
 
 	if o.Mode == "" {
-		return fmt.Errorf("value of '--output-mode' can't be empty")
+		return errors.New("value of '--output-mode' can't be empty")
 	}
 
-	// Template is optional for mode 'replace'
+	// Template is optional for mode 'replace'.
 	if o.Mode == OutputModeReplace && o.Template == "" {
 		return nil
 	}
 
 	if o.Template == "" {
-		return fmt.Errorf("value of '--output-template' can't be empty")
+		return errors.New("value of '--output-template' can't be empty")
 	}
 
 	if !strings.Contains(o.Template, OutputContent) {
-		return fmt.Errorf(
+		return errors.New(
 			"value of '--output-template' doesn't have '{{ .Content }}' (note that spaces inside '{{ }}' are mandatory)",
 		)
 	}
@@ -281,6 +285,7 @@ func (o *output) validate() error {
 	}
 
 	o.Template = strings.ReplaceAll(o.Template, "\\n", "\n")
+
 	lines := strings.Split(o.Template, "\n")
 	tests := []struct {
 		condition  func() bool
@@ -327,11 +332,11 @@ func (o *output) validate() error {
 // ref: https://www.jamestharpe.com/markdown-comments/
 func isInlineComment(line string) bool {
 	switch {
-	// AsciiDoc specific
+	// AsciiDoc specific.
 	case strings.HasPrefix(line, "//"):
 		return true
 
-	// Markdown specific
+	// Markdown specific.
 	default:
 		cases := [][]string{
 			{"<!--", "-->"},
@@ -352,8 +357,8 @@ func isInlineComment(line string) bool {
 }
 
 type outputvalues struct {
-	Enabled bool   `mapstructure:"enabled"`
 	From    string `mapstructure:"from"`
+	Enabled bool   `mapstructure:"enabled"`
 }
 
 func defaultOutputValues() outputvalues {
@@ -365,8 +370,9 @@ func defaultOutputValues() outputvalues {
 
 func (o *outputvalues) validate() error {
 	if o.Enabled && o.From == "" {
-		return fmt.Errorf("value of '--output-values-from' is missing")
+		return errors.New("value of '--output-values-from' is missing")
 	}
+
 	return nil
 }
 
@@ -387,8 +393,8 @@ var allSorts = []string{
 var SortTypes = strings.Join(allSorts, ", ")
 
 type sort struct {
-	Enabled bool   `mapstructure:"enabled"`
 	By      string `mapstructure:"by"`
+	Enabled bool   `mapstructure:"enabled"`
 }
 
 func defaultSort() sort {
@@ -402,6 +408,7 @@ func (s *sort) validate() error {
 	if !contains(allSorts, s.By) {
 		return fmt.Errorf("'%s' is not a valid sort type", s.By)
 	}
+
 	return nil
 }
 
@@ -449,7 +456,7 @@ func (s *settings) validate() error {
 // can check efficiently. Templates use these booleans to decide which sections
 // to render, avoiding repeated list lookups during template execution.
 func (c *Config) Parse() {
-	// sections
+	// sections.
 	c.Sections.DataSources = c.Sections.visibility("data-sources")
 	c.Sections.Header = c.Sections.visibility("header")
 	c.Sections.Inputs = c.Sections.visibility("inputs")
@@ -471,23 +478,23 @@ func (c *Config) Parse() {
 // expensive module parsing begins. Failing fast here means users don't wait
 // for Terraform file traversal only to discover an invalid option.
 func (c *Config) Validate() error {
-	// formatter
+	// formatter.
 	if c.Formatter == "" {
-		return fmt.Errorf("value of 'formatter' can't be empty")
+		return errors.New("value of 'formatter' can't be empty")
 	}
 
-	// header-from
+	// header-from.
 	if c.HeaderFrom == "" {
-		return fmt.Errorf("value of '--header-from' can't be empty")
+		return errors.New("value of '--header-from' can't be empty")
 	}
 
-	// footer-from, not a 'default' section so can be empty
+	// footer-from, not a 'default' section so can be empty.
 	if c.Sections.Footer && c.FooterFrom == "" {
-		return fmt.Errorf("value of '--footer-from' can't be empty")
+		return errors.New("value of '--footer-from' can't be empty")
 	}
 
 	if c.FooterFrom == c.HeaderFrom {
-		return fmt.Errorf("value of '--footer-from' can't equal value of '--header-from")
+		return errors.New("value of '--footer-from' can't equal value of '--header-from")
 	}
 
 	for _, fn := range [](func() error){
@@ -509,20 +516,18 @@ func (c *Config) Validate() error {
 // ReadConfig is a standalone config reader for use outside the CLI (e.g., in
 // tests or the plugin SDK). It encapsulates the full read→unmarshal→validate→parse
 // lifecycle so callers don't need to replicate the sequencing themselves.
-func ReadConfig(rootDir string, filename string) (*Config, error) {
+func ReadConfig(rootDir, filename string) (*Config, error) {
 	cfg := NewConfig()
 
 	v := viper.New()
 	v.SetConfigFile(filepath.Join(rootDir, filename))
 
 	if err := v.ReadInConfig(); err != nil {
-		var perr *os.PathError
-		if errors.As(err, &perr) {
+		if _, ok := errors.AsType[*os.PathError](err); ok {
 			return nil, fmt.Errorf("config file %s not found", filename)
 		}
 
-		var cerr viper.ConfigFileNotFoundError
-		if !errors.As(err, &cerr) {
+		if _, ok := errors.AsType[viper.ConfigFileNotFoundError](err); !ok {
 			return nil, err
 		}
 	}
@@ -533,7 +538,7 @@ func ReadConfig(rootDir string, filename string) (*Config, error) {
 
 	cfg.ModuleRoot = rootDir
 
-	// process and validate configuration
+	// process and validate configuration.
 	if err := cfg.Validate(); err != nil {
 		return nil, err
 	}

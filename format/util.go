@@ -1,5 +1,5 @@
-// Copyright 2021 The terraform-docs Authors.
-// Copyright 2026 Northwood Labs, LLC <license@northwood-labs.com>.
+// Copyright 2018-2026 The terraform-docs Authors.
+// Copyright 2026 Northwood Labs, LLC <license@northwood-labs.com>
 //
 // Licensed under the MIT license (the "License"); you may not
 // use this file except in compliance with the License.
@@ -35,11 +35,11 @@ func sanitize(markdown string) string {
 	// We must preserve them while stripping all other trailing whitespace.
 	result = regexp.MustCompile(` {2}(\r?\n)`).ReplaceAllString(result, "‡‡‡DOUBLESPACES‡‡‡$1")
 
-	// Remove trailing spaces from the end of lines
+	// Remove trailing spaces from the end of lines.
 	result = regexp.MustCompile(` +(\r?\n)`).ReplaceAllString(result, "$1")
 	result = regexp.MustCompile(` +$`).ReplaceAllLiteralString(result, "")
 
-	// Restore the preserved double spaces
+	// Restore the preserved double spaces.
 	result = regexp.MustCompile(`‡‡‡DOUBLESPACES‡‡‡(\r?\n)`).ReplaceAllString(result, "  $1")
 
 	// WHY: A blank line containing only double spaces is an artifact of template
@@ -63,12 +63,14 @@ func sanitize(markdown string) string {
 // render identically in all Markdown renderers while satisfying linters.
 func SanitizeBareLinks(s string) string {
 	urlRegex := xurls.Strict()
+
 	matches := urlRegex.FindAllStringIndex(s, -1)
 	if matches == nil {
 		return s
 	}
 
 	var result strings.Builder
+
 	lastIndex := 0
 
 	for _, match := range matches {
@@ -86,11 +88,12 @@ func SanitizeBareLinks(s string) string {
 			continue
 		}
 
-		// Append text before the URL
+		// Append text before the URL.
 		result.WriteString(s[lastIndex:start])
 
-		// Wrap the URL in <>
+		// Wrap the URL in <>.
 		url := s[start:end]
+
 		result.WriteString("<")
 		result.WriteString(url)
 		result.WriteString(">")
@@ -98,8 +101,9 @@ func SanitizeBareLinks(s string) string {
 		lastIndex = end
 	}
 
-	// Append the remaining part of the line
+	// Append the remaining part of the line.
 	result.WriteString(s[lastIndex:])
+
 	return result.String()
 }
 
@@ -113,10 +117,11 @@ func SanitizeBareLinks(s string) string {
 // multi-line complex objects. Using single backticks for short values keeps
 // tables compact, while triple-fence blocks preserve readability for HCL maps
 // and lists. The boolean return signals callers whether extra spacing is needed.
-func PrintFencedCodeBlock(code string, language string) (string, bool) {
+func PrintFencedCodeBlock(code, language string) (string, bool) {
 	if strings.Contains(code, "\n") {
 		return fmt.Sprintf("\n\n```%s\n%s\n```\n", language, code), true
 	}
+
 	return fmt.Sprintf("`%s`", code), false
 }
 
@@ -129,10 +134,11 @@ func PrintFencedCodeBlock(code string, language string) (string, bool) {
 // WHY: AsciiDoc uses a different fence syntax ([source,lang] + ---- delimiters).
 // This parallel function ensures AsciiDoc formatters produce valid Asciidoctor
 // source blocks without duplicating the single-vs-multi decision logic.
-func PrintFencedAsciidocCodeBlock(code string, language string) (string, bool) {
+func PrintFencedAsciidocCodeBlock(code, language string) (string, bool) {
 	if strings.Contains(code, "\n") {
 		return fmt.Sprintf("\n[source,%s]\n----\n%s\n----\n", language, code), true
 	}
+
 	return fmt.Sprintf("`%s`", code), false
 }
 
@@ -159,6 +165,7 @@ func readTemplateItems(efs embed.FS, prefix string) []*template.Item {
 		}
 
 		name := f.Name()
+
 		name = strings.ReplaceAll(name, prefix, "")
 		name = strings.ReplaceAll(name, "_", "")
 		name = strings.ReplaceAll(name, ".tmpl", "")
@@ -174,6 +181,7 @@ func readTemplateItems(efs embed.FS, prefix string) []*template.Item {
 			TrimSpace: true,
 		})
 	}
+
 	return items
 }
 
@@ -200,27 +208,35 @@ func copySections(config *print.Config, src *terraform.Module) *terraform.Module
 	if config.Sections.Header {
 		dest.Header = src.Header
 	}
+
 	if config.Sections.Footer {
 		dest.Footer = src.Footer
 	}
+
 	if config.Sections.Inputs {
 		dest.Inputs = src.Inputs
 	}
+
 	if config.Sections.ModuleCalls {
 		dest.ModuleCalls = src.ModuleCalls
 	}
+
 	if config.Sections.Outputs {
 		dest.Outputs = src.Outputs
 	}
+
 	if config.Sections.Providers {
 		dest.Providers = src.Providers
 	}
+
 	if config.Sections.ProviderFunctions {
 		dest.ProviderFunctions = src.ProviderFunctions
 	}
+
 	if config.Sections.Requirements {
 		dest.Requirements = src.Requirements
 	}
+
 	if config.Sections.Resources || config.Sections.DataSources {
 		dest.Resources = filterResourcesByMode(config, src.Resources)
 	}
@@ -236,13 +252,16 @@ func copySections(config *print.Config, src *terraform.Module) *terraform.Module
 // resource types the user asked for.
 func filterResourcesByMode(config *print.Config, module []*terraform.Resource) []*terraform.Resource {
 	resources := make([]*terraform.Resource, 0)
+
 	for _, r := range module {
 		if config.Sections.Resources && r.Mode == "managed" {
 			resources = append(resources, r)
 		}
+
 		if config.Sections.DataSources && r.Mode == "data" {
 			resources = append(resources, r)
 		}
 	}
+
 	return resources
 }

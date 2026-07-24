@@ -1,5 +1,5 @@
-// Copyright 2021 The terraform-docs Authors.
-// Copyright 2026 Northwood Labs, LLC <license@northwood-labs.com>.
+// Copyright 2018-2026 The terraform-docs Authors.
+// Copyright 2026 Northwood Labs, LLC <license@northwood-labs.com>
 //
 // Licensed under the MIT license (the "License"); you may not
 // use this file except in compliance with the License.
@@ -120,10 +120,10 @@ func withModule(module *terraform.Module) generateFunc {
 // needs to implement the rendering specifics (template selection, sanitization)
 // without duplicating content assembly or accessor boilerplate.
 type generator struct {
-	// all the content combined
+	// all the content combined.
 	content string
 
-	// individual sections
+	// individual sections.
 	header       string
 	footer       string
 	inputs       string
@@ -136,21 +136,21 @@ type generator struct {
 	config *print.Config
 	module *terraform.Module
 
-	path string         // module's path
-	fns  []generateFunc // generator helper functions
+	path string         // module's path.
+	fns  []generateFunc // generator helper functions.
 
 	// WHY: canRender gates whether a formatter supports user-supplied content
 	// templates. Data-only formats (json, yaml, xml, toml) don't support custom
 	// templates because their output structure is fixed by the serialization
 	// format itself—reordering sections would produce invalid documents.
-	canRender bool // indicates if the generator can render with custom template
+	canRender bool // indicates if the generator can render with custom template.
 }
 
 // newGenerator returns a generator for specific formatter name and with
 // provided sets of GeneratorFunc functions to build and add individual
 // sections.
 //
-//nolint:unparam
+
 func newGenerator(config *print.Config, canRender bool, fns ...generateFunc) *generator {
 	g := &generator{
 		config: config,
@@ -243,22 +243,25 @@ func (g *generator) Render(tpl string) (string, error) {
 			if err != nil {
 				panic(err)
 			}
+
 			return strings.TrimSuffix(string(content), "\n")
 		},
 		// WHY: "include_optional" is the graceful counterpart—missing files
 		// don't break generation, they just fall back to a default string.
 		// This supports optional sections that may not exist in every module.
-		"include_optional": func(s string, fb string) string {
+		"include_optional": func(s, fb string) string {
 			content, err := os.ReadFile(filepath.Join(g.path, filepath.Clean(s)))
 			if err != nil {
 				return fb
 			}
+
 			return strings.TrimSuffix(string(content), "\n")
 		},
 	})
 
 	data := struct {
 		*generator
+
 		Config *print.Config
 		Module *terraform.Module
 	}{
@@ -306,9 +309,12 @@ func (g *generator) forEach(render func(string) (string, error)) error {
 		if err != nil {
 			return err
 		}
+
 		fn := callback(result)
+
 		g.fns = append(g.fns, fn)
 		fn(g)
 	}
+
 	return nil
 }

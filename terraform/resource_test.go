@@ -1,5 +1,5 @@
-// Copyright 2021 The terraform-docs Authors.
-// Copyright 2026 Northwood Labs, LLC <license@northwood-labs.com>.
+// Copyright 2018-2026 The terraform-docs Authors.
+// Copyright 2026 Northwood Labs, LLC <license@northwood-labs.com>
 //
 // Licensed under the MIT license (the "License"); you may not
 // use this file except in compliance with the License.
@@ -34,8 +34,8 @@ func TestResourceSpec(t *testing.T) {
 // WHY: Verifies resource mode (managed/data/invalid) is correctly mapped to human-readable strings.
 func TestResourceMode(t *testing.T) {
 	tests := map[string]struct {
-		resource    Resource
 		expectValue string
+		resource    Resource
 	}{
 		"Managed": {
 			resource: Resource{
@@ -81,8 +81,8 @@ func TestResourceMode(t *testing.T) {
 // return empty URL rather than a broken link.
 func TestResourceURL(t *testing.T) {
 	tests := map[string]struct {
-		resource    Resource
 		expectValue string
+		resource    Resource
 	}{
 		"Generic URL construction": {
 			resource: Resource{
@@ -173,12 +173,14 @@ func TestResourcesSortedByTypeAndMode(t *testing.T) {
 
 	for k, i := range resources {
 		mode := ""
+
 		switch i.Mode {
 		case "managed":
 			mode = " (r)"
 		case "data":
 			mode = " (d)"
 		}
+
 		actual[k] = i.Spec() + mode
 	}
 
@@ -189,8 +191,8 @@ func TestResourcesSortedByTypeAndMode(t *testing.T) {
 // Only exact versions should be used; ranges/pessimistic constraints should resolve to "latest".
 func TestResourceVersion(t *testing.T) {
 	tests := map[string]struct {
-		constraint []string
 		expected   string
+		constraint []string
 	}{
 		"exact version, without operator": {
 			constraint: []string{"1.2.3"},

@@ -1,5 +1,5 @@
-// Copyright 2021 The terraform-docs Authors.
-// Copyright 2026 Northwood Labs, LLC <license@northwood-labs.com>.
+// Copyright 2018-2026 The terraform-docs Authors.
+// Copyright 2026 Northwood Labs, LLC <license@northwood-labs.com>
 //
 // Licensed under the MIT license (the "License"); you may not
 // use this file except in compliance with the License.
@@ -52,7 +52,9 @@ func LoadWithOptions(config *print.Config) (*Module, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	sortItems(module, config)
+
 	return module, nil
 }
 
@@ -63,22 +65,27 @@ func LoadWithOptions(config *print.Config) (*Module, error) {
 func loadModule(path string) (*tfconfig.Module, error) {
 	module, diag := tfconfig.LoadModule(path)
 	if diag != nil && diag.HasErrors() {
-		// Filter out "Invalid provider reference" errors which can happen with OpenTofu 'for_each' in providers
+		// Filter out "Invalid provider reference" errors which can happen with OpenTofu 'for_each' in providers.
 		var filteredDiags tfconfig.Diagnostics
+
 		for i := range diag {
 			if diag[i].Severity == tfconfig.DiagError &&
 				(diag[i].Summary == "Invalid provider reference" || strings.Contains(diag[i].Detail, "Provider argument requires a provider name followed by an optional alias")) {
 				continue
 			}
+
 			filteredDiags = append(filteredDiags, diag[i])
 		}
+
 		if filteredDiags.HasErrors() {
 			return nil, filteredDiags
 		}
 	}
+
 	if err := fixOpenTofuProviders(module); err != nil {
 		return nil, err
 	}
+
 	return module, nil
 }
 
@@ -91,7 +98,7 @@ func fixOpenTofuProviders(module *tfconfig.Module) error {
 	resources := []map[string]*tfconfig.Resource{module.ManagedResources, module.DataResources}
 	parser := hclparse.NewParser()
 
-	// cache parsed files to avoid re-reading/re-parsing
+	// cache parsed files to avoid re-reading/re-parsing.
 	files := make(map[string]*hcl.File)
 
 	for _, resourceMap := range resources {
@@ -101,19 +108,23 @@ func fixOpenTofuProviders(module *tfconfig.Module) error {
 			if r.Provider.Name != "" {
 				continue
 			}
+
 			f, err := getParsedFile(parser, r.Pos.Filename, files)
 			if err != nil {
 				return err
 			}
+
 			if f == nil {
 				continue
 			}
+
 			if name, alias, ok := findProviderInFile(f, r.Pos.Line); ok {
 				r.Provider.Name = name
 				r.Provider.Alias = alias
 			}
 		}
 	}
+
 	return nil
 }
 
@@ -123,12 +134,16 @@ func getParsedFile(parser *hclparse.Parser, filename string, files map[string]*h
 	if f, ok := files[filename]; ok {
 		return f, nil
 	}
+
 	b, err := os.ReadFile(filepath.Clean(filename))
 	if err != nil {
 		return nil, err
 	}
+
 	f, _ := parser.ParseHCL(b, filename)
+
 	files[filename] = f
+
 	return f, nil
 }
 
@@ -141,29 +156,35 @@ func findProviderInFile(f *hcl.File, line int) (string, string, bool) {
 		if b.DefRange().Start.Line != line {
 			continue
 		}
+
 		attr, ok := b.Body.Attributes["provider"]
 		if !ok {
 			return "", "", false
 		}
+
 		expr := attr.Expr
 		if idxExpr, ok := expr.(*hclsyntax.IndexExpr); ok {
 			expr = idxExpr.Collection
 		}
 
-		// Try to get traversal
+		// Try to get traversal.
 		traversal, diags := hcl.AbsTraversalForExpr(expr)
 		if diags.HasErrors() || len(traversal) == 0 {
 			return "", "", false
 		}
+
 		providerName := traversal.RootName()
 		alias := ""
+
 		if len(traversal) > 1 {
 			if getAttr, ok := traversal[1].(hcl.TraverseAttr); ok {
 				alias = getAttr.Name
 			}
 		}
+
 		return providerName, alias, true
 	}
+
 	return "", "", false
 }
 
@@ -183,10 +204,12 @@ func loadModuleItems(tfmodule *tfconfig.Module, config *print.Config) (*Module, 
 
 	inputs, required, optional := loadInputs(tfmodule, config)
 	modulecalls := loadModulecalls(tfmodule, config)
+
 	outputs, err := loadOutputs(tfmodule, config)
 	if err != nil {
 		return nil, err
 	}
+
 	providers := loadProviders(tfmodule, config)
 	providerFunctions := loadProviderFunctions(tfmodule, config)
 	requirements := loadRequirements(tfmodule)
@@ -212,32 +235,37 @@ func getFileFormat(filename string) string {
 	if filename == "" {
 		return ""
 	}
+
 	last := strings.LastIndex(filename, ".")
 	if last == -1 {
 		return ""
 	}
+
 	return filename[last:]
 }
 
-func isFileFormatSupported(filename string, section string) (bool, error) {
+func isFileFormatSupported(filename, section string) (bool, error) {
 	if section == "" {
 		return false, errors.New("section is missing")
 	}
+
 	if filename == "" {
 		return false, fmt.Errorf("--%s-from value is missing", section)
 	}
+
 	switch getFileFormat(filename) {
 	case ".adoc", ".md", ".tf", ".tofu", ".txt":
 		return true, nil
 	}
+
 	return false, fmt.Errorf("only .adoc, .md, .tf, .tofu and .txt formats are supported to read %s from", section)
 }
 
 func getSource(filename string) string {
-	// Default source is local
+	// Default source is local.
 	source := "local"
 
-	// Identify another source different from the local for the filename
+	// Identify another source different from the local for the filename.
 	if strings.HasPrefix(filename, "http") || strings.HasPrefix(filename, "https") ||
 		strings.HasPrefix(filename, "s3") {
 		source = "web"
@@ -247,18 +275,19 @@ func getSource(filename string) string {
 }
 
 func sendHTTPRequest(url string) (string, error) {
-	// Creation of context
+	// Creation of context.
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	// Send GET request
-	req, err := http.NewRequestWithContext(ctx, "GET", url, nil) // #nosec G107
+	// Send GET request.
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil) // #nosec G107
 	if err != nil {
 		fmt.Println("Error:", err)
 		return "", err
 	}
 
 	client := http.Client{}
+
 	resp, err := client.Do(req)
 	if err != nil {
 		fmt.Println("Error:", err)
@@ -281,19 +310,20 @@ func sendHTTPRequest(url string) (string, error) {
 	return string(body), nil
 }
 
-func createTempFile(config *print.Config, url string, content string) (string, error) {
-	// Creation of context
+func createTempFile(config *print.Config, url, content string) (string, error) {
+	// Creation of context.
 	fileFormat := getFileFormat(url)
-	tempFile, err := os.CreateTemp("", "temp-*"+fileFormat) // Pattern with temp-*.* extension
+
+	tempFile, err := os.CreateTemp("", "temp-*"+fileFormat) // Pattern with temp-*.* extension.
 	if err != nil {
 		fmt.Println("Error creating temporary file:", err)
 		return "", err
 	}
 
-	// overrride file name, otherwise it will use the URL and not the temp file created
+	// overrride file name, otherwise it will use the URL and not the temp file created.
 	filename := filepath.Join("/", config.ModuleRoot, tempFile.Name())
 
-	// Write the content to the temporary file
+	// Write the content to the temporary file.
 	if _, err := tempFile.WriteString(content); err != nil {
 		fmt.Println("Error writing to temporary file:", err)
 		return "", err
@@ -308,6 +338,7 @@ func loadHeader(config *print.Config) (string, error) {
 	if !config.Sections.Header {
 		return "", nil
 	}
+
 	return loadSection(config, config.HeaderFrom, "header")
 }
 
@@ -317,6 +348,7 @@ func loadFooter(config *print.Config) (string, error) {
 	if !config.Sections.Footer {
 		return "", nil
 	}
+
 	return loadSection(config, config.FooterFrom, "footer")
 }
 
@@ -324,36 +356,37 @@ func loadFooter(config *print.Config) (string, error) {
 // leading block comment) or a standalone .md/.adoc/.txt file. Supporting multiple formats and
 // remote URLs gives module authors flexibility in where they maintain their documentation prose
 // without coupling to a single convention.
-func loadSection(config *print.Config, file string, section string) (string, error) { //nolint:gocyclo
+func loadSection(config *print.Config, file, section string) (string, error) {
 	// NOTE(khos2ow): this function is over our cyclomatic complexity goal.
 	// Be wary when adding branches, and look for functionality that could
 	// be reasonably moved into an injected dependency.
-
 	if section == "" {
 		return "", errors.New("section is missing")
 	}
+
 	filename := filepath.Join(config.ModuleRoot, file)
 	if ok, err := isFileFormatSupported(file, section); !ok {
 		return "", err
 	}
+
 	sourceType := getSource(file)
 
 	if sourceType == "web" {
-		// Request content of the URL
+		// Request content of the URL.
 		response, err := sendHTTPRequest(file)
 		if err != nil {
 			fmt.Println("Error:", err)
 			return "", err
 		}
 
-		// Create temp file with the remote content
+		// Create temp file with the remote content.
 		filename, err = createTempFile(config, file, response)
 		if err != nil {
 			fmt.Println("Error:", err)
 			return "", err
 		}
 
-		// Ensure the temporary file is removed
+		// Ensure the temporary file is removed.
 		defer func() {
 			errDefer := os.Remove(filename)
 			if errDefer != nil {
@@ -364,18 +397,22 @@ func loadSection(config *print.Config, file string, section string) (string, err
 
 	if info, err := os.Stat(filename); os.IsNotExist(err) || info.IsDir() {
 		if section == "header" && file == "main.tf" {
-			return "", nil // absorb the error to not break workflow for default value of header and missing 'main.tf'
+			return "", nil // absorb the error to not break workflow for default value of header and missing 'main.tf'.
 		}
-		return "", err // user explicitly asked for a file which doesn't exist
+
+		return "", err // user explicitly asked for a file which doesn't exist.
 	}
+
 	format := getFileFormat(file)
 	if format != ".tf" && format != ".tofu" {
 		content, err := os.ReadFile(filepath.Clean(filename))
 		if err != nil {
 			return "", err
 		}
+
 		return string(content), nil
 	}
+
 	lines := reader.Lines{
 		FileName: filename,
 		LineNum:  -1,
@@ -388,19 +425,24 @@ func loadSection(config *print.Config, file string, section string) (string, err
 			if strings.HasPrefix(tmp, "/*") || strings.HasPrefix(tmp, "*/") {
 				return "", false
 			}
+
 			if tmp == "*" {
 				return "", true
 			}
+
 			line = strings.TrimLeft(line, " ")
 			line = strings.TrimRight(line, "\r\n")
 			line = strings.TrimPrefix(line, "* ")
+
 			return line, true
 		},
 	}
+
 	sectionText, err := lines.Extract()
 	if err != nil {
 		return "", err
 	}
+
 	return strings.Join(sectionText, "\n"), nil
 }
 
@@ -417,7 +459,7 @@ func loadInputs(tfmodule *tfconfig.Module, config *print.Config) ([]*Input, []*I
 	for _, input := range tfmodule.Variables {
 		comments := loadComments(input.Pos.Filename, input.Pos.Line)
 
-		// skip over inputs that are marked as being ignored
+		// skip over inputs that are marked as being ignored.
 		if strings.Contains(comments, "terraform-docs-ignore") {
 			continue
 		}
@@ -481,12 +523,13 @@ func formatSource(s, v string) (source, version string) {
 
 func loadModulecalls(tfmodule *tfconfig.Module, config *print.Config) []*ModuleCall {
 	modules := make([]*ModuleCall, 0)
+
 	var source, version string
 
 	for _, m := range tfmodule.ModuleCalls {
 		comments := loadComments(m.Pos.Filename, m.Pos.Line)
 
-		// skip over modules that are marked as being ignored
+		// skip over modules that are marked as being ignored.
 		if strings.Contains(comments, "terraform-docs-ignore") {
 			continue
 		}
@@ -509,6 +552,7 @@ func loadModulecalls(tfmodule *tfconfig.Module, config *print.Config) []*ModuleC
 			},
 		})
 	}
+
 	return modules
 }
 
@@ -519,17 +563,20 @@ func loadModulecalls(tfmodule *tfconfig.Module, config *print.Config) []*ModuleC
 func loadOutputs(tfmodule *tfconfig.Module, config *print.Config) ([]*Output, error) {
 	outputs := make([]*Output, 0, len(tfmodule.Outputs))
 	values := make(map[string]*output)
+
 	if config.OutputValues.Enabled {
 		var err error
+
 		values, err = loadOutputValues(config)
 		if err != nil {
 			return nil, err
 		}
 	}
+
 	for _, o := range tfmodule.Outputs {
 		comments := loadComments(o.Pos.Filename, o.Pos.Line)
 
-		// skip over outputs that are marked as being ignored
+		// skip over outputs that are marked as being ignored.
 		if strings.Contains(comments, "terraform-docs-ignore") {
 			continue
 		}
@@ -562,28 +609,40 @@ func loadOutputs(tfmodule *tfconfig.Module, config *print.Config) ([]*Output, er
 				output.Value = types.ValueOf(`<sensitive>`)
 			}
 		}
+
 		outputs = append(outputs, output)
 	}
+
 	return outputs, nil
 }
 
 func loadOutputValues(config *print.Config) (map[string]*output, error) {
-	var out []byte
-	var err error
+	var (
+		out []byte
+		err error
+	)
 	if config.OutputValues.From == "" {
 		cmd := exec.CommandContext(context.TODO(), "terraform", "output", "-json")
+
 		cmd.Dir = config.ModuleRoot
 		if out, err = cmd.Output(); err != nil {
 			return nil, fmt.Errorf("caught error while reading the terraform outputs: %w", err)
 		}
 	} else if out, err = os.ReadFile(config.OutputValues.From); err != nil {
-		return nil, fmt.Errorf("caught error while reading the terraform outputs file at %s: %w", config.OutputValues.From, err)
+		return nil, fmt.Errorf(
+			"caught error while reading the terraform outputs file at %s: %w",
+			config.OutputValues.From,
+			err,
+		)
 	}
+
 	var terraformOutputs map[string]*output
+
 	err = json.Unmarshal(out, &terraformOutputs)
 	if err != nil {
 		return nil, err
 	}
+
 	return terraformOutputs, err
 }
 
@@ -592,20 +651,21 @@ func loadOutputValues(config *print.Config) (map[string]*output, error) {
 // author forgot to declare a provider in required_providers. It also merges version info from
 // .terraform.lock.hcl (if --lock-file is set) to show the exact installed version, giving
 // readers a more accurate picture than just the constraint string.
-func loadProviders(tfmodule *tfconfig.Module, config *print.Config) []*Provider { //nolint:gocyclo
+func loadProviders(tfmodule *tfconfig.Module, config *print.Config) []*Provider {
 	// NOTE(khos2ow): this function is over our cyclomatic complexity goal.
 	// Be wary when adding branches, and look for functionality that could
 	// be reasonably moved into an injected dependency.
-
 	type provider struct {
 		Name        string   `hcl:"name,label"`
 		Version     string   `hcl:"version"`
 		Constraints *string  `hcl:"constraints"`
 		Hashes      []string `hcl:"hashes"`
 	}
+
 	type lockfile struct {
 		Provider []provider `hcl:"provider,block"`
 	}
+
 	lock := make(map[string]provider)
 
 	if config.Settings.LockFile {
@@ -616,6 +676,7 @@ func loadProviders(tfmodule *tfconfig.Module, config *print.Config) []*Provider 
 			for i := range lf.Provider {
 				segments := strings.Split(lf.Provider[i].Name, "/")
 				name := segments[len(segments)-1]
+
 				lock[name] = lf.Provider[i]
 			}
 		}
@@ -628,7 +689,7 @@ func loadProviders(tfmodule *tfconfig.Module, config *print.Config) []*Provider 
 		for _, r := range resource {
 			comments := loadComments(r.Pos.Filename, r.Pos.Line)
 
-			// skip over resources that are marked as being ignored
+			// skip over resources that are marked as being ignored.
 			if strings.Contains(comments, "terraform-docs-ignore") {
 				continue
 			}
@@ -642,11 +703,12 @@ func loadProviders(tfmodule *tfconfig.Module, config *print.Config) []*Provider 
 
 			key := fmt.Sprintf("%s.%s", r.Provider.Name, r.Provider.Alias)
 			if existing, ok := discovered[key]; ok {
-				// keep the earliest position across all resources of this provider
+				// keep the earliest position across all resources of this provider.
 				if r.Pos.Filename < existing.Position.Filename ||
 					(r.Pos.Filename == existing.Position.Filename && r.Pos.Line < existing.Position.Line) {
 					existing.Position = Position{Filename: r.Pos.Filename, Line: r.Pos.Line}
 				}
+
 				continue
 			}
 
@@ -666,6 +728,7 @@ func loadProviders(tfmodule *tfconfig.Module, config *print.Config) []*Provider 
 	for key := range discovered {
 		keys = append(keys, key)
 	}
+
 	sort.Strings(keys)
 
 	providers := make([]*Provider, 0, len(discovered))
@@ -684,10 +747,12 @@ func loadProviders(tfmodule *tfconfig.Module, config *print.Config) []*Provider 
 func loadProviderFunctions(tfmodule *tfconfig.Module, config *print.Config) []*ProviderFunction {
 	providerVersions := make(map[string]string)
 	providerSources := make(map[string]string)
+
 	for name, provider := range tfmodule.RequiredProviders {
 		if len(provider.VersionConstraints) > 0 {
 			providerVersions[name] = strings.Join(provider.VersionConstraints, " ")
 		}
+
 		if len(provider.Source) > 0 {
 			providerSources[name] = provider.Source
 		} else {
@@ -702,12 +767,15 @@ func loadProviderFunctions(tfmodule *tfconfig.Module, config *print.Config) []*P
 		if err != nil {
 			return nil
 		}
+
 		if d.IsDir() {
 			if strings.HasPrefix(d.Name(), ".") {
 				return fs.SkipDir
 			}
+
 			return nil
 		}
+
 		if filepath.Ext(path) != ".tf" {
 			return nil
 		}
@@ -723,6 +791,7 @@ func loadProviderFunctions(tfmodule *tfconfig.Module, config *print.Config) []*P
 		}
 
 		collectProviderFunctions(body, path, discovered, providerVersions, providerSources)
+
 		return nil
 	})
 
@@ -730,6 +799,7 @@ func loadProviderFunctions(tfmodule *tfconfig.Module, config *print.Config) []*P
 	for key := range discovered {
 		keys = append(keys, key)
 	}
+
 	sort.Strings(keys)
 
 	providerFunctions := make([]*ProviderFunction, 0, len(discovered))
@@ -770,13 +840,16 @@ func collectProviderFunctionsFromExpr(
 			if len(parts) == 3 {
 				providerName := parts[1]
 				functionName := parts[2]
+
 				key := fmt.Sprintf("%s.%s", providerName, functionName)
 				if _, ok := discovered[key]; !ok {
 					version := types.String(versions[providerName])
+
 					source := sources[providerName]
 					if len(source) == 0 {
 						source = fmt.Sprintf("%s/%s", "hashicorp", providerName)
 					}
+
 					discovered[key] = &ProviderFunction{
 						ProviderName:   providerName,
 						Function:       functionName,
@@ -790,6 +863,7 @@ func collectProviderFunctionsFromExpr(
 				}
 			}
 		}
+
 		for _, arg := range t.Args {
 			collectProviderFunctionsFromExpr(arg, filename, discovered, versions, sources)
 		}
@@ -816,15 +890,19 @@ func collectProviderFunctionsFromExpr(
 		if t.KeyExpr != nil {
 			collectProviderFunctionsFromExpr(t.KeyExpr, filename, discovered, versions, sources)
 		}
+
 		if t.ValExpr != nil {
 			collectProviderFunctionsFromExpr(t.ValExpr, filename, discovered, versions, sources)
 		}
+
 		collectProviderFunctionsFromExpr(t.CollExpr, filename, discovered, versions, sources)
+
 		if t.CondExpr != nil {
 			collectProviderFunctionsFromExpr(t.CondExpr, filename, discovered, versions, sources)
 		}
 	case *hclsyntax.SplatExpr:
 		collectProviderFunctionsFromExpr(t.Source, filename, discovered, versions, sources)
+
 		if t.Each != nil {
 			collectProviderFunctionsFromExpr(t.Each, filename, discovered, versions, sources)
 		}
@@ -876,6 +954,7 @@ func loadRequirements(tfmodule *tfconfig.Module) []*Requirement {
 			})
 		}
 	}
+
 	return requirements
 }
 
@@ -891,7 +970,7 @@ func loadResources(tfmodule *tfconfig.Module, config *print.Config) []*Resource 
 		for _, r := range resource {
 			comments := loadComments(r.Pos.Filename, r.Pos.Line)
 
-			// skip over resources that are marked as being ignored
+			// skip over resources that are marked as being ignored.
 			if strings.Contains(comments, "terraform-docs-ignore") {
 				continue
 			}
@@ -936,12 +1015,14 @@ func loadResources(tfmodule *tfconfig.Module, config *print.Config) []*Resource 
 	for key := range discovered {
 		resourceKeys = append(resourceKeys, key)
 	}
+
 	sort.Strings(resourceKeys)
 
 	resources := make([]*Resource, 0, len(discovered))
 	for _, key := range resourceKeys {
 		resources = append(resources, discovered[key])
 	}
+
 	return resources
 }
 
@@ -953,6 +1034,7 @@ func resourceVersion(constraints []string) string {
 	if len(constraints) == 0 {
 		return "latest"
 	}
+
 	versionParts := strings.Split(constraints[len(constraints)-1], " ")
 	switch len(versionParts) {
 	case 1:
@@ -960,14 +1042,17 @@ func resourceVersion(constraints []string) string {
 			if versionParts[0][0:1] == "=" {
 				return versionParts[0][1:]
 			}
+
 			return "latest"
 		}
+
 		return versionParts[0]
 	case 2:
 		if versionParts[0] == "=" {
 			return versionParts[1]
 		}
 	}
+
 	return "latest"
 }
 
@@ -987,13 +1072,16 @@ func loadComments(filename string, lineNum int) string {
 			line = strings.TrimPrefix(line, "#")
 			line = strings.TrimPrefix(line, "//")
 			line = strings.TrimSpace(line)
+
 			return line, true
 		},
 	}
+
 	comment, err := lines.Extract()
 	if err != nil {
-		return "" // absorb the error, we don't need to bubble it up or break the execution
+		return "" // absorb the error, we don't need to bubble it up or break the execution.
 	}
+
 	return strings.Join(comment, " ")
 }
 
@@ -1002,23 +1090,23 @@ func loadComments(filename string, lineNum int) string {
 // load functions can append items in discovery order without worrying about ordering, and the
 // sort strategy can be changed without touching any loader logic.
 func sortItems(tfmodule *Module, config *print.Config) {
-	// inputs
+	// inputs.
 	inputs(tfmodule.Inputs).sort(config.Sort.Enabled, config.Sort.By)
 	inputs(tfmodule.RequiredInputs).sort(config.Sort.Enabled, config.Sort.By)
 	inputs(tfmodule.OptionalInputs).sort(config.Sort.Enabled, config.Sort.By)
 
-	// outputs
+	// outputs.
 	outputs(tfmodule.Outputs).sort(config.Sort.Enabled, config.Sort.By)
 
-	// providers
+	// providers.
 	providers(tfmodule.Providers).sort(config.Sort.Enabled, config.Sort.By)
 
-	// provider functions
+	// provider functions.
 	providerFunctions(tfmodule.ProviderFunctions).sort(config.Sort.Enabled, config.Sort.By)
 
-	// resources
+	// resources.
 	resources(tfmodule.Resources).sort(config.Sort.Enabled, config.Sort.By)
 
-	// modules
+	// modules.
 	modulecalls(tfmodule.ModuleCalls).sort(config.Sort.Enabled, config.Sort.By)
 }

@@ -1,5 +1,5 @@
-// Copyright 2021 The terraform-docs Authors.
-// Copyright 2026 Northwood Labs, LLC <license@northwood-labs.com>.
+// Copyright 2018-2026 The terraform-docs Authors.
+// Copyright 2026 Northwood Labs, LLC <license@northwood-labs.com>
 //
 // Licensed under the MIT license (the "License"); you may not
 // use this file except in compliance with the License.
@@ -68,6 +68,7 @@ func (r *Resource) GetMode() string {
 // private or non-standard registry sources whose path structure differs from the public registry.
 func (r *Resource) URL() string {
 	kind := ""
+
 	switch r.Mode {
 	case "managed":
 		kind = "resources"
@@ -80,6 +81,7 @@ func (r *Resource) URL() string {
 	if strings.Count(r.ProviderSource, "/") > 1 {
 		return ""
 	}
+
 	return fmt.Sprintf(
 		"https://registry.terraform.io/providers/%s/%s/docs/%s/%s",
 		r.ProviderSource,
@@ -95,8 +97,10 @@ func sortResourcesByType(x []*Resource) {
 			if x[i].Spec() == x[j].Spec() {
 				return x[i].Name <= x[j].Name
 			}
+
 			return x[i].Spec() < x[j].Spec()
 		}
+
 		return x[i].Mode > x[j].Mode
 	})
 }
@@ -107,6 +111,6 @@ type resources []*Resource
 // groups managed resources and data sources separately, then alphabetizes within each group
 // by their Spec() address—producing a predictable, scannable list in documentation.
 func (rr resources) sort(enabled bool, by string) { //nolint:unparam
-	// always sort by type
+	// always sort by type.
 	sortResourcesByType(rr)
 }

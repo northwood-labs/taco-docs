@@ -1,8 +1,10 @@
 /*
-Copyright 2021 The terraform-docs Authors.
+Copyright 2018-2026 The terraform-docs Authors.
+Copyright 2026 Northwood Labs, LLC <license@northwood-labs.com>
 
 Licensed under the MIT license (the "License"); you may not
 use this file except in compliance with the License.
+
 You may obtain a copy of the License at the LICENSE file in
 the root directory of this source tree.
 */
@@ -48,6 +50,7 @@ func (p *ProviderFunction) URL() string {
 	if strings.Count(p.ProviderSource, "/") > 1 {
 		return ""
 	}
+
 	return fmt.Sprintf(
 		"https://registry.terraform.io/providers/%s/%s/docs/functions/%s",
 		p.ProviderSource,
@@ -61,6 +64,7 @@ func sortProviderFunctionsByName(x []*ProviderFunction) {
 		if x[i].ProviderName == x[j].ProviderName {
 			return x[i].Function < x[j].Function
 		}
+
 		return x[i].ProviderName < x[j].ProviderName
 	})
 }

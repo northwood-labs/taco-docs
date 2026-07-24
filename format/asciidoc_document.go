@@ -1,5 +1,5 @@
-// Copyright 2021 The terraform-docs Authors.
-// Copyright 2026 Northwood Labs, LLC <license@northwood-labs.com>.
+// Copyright 2018-2026 The terraform-docs Authors.
+// Copyright 2026 Northwood Labs, LLC <license@northwood-labs.com>
 //
 // Licensed under the MIT license (the "License"); you may not
 // use this file except in compliance with the License.
@@ -36,7 +36,7 @@ type asciidocDocument struct {
 }
 
 // NewAsciidocDocument returns new instance of Asciidoc Document.
-func NewAsciidocDocument(config *print.Config) Type {
+func NewAsciidocDocument(config *print.Config) *asciidocDocument {
 	items := readTemplateItems(asciidocsDocumentFS, "asciidoc_document")
 
 	// WHY: Same rationale as asciidocTable—disable Markdown-style escaping
@@ -52,16 +52,19 @@ func NewAsciidocDocument(config *print.Config) Type {
 			if !extraline {
 				result += "\n"
 			}
+
 			return result
 		},
 		"value": func(v string) string {
 			if v == "n/a" {
 				return v
 			}
+
 			result, extraline := PrintFencedAsciidocCodeBlock(v, "json")
 			if !extraline {
 				result += "\n"
 			}
+
 			return result
 		},
 		"isRequired": func() bool {
@@ -83,6 +86,7 @@ func (d *asciidocDocument) Generate(module *terraform.Module) error {
 		if err != nil {
 			return "", err
 		}
+
 		return sanitize(rendered), nil
 	})
 

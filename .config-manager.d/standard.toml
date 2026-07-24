@@ -110,8 +110,9 @@
 # Trivy for vulnerability and license scanning
 # https://trivy.dev
 [[files]]
-  stub        = 'configs/stubs/trivyignore'
-  destination = '.trivyignore'
+  stub        = 'configs/stubs/trivyignore.yaml'
+  destination = '.trivyignore.yaml'
+  replaces    = ['.trivyignore']
 
 [[files]]
   stub        = 'configs/stubs/trivy-license.yaml'

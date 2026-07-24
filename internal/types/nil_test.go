@@ -1,5 +1,5 @@
-// Copyright 2021 The terraform-docs Authors.
-// Copyright 2026 Northwood Labs, LLC <license@northwood-labs.com>.
+// Copyright 2018-2026 The terraform-docs Authors.
+// Copyright 2026 Northwood Labs, LLC <license@northwood-labs.com>
 //
 // Licensed under the MIT license (the "License"); you may not
 // use this file except in compliance with the License.
@@ -120,7 +120,7 @@ func TestNilMarshalJSON(t *testing.T) {
 			assert := assert.New(t)
 			actual, err := new(Nil).MarshalJSON()
 
-			assert.Nil(err)
+			assert.NoError(err)
 			assert.Equal(tt.expected, string(actual))
 		})
 	}
@@ -140,15 +140,17 @@ func TestNilMarshalXML(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			assert := assert.New(t)
+
 			var b bytes.Buffer
+
 			encoder := xml.NewEncoder(&b)
 			start := xml.StartElement{Name: xml.Name{Local: "test"}}
 
 			err := new(Nil).MarshalXML(encoder, start)
-			assert.Nil(err)
+			assert.NoError(err)
 
 			err = encoder.Flush()
-			assert.Nil(err)
+			assert.NoError(err)
 
 			assert.Equal(tt.expected, b.String())
 		})
@@ -158,8 +160,8 @@ func TestNilMarshalXML(t *testing.T) {
 // WHY: Ensures nil serializes to Go nil for YAML marshaling (renders as "null" or omitted in YAML).
 func TestNilMarshalYAML(t *testing.T) {
 	tests := []struct {
+		expected any
 		name     string
-		expected interface{}
 	}{
 		{
 			name:     "nil marshal YAML",
@@ -171,7 +173,7 @@ func TestNilMarshalYAML(t *testing.T) {
 			assert := assert.New(t)
 			actual, err := new(Nil).MarshalYAML()
 
-			assert.Nil(err)
+			assert.NoError(err)
 			assert.Equal(tt.expected, actual)
 		})
 	}

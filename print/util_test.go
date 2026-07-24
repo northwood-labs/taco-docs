@@ -1,5 +1,5 @@
-// Copyright 2021 The terraform-docs Authors.
-// Copyright 2026 Northwood Labs, LLC <license@northwood-labs.com>.
+// Copyright 2018-2026 The terraform-docs Authors.
+// Copyright 2026 Northwood Labs, LLC <license@northwood-labs.com>
 //
 // Licensed under the MIT license (the "License"); you may not
 // use this file except in compliance with the License.
@@ -18,6 +18,7 @@ import (
 // WHY: Validates the 'contains' helper used internally for section filtering.
 func TestSliceContains(t *testing.T) {
 	list := []string{"foo", "bar", "buzz"}
+
 	tests := []struct {
 		name     string
 		item     string
@@ -56,6 +57,7 @@ func TestSliceContains(t *testing.T) {
 // WHY: Validates the 'index' helper used to locate items in section lists.
 func TestSliceIndex(t *testing.T) {
 	list := []string{"foo", "bar", "buzz"}
+
 	tests := []struct {
 		name     string
 		item     string
@@ -95,6 +97,7 @@ func TestSliceIndex(t *testing.T) {
 // unwanted sections in the output or panic on missing items.
 func TestSliceRemove(t *testing.T) {
 	list := []string{"foo", "bar", "buzz"}
+
 	tests := []struct {
 		name     string
 		item     string
@@ -126,8 +129,9 @@ func TestSliceRemove(t *testing.T) {
 			assert := assert.New(t)
 			cpy := make([]string, len(list))
 			copy(cpy, list)
+
 			actual := remove(cpy, tt.item)
-			assert.Equal(len(tt.expected), len(actual))
+			assert.Len(actual, len(tt.expected))
 			assert.Equal(tt.expected, actual)
 		})
 	}

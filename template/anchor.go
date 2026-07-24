@@ -1,5 +1,5 @@
-// Copyright 2021 The terraform-docs Authors.
-// Copyright 2026 Northwood Labs, LLC <license@northwood-labs.com>.
+// Copyright 2018-2026 The terraform-docs Authors.
+// Copyright 2026 Northwood Labs, LLC <license@northwood-labs.com>
 //
 // Licensed under the MIT license (the "License"); you may not
 // use this file except in compliance with the License.
@@ -17,13 +17,13 @@ import (
 // that inputs/outputs can be cross-referenced from elsewhere in a document.
 // The dual approach (anchor + link) ensures the item is both a jump target and
 // itself clickable for navigation.
-func CreateAnchorMarkdown(prefix string, value string, anchor bool, escape bool) string {
+func CreateAnchorMarkdown(prefix, value string, anchor, escape bool) string {
 	sanitizedName := SanitizeName(value, escape)
 
 	if anchor {
 		anchorName := fmt.Sprintf("%s_%s", prefix, value)
 		sanitizedAnchorName := SanitizeName(anchorName, escape)
-		// the <a> link is purposely not sanitized as this breaks markdown formatting
+		// the <a> link is purposely not sanitized as this breaks markdown formatting.
 		return fmt.Sprintf("<a name=\"%s\"></a> [%s](#%s)", anchorName, sanitizedName, sanitizedAnchorName)
 	}
 
@@ -33,12 +33,13 @@ func CreateAnchorMarkdown(prefix string, value string, anchor bool, escape bool)
 // CreateAnchorAsciidoc is the AsciiDoc equivalent using [[id]] and <<id,label>>
 // syntax. AsciiDoc uses different anchor/xref conventions than Markdown, so a
 // separate function keeps format-specific concerns isolated.
-func CreateAnchorAsciidoc(prefix string, value string, anchor bool, escape bool) string {
+func CreateAnchorAsciidoc(prefix, value string, anchor, escape bool) string {
 	sanitizedName := SanitizeName(value, escape)
 
 	if anchor {
 		anchorName := fmt.Sprintf("%s_%s", prefix, value)
 		sanitizedAnchorName := SanitizeName(anchorName, escape)
+
 		return fmt.Sprintf("[[%s]] <<%s,%s>>", sanitizedAnchorName, sanitizedAnchorName, sanitizedName)
 	}
 

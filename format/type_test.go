@@ -1,12 +1,18 @@
-// /*
-// Copyright 2021 The terraform-docs Authors.
+// Copyright 2018-2026 The terraform-docs Authors.
+// Copyright 2026 Northwood Labs, LLC <license@northwood-labs.com>
+//
+// Licensed under the MIT license (the "License"); you may not
+// use this file except in compliance with the License.
+//
+// You may obtain a copy of the License at the LICENSE file in
+// the root directory of this source tree.
 
 // Licensed under the MIT license (the "License"); you may not
 // use this file except in compliance with the License.
 
 // You may obtain a copy of the License at the LICENSE file in
 // the root directory of this source tree.
-// */
+// */.
 
 package format
 
@@ -201,12 +207,14 @@ func TestFormatType(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			assert := assert.New(t)
 			config := print.DefaultConfig()
+
 			config.Formatter = tt.format
+
 			actual, err := New(config)
 			if tt.wantErr {
-				assert.NotNil(err)
+				assert.Error(err)
 			} else {
-				assert.Nil(err)
+				assert.NoError(err)
 				assert.Equal(tt.expected, reflect.TypeOf(actual).String())
 			}
 		})

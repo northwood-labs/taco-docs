@@ -1,5 +1,5 @@
-// Copyright 2021 The terraform-docs Authors.
-// Copyright 2026 Northwood Labs, LLC <license@northwood-labs.com>.
+// Copyright 2018-2026 The terraform-docs Authors.
+// Copyright 2026 Northwood Labs, LLC <license@northwood-labs.com>
 //
 // Licensed under the MIT license (the "License"); you may not
 // use this file except in compliance with the License.
@@ -40,10 +40,11 @@ func TestTemplateRender(t *testing.T) {
 	module := &terraform.Module{
 		Header: "sample header",
 	}
+
 	tests := []struct {
 		name     string
-		items    []*Item
 		expected string
+		items    []*Item
 		wantErr  bool
 	}{
 		{
@@ -72,11 +73,12 @@ func TestTemplateRender(t *testing.T) {
 			assert := assert.New(t)
 			tpl := New(print.DefaultConfig(), tt.items...)
 			tpl.CustomFunc(customFuncs)
+
 			rendered, err := tpl.Render("", module)
 			if tt.wantErr {
-				assert.NotNil(err)
+				assert.Error(err)
 			} else {
-				assert.Nil(err)
+				assert.NoError(err)
 				assert.Equal(tt.expected, rendered)
 			}
 		})
@@ -89,11 +91,11 @@ func TestBuiltinFunc(t *testing.T) {
 	tests := []struct {
 		name     string
 		funcName string
+		expected string
 		funcArgs []string
 		escape   bool
-		expected string
 	}{
-		// default
+		// default.
 		{
 			name:     "template builtin functions default",
 			funcName: "default",
@@ -123,7 +125,7 @@ func TestBuiltinFunc(t *testing.T) {
 			expected: "",
 		},
 
-		// tostring
+		// tostring.
 		{
 			name:     "template builtin functions tostring",
 			funcName: "tostring",
@@ -139,7 +141,7 @@ func TestBuiltinFunc(t *testing.T) {
 			expected: "",
 		},
 
-		// trim
+		// trim.
 		{
 			name:     "template builtin functions trim",
 			funcName: "trim",
@@ -169,7 +171,7 @@ func TestBuiltinFunc(t *testing.T) {
 			expected: "",
 		},
 
-		// trimLeft
+		// trimLeft.
 		{
 			name:     "template builtin functions trimLeft",
 			funcName: "trimLeft",
@@ -199,7 +201,7 @@ func TestBuiltinFunc(t *testing.T) {
 			expected: "",
 		},
 
-		// trimRight
+		// trimRight.
 		{
 			name:     "template builtin functions trimRight",
 			funcName: "trimRight",
@@ -229,7 +231,7 @@ func TestBuiltinFunc(t *testing.T) {
 			expected: "",
 		},
 
-		// trimPrefix
+		// trimPrefix.
 		{
 			name:     "template builtin functions trimPrefix",
 			funcName: "trimPrefix",
@@ -259,7 +261,7 @@ func TestBuiltinFunc(t *testing.T) {
 			expected: "",
 		},
 
-		// trimSuffix
+		// trimSuffix.
 		{
 			name:     "template builtin functions trimSuffix",
 			funcName: "trimSuffix",
@@ -289,7 +291,7 @@ func TestBuiltinFunc(t *testing.T) {
 			expected: "",
 		},
 
-		// indent
+		// indent.
 		{
 			name:     "template builtin functions indent",
 			funcName: "indent",
@@ -319,7 +321,7 @@ func TestBuiltinFunc(t *testing.T) {
 			expected: "#####",
 		},
 
-		// name
+		// name.
 		{
 			name:     "template builtin functions name",
 			funcName: "name",
@@ -349,7 +351,7 @@ func TestBuiltinFunc(t *testing.T) {
 			expected: "",
 		},
 
-		// sanitizeSection
+		// sanitizeSection.
 		{
 			name:     "template builtin functions sanitizeSection",
 			funcName: "sanitizeSection",
@@ -374,7 +376,7 @@ func TestBuiltinFunc(t *testing.T) {
 			expected: "n/a",
 		},
 
-		// sanitizeDoc
+		// sanitizeDoc.
 		{
 			name:     "template builtin functions sanitizeDoc",
 			funcName: "sanitizeDoc",
@@ -397,7 +399,7 @@ func TestBuiltinFunc(t *testing.T) {
 			expected: "n/a",
 		},
 
-		// sanitizeMarkdownTbl
+		// sanitizeMarkdownTbl.
 		{
 			name:     "template builtin functions sanitizeMarkdownTbl",
 			funcName: "sanitizeMarkdownTbl",
@@ -424,7 +426,9 @@ func TestBuiltinFunc(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			assert := assert.New(t)
 			config := print.DefaultConfig()
+
 			config.Settings.Escape = tt.escape
+
 			funcs := builtinFuncs(config)
 
 			fn, ok := funcs[tt.funcName]
@@ -444,9 +448,10 @@ func TestBuiltinFunc(t *testing.T) {
 
 			for i := range argv {
 				var argType reflect.Kind
+
 				if strings.HasPrefix(tt.funcArgs[i], "\"") {
 					if tt.funcName == "tostring" {
-						argType = reflect.TypeOf(types.String("")).Kind()
+						argType = reflect.TypeFor[types.String]().Kind()
 						argv[i] = reflect.ValueOf(types.String(strings.Trim(tt.funcArgs[i], "\"")))
 					} else {
 						argType = reflect.String
@@ -454,9 +459,12 @@ func TestBuiltinFunc(t *testing.T) {
 					}
 				} else {
 					argType = reflect.Int
+
 					num, _ := strconv.Atoi(tt.funcArgs[i])
+
 					argv[i] = reflect.ValueOf(num)
 				}
+
 				if tp.In(i).Kind() != argType {
 					assert.Fail("Invalid argument. got: %v, want: %v", argType, tp.In(i).Kind())
 				}
@@ -478,9 +486,9 @@ func TestBuiltinFunc(t *testing.T) {
 func TestGenerateIndentation(t *testing.T) {
 	tests := []struct {
 		name     string
+		expected string
 		base     int
 		extra    int
-		expected string
 	}{
 		{
 			name:     "generate indentation",
@@ -528,8 +536,8 @@ func TestNormalize(t *testing.T) {
 	tests := []struct {
 		name     string
 		text     string
-		trim     bool
 		expected string
+		trim     bool
 	}{
 		{
 			name:     "normalize with trim space",

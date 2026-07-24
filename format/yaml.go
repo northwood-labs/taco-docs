@@ -1,5 +1,5 @@
-// Copyright 2021 The terraform-docs Authors.
-// Copyright 2026 Northwood Labs, LLC <license@northwood-labs.com>.
+// Copyright 2018-2026 The terraform-docs Authors.
+// Copyright 2026 Northwood Labs, LLC <license@northwood-labs.com>
 //
 // Licensed under the MIT license (the "License"); you may not
 // use this file except in compliance with the License.
@@ -35,7 +35,7 @@ type yaml struct {
 //
 // WHY: canRender is false because the YAML encoder dictates output structure;
 // custom content templates can't meaningfully reorder a serialized YAML document.
-func NewYAML(config *print.Config) Type {
+func NewYAML(config *print.Config) *yaml {
 	return &yaml{
 		generator: newGenerator(config, false),
 		config:    config,

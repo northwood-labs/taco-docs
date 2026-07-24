@@ -1,5 +1,5 @@
-// Copyright 2021 The terraform-docs Authors.
-// Copyright 2026 Northwood Labs, LLC <license@northwood-labs.com>.
+// Copyright 2018-2026 The terraform-docs Authors.
+// Copyright 2026 Northwood Labs, LLC <license@northwood-labs.com>
 //
 // Licensed under the MIT license (the "License"); you may not
 // use this file except in compliance with the License.
@@ -13,13 +13,10 @@ package print
 // trivial operations. These exist because Go (pre-generics) required hand-written
 // utility functions for basic slice operations on concrete types.
 
+import "slices"
+
 func contains(list []string, name string) bool {
-	for _, v := range list {
-		if v == name {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(list, name)
 }
 
 // nolint

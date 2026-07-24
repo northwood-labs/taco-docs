@@ -1,5 +1,5 @@
-// Copyright 2021 The terraform-docs Authors.
-// Copyright 2026 Northwood Labs, LLC <license@northwood-labs.com>.
+// Copyright 2018-2026 The terraform-docs Authors.
+// Copyright 2026 Northwood Labs, LLC <license@northwood-labs.com>
 //
 // Licensed under the MIT license (the "License"); you may not
 // use this file except in compliance with the License.
@@ -13,6 +13,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"encoding/xml"
+	"maps"
 	"reflect"
 	"sort"
 )
@@ -27,7 +28,7 @@ import (
 type Value interface {
 	HasDefault() bool
 	Length() int
-	Raw() interface{}
+	Raw() any
 }
 
 // ValueOf wraps a raw Go interface{} (as parsed from HCL) into the appropriate
@@ -35,10 +36,11 @@ type Value interface {
 // returns default values as interface{}, but we need concrete types to attach
 // custom JSON/XML/YAML marshalers that produce the correct output representation
 // (e.g., `null` for nil, `""` for explicit empty string).
-func ValueOf(v interface{}) Value {
+func ValueOf(v any) Value {
 	if v == nil {
 		return new(Nil)
 	}
+
 	value := reflect.ValueOf(v)
 
 	// We don't really care about all the other kinds.
@@ -51,6 +53,7 @@ func ValueOf(v interface{}) Value {
 		if value.IsZero() {
 			return Empty("")
 		}
+
 		return String(value.String())
 	case reflect.Float32, reflect.Float64:
 		return Number(value.Float())
@@ -62,10 +65,11 @@ func ValueOf(v interface{}) Value {
 	case reflect.Bool:
 		return Bool(value.Bool())
 	case reflect.Slice:
-		return List(value.Interface().([]interface{}))
+		return List(value.Interface().([]any))
 	case reflect.Map:
-		return Map(value.Interface().(map[string]interface{}))
+		return Map(value.Interface().(map[string]any))
 	}
+
 	return new(Nil)
 }
 
@@ -74,10 +78,11 @@ func ValueOf(v interface{}) Value {
 // falling back to runtime type inference from the default value. The fallback
 // handles cases where type is omitted but a default is set — Terraform infers the
 // type from the default value in this scenario.
-func TypeOf(t string, v interface{}) String {
+func TypeOf(t string, v any) String {
 	if t != "" {
 		return String(t)
 	}
+
 	if v != nil {
 		// We don't really care about all the other kinds.
 		//
@@ -95,13 +100,14 @@ func TypeOf(t string, v interface{}) String {
 			return String("map")
 		}
 	}
+
 	return String("any")
 }
 
 // Nil represents a variable with no default value. It marshals to `null` in JSON
 // and YAML, and uses xsi:nil="true" in XML. The distinction between Nil and Empty
 // is critical: Nil means "the user must provide a value" (required input), while
-// Empty means "the default value is explicitly an empty string."
+// Empty means "the default value is explicitly an empty string.".
 type Nil struct{}
 
 // HasDefault returns false for Nil because a nil default means the variable is
@@ -110,13 +116,13 @@ func (n Nil) HasDefault() bool {
 	return false
 }
 
-// Length returns the length of underlying item
+// Length returns the length of underlying item.
 func (n Nil) Length() int {
 	return 0
 }
 
 // Raw underlying value of this type.
-func (n Nil) Raw() interface{} {
+func (n Nil) Raw() any {
 	return nil
 }
 
@@ -133,7 +139,7 @@ func (n Nil) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 }
 
 // MarshalYAML produces a YAML null value.
-func (n Nil) MarshalYAML() (interface{}, error) {
+func (n Nil) MarshalYAML() (any, error) {
 	return nil, nil
 }
 
@@ -153,13 +159,13 @@ func (s String) HasDefault() bool {
 	return true
 }
 
-// Length returns the length of underlying item
+// Length returns the length of underlying item.
 func (s String) Length() int {
 	return len(s.underlying())
 }
 
 // Raw underlying value of this type.
-func (s String) Raw() interface{} {
+func (s String) Raw() any {
 	return s.underlying()
 }
 
@@ -173,11 +179,14 @@ func (s String) MarshalJSON() ([]byte, error) {
 	} else {
 		encoder := json.NewEncoder(&buf)
 		encoder.SetEscapeHTML(false)
+
 		if err := encoder.Encode(string(s)); err != nil {
 			return nil, err
 		}
-		buf.Truncate(buf.Len() - 1) // The json encoder adds a newline, this is not configurable
+
+		buf.Truncate(buf.Len() - 1) // The json encoder adds a newline, this is not configurable.
 	}
+
 	return buf.Bytes(), nil
 }
 
@@ -188,15 +197,17 @@ func (s String) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 		start.Attr = append(start.Attr, xml.Attr{Name: xml.Name{Local: "xsi:nil"}, Value: "true"})
 		return e.EncodeElement(``, start)
 	}
+
 	return e.EncodeElement(string(s), start)
 }
 
 // MarshalYAML produces null for empty strings, matching the convention that
 // "no value specified" renders as null across all output formats.
-func (s String) MarshalYAML() (interface{}, error) {
+func (s String) MarshalYAML() (any, error) {
 	if len(string(s)) == 0 || string(s) == `""` {
 		return nil, nil
 	}
+
 	return string(s), nil
 }
 
@@ -216,13 +227,13 @@ func (e Empty) HasDefault() bool {
 	return true
 }
 
-// Length returns the length of underlying item
+// Length returns the length of underlying item.
 func (e Empty) Length() int {
 	return len(e.underlying())
 }
 
 // Raw underlying value of this type.
-func (e Empty) Raw() interface{} {
+func (e Empty) Raw() any {
 	return e.underlying()
 }
 
@@ -247,13 +258,13 @@ func (n Number) HasDefault() bool {
 	return true
 }
 
-// Length returns the length of underlying item
+// Length returns the length of underlying item.
 func (n Number) Length() int {
 	return 0
 }
 
 // Raw underlying value of this type.
-func (n Number) Raw() interface{} {
+func (n Number) Raw() any {
 	return n.underlying()
 }
 
@@ -270,27 +281,28 @@ func (b Bool) HasDefault() bool {
 	return true
 }
 
-// Length returns the length of underlying item
+// Length returns the length of underlying item.
 func (b Bool) Length() int {
 	return 0
 }
 
 // Raw underlying value of this type.
-func (b Bool) Raw() interface{} {
+func (b Bool) Raw() any {
 	return b.underlying()
 }
 
 // List represents a Terraform list/tuple default value. It exists as a distinct
 // type (rather than using []interface{} directly) so that custom XML marshaling
 // can wrap items in <item> tags for well-formed structure.
-type List []interface{}
+type List []any
 
 // Underlying returns a defensive copy of the list elements.
-func (l List) Underlying() []interface{} {
-	r := make([]interface{}, 0)
+func (l List) Underlying() []any {
+	r := make([]any, 0)
 	for _, i := range l {
 		r = append(r, i)
 	}
+
 	return r
 }
 
@@ -299,19 +311,19 @@ func (l List) HasDefault() bool {
 	return true
 }
 
-// Length returns the length of underlying item
+// Length returns the length of underlying item.
 func (l List) Length() int {
 	return len(l)
 }
 
 // Raw underlying value of this type.
-func (l List) Raw() interface{} {
+func (l List) Raw() any {
 	return l.Underlying()
 }
 
 type xmllistentry struct {
-	XMLName xml.Name    `xml:"item"`
-	Value   interface{} `xml:",chardata"`
+	Value   any      `xml:",chardata"`
+	XMLName xml.Name `xml:"item"`
 }
 
 // MarshalXML wraps each list element in an <item> tag. This is necessary because
@@ -321,32 +333,34 @@ func (l List) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 	if len(l) == 0 {
 		return e.EncodeElement(``, start)
 	}
+
 	err := e.EncodeToken(start)
 	if err != nil {
 		return err
 	}
+
 	for _, i := range l {
 		e.Encode(xmllistentry{XMLName: xml.Name{Local: "item"}, Value: i}) //nolint:errcheck,gosec
 	}
+
 	return e.EncodeToken(start.End())
 }
 
 // Map represents a Terraform map/object default value. Like List, it exists as
 // a distinct type to provide custom XML marshaling where map keys become element
 // names and values become element content.
-type Map map[string]interface{}
+type Map map[string]any
 
 // Underlying returns a defensive copy of the map.
-func (m Map) Underlying() map[string]interface{} {
-	r := make(map[string]interface{})
-	for k, e := range m {
-		r[k] = e
-	}
+func (m Map) Underlying() map[string]any {
+	r := make(map[string]any)
+	maps.Copy(r, m)
+
 	return r
 }
 
 // Raw underlying value of this type.
-func (m Map) Raw() interface{} {
+func (m Map) Raw() any {
 	return m.Underlying()
 }
 
@@ -355,14 +369,14 @@ func (m Map) HasDefault() bool {
 	return true
 }
 
-// Length returns the length of underlying item
+// Length returns the length of underlying item.
 func (m Map) Length() int {
 	return len(m)
 }
 
 type xmlmapentry struct {
-	XMLName xml.Name    `xml:","`
-	Value   interface{} `xml:",chardata"`
+	Value   any      `xml:",chardata"`
+	XMLName xml.Name `xml:","`
 }
 
 // sortmapkeys ensures deterministic XML output by sorting map keys alphabetically.
@@ -381,29 +395,34 @@ func (m Map) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 	if len(m) == 0 {
 		return e.EncodeElement(``, start)
 	}
+
 	err := e.EncodeToken(start)
 	if err != nil {
 		return err
 	}
+
 	keys := make([]string, 0)
 	for k := range m {
 		keys = append(keys, k)
 	}
+
 	sort.Sort(sortmapkeys(keys))
+
 	for _, k := range keys {
 		// We don't really care about all the other kinds.
 		//
-		//nolint:exhaustive
+
 		switch reflect.TypeOf(m[k]).Kind() {
 		case reflect.Map:
 			is := xml.StartElement{Name: xml.Name{Local: k}}
-			Map(m[k].(map[string]interface{})).MarshalXML(e, is) //nolint:errcheck,gosec
+			Map(m[k].(map[string]any)).MarshalXML(e, is) //nolint:errcheck,gosec
 		case reflect.Slice:
 			is := xml.StartElement{Name: xml.Name{Local: k}}
-			List(m[k].([]interface{})).MarshalXML(e, is) //nolint:errcheck,gosec
+			List(m[k].([]any)).MarshalXML(e, is) //nolint:errcheck,gosec
 		default:
 			e.Encode(xmlmapentry{XMLName: xml.Name{Local: k}, Value: m[k]}) //nolint:errcheck,gosec
 		}
 	}
+
 	return e.EncodeToken(start.End())
 }

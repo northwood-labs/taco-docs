@@ -1,5 +1,5 @@
-// Copyright 2021 The terraform-docs Authors.
-// Copyright 2026 Northwood Labs, LLC <license@northwood-labs.com>.
+// Copyright 2018-2026 The terraform-docs Authors.
+// Copyright 2026 Northwood Labs, LLC <license@northwood-labs.com>
 //
 // Licensed under the MIT license (the "License"); you may not
 // use this file except in compliance with the License.
@@ -26,6 +26,7 @@ func TestList(t *testing.T) {
 		{true, false, true},
 		{10, float64(1000), int8(42)},
 	}
+
 	tests := []testlist{
 		{
 			name:   "value not nil and type list",
@@ -68,7 +69,7 @@ func TestList(t *testing.T) {
 func TestListLength(t *testing.T) {
 	tests := []struct {
 		name     string
-		value    []interface{}
+		value    []any
 		expected int
 	}{
 		{
@@ -109,7 +110,7 @@ func TestListLength(t *testing.T) {
 func TestListUnderlying(t *testing.T) {
 	tests := []struct {
 		name  string
-		value []interface{}
+		value []any
 	}{
 		{
 			name:  "list underlying",
@@ -141,8 +142,8 @@ func TestListUnderlying(t *testing.T) {
 func TestListMarshalXML(t *testing.T) {
 	tests := []struct {
 		name     string
-		value    []interface{}
 		expected string
+		value    []any
 	}{
 		{
 			name:     "list marshal XML",
@@ -178,15 +179,17 @@ func TestListMarshalXML(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			assert := assert.New(t)
+
 			var b bytes.Buffer
+
 			encoder := xml.NewEncoder(&b)
 			start := xml.StartElement{Name: xml.Name{Local: "test"}}
 
 			err := List(tt.value).MarshalXML(encoder, start)
-			assert.Nil(err)
+			assert.NoError(err)
 
 			err = encoder.Flush()
-			assert.Nil(err)
+			assert.NoError(err)
 
 			assert.Equal(tt.expected, b.String())
 		})

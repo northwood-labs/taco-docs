@@ -1,5 +1,5 @@
-// Copyright 2021 The terraform-docs Authors.
-// Copyright 2026 Northwood Labs, LLC <license@northwood-labs.com>.
+// Copyright 2018-2026 The terraform-docs Authors.
+// Copyright 2026 Northwood Labs, LLC <license@northwood-labs.com>
 //
 // Licensed under the MIT license (the "License"); you may not
 // use this file except in compliance with the License.
@@ -63,20 +63,26 @@ func NewClient(opts *ClientOpts) *goplugin.Client {
 // Name calls the server-side Name method and returns its version.
 func (c *Client) Name() (string, error) {
 	var resp string
-	err := c.rpcClient.Call("Plugin.Name", new(interface{}), &resp)
+
+	err := c.rpcClient.Call("Plugin.Name", new(any), &resp)
+
 	return resp, err
 }
 
 // Version calls the server-side Version method and returns its version.
 func (c *Client) Version() (string, error) {
 	var resp string
-	err := c.rpcClient.Call("Plugin.Version", new(interface{}), &resp)
+
+	err := c.rpcClient.Call("Plugin.Version", new(any), &resp)
+
 	return resp, err
 }
 
 // Execute calls the server-side Execute method and returns generated output.
 func (c *Client) Execute(args *ExecuteArgs) (string, error) {
 	var resp string
+
 	err := c.rpcClient.Call("Plugin.Execute", args, &resp)
+
 	return resp, err
 }

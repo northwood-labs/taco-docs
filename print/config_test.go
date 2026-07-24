@@ -1,5 +1,5 @@
-// Copyright 2021 The terraform-docs Authors.
-// Copyright 2026 Northwood Labs, LLC <license@northwood-labs.com>.
+// Copyright 2018-2026 The terraform-docs Authors.
+// Copyright 2026 Northwood Labs, LLC <license@northwood-labs.com>
 //
 // Licensed under the MIT license (the "License"); you may not
 // use this file except in compliance with the License.
@@ -22,9 +22,9 @@ import (
 // users could pass conflicting options and get undefined behavior or silent misconfiguration.
 func TestConfigSections(t *testing.T) {
 	tests := map[string]struct {
+		errMsg   string
 		sections sections
 		wantErr  bool
-		errMsg   string
 	}{
 		"OnlyShows": {
 			sections: sections{
@@ -74,10 +74,10 @@ func TestConfigSections(t *testing.T) {
 			err := tt.sections.validate()
 
 			if tt.wantErr {
-				assert.NotNil(err)
+				assert.Error(err)
 				assert.Equal(tt.errMsg, err.Error())
 			} else {
-				assert.Nil(err)
+				assert.NoError(err)
 			}
 		})
 	}
@@ -87,8 +87,8 @@ func TestConfigSections(t *testing.T) {
 // sections silently appear or disappear from output without user intent.
 func TestConfigVisibility(t *testing.T) {
 	tests := []struct {
-		sections sections
 		name     string
+		sections sections
 		expected bool
 	}{
 		{
@@ -160,9 +160,9 @@ func TestConfigVisibility(t *testing.T) {
 // (begin/end comments, {{ .Content }} presence). Malformed templates would silently corrupt output files.
 func TestConfigOutput(t *testing.T) {
 	tests := map[string]struct {
+		errMsg  string
 		output  output
 		wantErr bool
-		errMsg  string
 	}{
 		"FileEmpty": {
 			output: output{
@@ -290,10 +290,10 @@ func TestConfigOutput(t *testing.T) {
 			err := tt.output.validate()
 
 			if tt.wantErr {
-				assert.NotNil(err)
+				assert.Error(err)
 				assert.Equal(tt.errMsg, err.Error())
 			} else {
-				assert.Nil(err)
+				assert.NoError(err)
 			}
 		})
 	}
@@ -482,9 +482,9 @@ func TestIsInlineComment(t *testing.T) {
 // WHY: Validates sort type options (name, required, type). Invalid sort type must error, not silently default.
 func TestConfigSort(t *testing.T) {
 	tests := map[string]struct {
+		errMsg  string
 		sort    sort
 		wantErr bool
-		errMsg  string
 	}{
 		"name": {
 			sort: sort{
@@ -523,10 +523,10 @@ func TestConfigSort(t *testing.T) {
 			err := tt.sort.validate()
 
 			if tt.wantErr {
-				assert.NotNil(err)
+				assert.Error(err)
 				assert.Equal(tt.errMsg, err.Error())
 			} else {
-				assert.Nil(err)
+				assert.NoError(err)
 			}
 		})
 	}
@@ -536,9 +536,9 @@ func TestConfigSort(t *testing.T) {
 // must error early rather than failing mid-generation.
 func TestConfigOutputvalues(t *testing.T) {
 	tests := map[string]struct {
+		errMsg       string
 		outputvalues outputvalues
 		wantErr      bool
-		errMsg       string
 	}{
 		"OK": {
 			outputvalues: outputvalues{
@@ -571,10 +571,10 @@ func TestConfigOutputvalues(t *testing.T) {
 			err := tt.outputvalues.validate()
 
 			if tt.wantErr {
-				assert.NotNil(err)
+				assert.Error(err)
 				assert.Equal(tt.errMsg, err.Error())
 			} else {
-				assert.Nil(err)
+				assert.NoError(err)
 			}
 		})
 	}
@@ -585,8 +585,8 @@ func TestConfigOutputvalues(t *testing.T) {
 func TestConfigValidate(t *testing.T) {
 	tests := map[string]struct {
 		config  func(c *Config)
-		wantErr bool
 		errMsg  string
+		wantErr bool
 	}{
 		"OK": {
 			config:  func(c *Config) {},
@@ -638,15 +638,17 @@ func TestConfigValidate(t *testing.T) {
 			assert := assert.New(t)
 
 			config := DefaultConfig()
+
 			config.Formatter = "foo"
 			tt.config(config)
+
 			err := config.Validate()
 
 			if tt.wantErr {
-				assert.NotNil(err)
+				assert.Error(err)
 				assert.Equal(tt.errMsg, err.Error())
 			} else {
-				assert.Nil(err)
+				assert.NoError(err)
 			}
 		})
 	}
@@ -690,9 +692,9 @@ func TestReadConfig(t *testing.T) {
 			_, err := ReadConfig(tt.rootDir, tt.filename)
 
 			if tt.wantErr {
-				assert.NotNil(err)
+				assert.Error(err)
 			} else {
-				assert.Nil(err)
+				assert.NoError(err)
 			}
 		})
 	}

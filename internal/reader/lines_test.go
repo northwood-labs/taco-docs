@@ -1,5 +1,5 @@
-// Copyright 2021 The terraform-docs Authors.
-// Copyright 2026 Northwood Labs, LLC <license@northwood-labs.com>.
+// Copyright 2018-2026 The terraform-docs Authors.
+// Copyright 2026 Northwood Labs, LLC <license@northwood-labs.com>
 //
 // Licensed under the MIT license (the "License"); you may not
 // use this file except in compliance with the License.
@@ -78,8 +78,8 @@ func TestReadLinesFromFile(t *testing.T) {
 	tests := []struct {
 		name       string
 		fileName   string
-		lineNumber int
 		expected   string
+		lineNumber int
 		wantError  bool
 	}{
 		{
@@ -126,6 +126,7 @@ func TestReadLinesFromFile(t *testing.T) {
 				LineNum:  tt.lineNumber,
 				Condition: func(line string) bool {
 					line = strings.TrimSpace(line)
+
 					return strings.HasPrefix(line, "#") || strings.HasPrefix(line, "/*") ||
 						strings.HasPrefix(line, "*") ||
 						strings.HasPrefix(line, "*/")
@@ -135,20 +136,24 @@ func TestReadLinesFromFile(t *testing.T) {
 					if strings.HasPrefix(line, "/*") || strings.HasPrefix(line, "*/") {
 						return "", false
 					}
+
 					if line == "*" {
 						return "", true
 					}
+
 					line = strings.TrimPrefix(line, "* ")
 					line = strings.TrimPrefix(line, "#")
 					line = strings.TrimSpace(line)
+
 					return line, true
 				},
 			}
+
 			comment, err := lines.Extract()
 			if tt.wantError {
-				assert.NotNil(err)
+				assert.Error(err)
 			} else {
-				assert.Nil(err)
+				assert.NoError(err)
 				assert.Equal(tt.expected, strings.Join(comment, " "))
 			}
 		})
@@ -161,10 +166,10 @@ func TestReadLinesFromText(t *testing.T) {
 	tests := []struct {
 		name        string
 		textContent string
-		lineNumber  int
 		expected    string
-		wantError   bool
 		errorText   string
+		lineNumber  int
+		wantError   bool
 	}{
 		{
 			name:        "extract lines from text",
@@ -254,6 +259,7 @@ func TestReadLinesFromText(t *testing.T) {
 				LineNum: tt.lineNumber,
 				Condition: func(line string) bool {
 					line = strings.TrimSpace(line)
+
 					return strings.HasPrefix(line, "#") || strings.HasPrefix(line, "/*") ||
 						strings.HasPrefix(line, "*") ||
 						strings.HasPrefix(line, "*/")
@@ -263,22 +269,26 @@ func TestReadLinesFromText(t *testing.T) {
 					if strings.HasPrefix(line, "/*") || strings.HasPrefix(line, "*/") {
 						return "", false
 					}
+
 					if line == "*" {
 						return "", true
 					}
+
 					line = strings.TrimPrefix(line, "* ")
 					line = strings.TrimPrefix(line, "#")
 					line = strings.TrimSpace(line)
+
 					return line, true
 				},
 			}
 			r := strings.NewReader(strings.TrimSpace(tt.textContent))
+
 			comment, err := lines.extract(r)
 			if tt.wantError {
-				assert.NotNil(err)
+				assert.Error(err)
 				assert.Equal(tt.errorText, err.Error())
 			} else {
-				assert.Nil(err)
+				assert.NoError(err)
 				assert.Equal(tt.expected, strings.Join(comment, " "))
 			}
 		})

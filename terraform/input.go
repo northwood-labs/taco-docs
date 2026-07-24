@@ -1,5 +1,5 @@
-// Copyright 2021 The terraform-docs Authors.
-// Copyright 2026 Northwood Labs, LLC <license@northwood-labs.com>.
+// Copyright 2018-2026 The terraform-docs Authors.
+// Copyright 2026 Northwood Labs, LLC <license@northwood-labs.com>
 //
 // Licensed under the MIT license (the "License"); you may not
 // use this file except in compliance with the License.
@@ -26,12 +26,12 @@ import (
 // onboarding new users who need to know what they must supply, by-type for grouping related
 // variables, and by-position for matching the author's original source order.
 type Input struct {
+	Default     types.Value  `json:"default"     toml:"default"     xml:"default"     yaml:"default"`
 	Name        string       `json:"name"        toml:"name"        xml:"name"        yaml:"name"`
 	Type        types.String `json:"type"        toml:"type"        xml:"type"        yaml:"type"`
 	Description types.String `json:"description" toml:"description" xml:"description" yaml:"description"`
-	Default     types.Value  `json:"default"     toml:"default"     xml:"default"     yaml:"default"`
-	Required    bool         `json:"required"    toml:"required"    xml:"required"    yaml:"required"`
 	Position    Position     `json:"-"           toml:"-"           xml:"-"           yaml:"-"`
+	Required    bool         `json:"required"    toml:"required"    xml:"required"    yaml:"required"`
 	Sensitive   bool         `json:"sensitive"   toml:"sensitive"   xml:"sensitive"   yaml:"sensitive"`
 }
 
@@ -40,21 +40,26 @@ type Input struct {
 // and not the JSON formatted of it.
 func (i *Input) GetValue() string {
 	var buf bytes.Buffer
+
 	encoder := json.NewEncoder(&buf)
 	encoder.SetIndent("", "  ")
 	encoder.SetEscapeHTML(false)
+
 	err := encoder.Encode(i.Default)
 	if err != nil {
 		panic(err)
 	}
+
 	value := strings.TrimSpace(buf.String())
 	if value == `null` {
 		if i.Required {
 			return ""
 		}
-		return `null` // explicit 'null' value
+
+		return `null` // explicit 'null' value.
 	}
-	return value // everything else
+
+	return value // everything else.
 }
 
 // HasDefault indicates if a Terraform variable has a default value set.
@@ -73,6 +78,7 @@ func sortInputsByRequired(x []*Input) {
 		if x[i].HasDefault() == x[j].HasDefault() {
 			return x[i].Name < x[j].Name
 		}
+
 		return !x[i].HasDefault() && x[j].HasDefault()
 	})
 }
@@ -82,6 +88,7 @@ func sortInputsByPosition(x []*Input) {
 		if x[i].Position.Filename == x[j].Position.Filename {
 			return x[i].Position.Line < x[j].Position.Line
 		}
+
 		return x[i].Position.Filename < x[j].Position.Filename
 	})
 }
@@ -91,6 +98,7 @@ func sortInputsByType(x []*Input) {
 		if x[i].Type == x[j].Type {
 			return x[i].Name < x[j].Name
 		}
+
 		return x[i].Type < x[j].Type
 	})
 }

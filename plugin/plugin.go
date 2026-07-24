@@ -1,5 +1,5 @@
-// Copyright 2021 The terraform-docs Authors.
-// Copyright 2026 Northwood Labs, LLC <license@northwood-labs.com>.
+// Copyright 2018-2026 The terraform-docs Authors.
+// Copyright 2026 Northwood Labs, LLC <license@northwood-labs.com>
 //
 // Licensed under the MIT license (the "License"); you may not
 // use this file except in compliance with the License.
@@ -37,12 +37,12 @@ var handshakeConfig = goplugin.HandshakeConfig{
 // lets go-plugin manage the RPC lifecycle while keeping plugin authors' code
 // focused on the formatting logic itself.
 type formatter struct {
+	printer printFunc
 	name    string
 	version string
-	printer printFunc
 }
 
-func newFormatter(name string, version string, printer printFunc) *formatter {
+func newFormatter(name, version string, printer printFunc) *formatter {
 	return &formatter{
 		name:    name,
 		version: version,
@@ -63,12 +63,12 @@ func (f *formatter) Execute(args *ExecuteArgs) (string, error) {
 }
 
 // Server returns an RPC server acting as a plugin.
-func (f *formatter) Server(b *goplugin.MuxBroker) (interface{}, error) {
+func (f *formatter) Server(b *goplugin.MuxBroker) (any, error) {
 	return &Server{impl: f, broker: b}, nil
 }
 
 // Client returns an RPC client for the host.
-func (*formatter) Client(b *goplugin.MuxBroker, c *rpc.Client) (interface{}, error) {
+func (*formatter) Client(b *goplugin.MuxBroker, c *rpc.Client) (any, error) {
 	return &Client{rpcClient: c, broker: b}, nil
 }
 

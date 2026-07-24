@@ -1,5 +1,5 @@
-// Copyright 2021 The terraform-docs Authors.
-// Copyright 2026 Northwood Labs, LLC <license@northwood-labs.com>.
+// Copyright 2018-2026 The terraform-docs Authors.
+// Copyright 2026 Northwood Labs, LLC <license@northwood-labs.com>
 //
 // Licensed under the MIT license (the "License"); you may not
 // use this file except in compliance with the License.
@@ -27,7 +27,7 @@ import (
 // in a terminal — without it, the shell prompt would appear on the same line.
 type stdoutWriter struct{}
 
-// Write content to Stdout
+// Write content to Stdout.
 func (sw *stdoutWriter) Write(p []byte) (int, error) {
 	return os.Stdout.WriteString(string(p) + "\n")
 }
@@ -44,18 +44,14 @@ func (sw *stdoutWriter) Write(p []byte) (int, error) {
 //     section for inputs/outputs. The markers (e.g., <!-- BEGIN_TF_DOCS -->) allow
 //     the tool to update only its section without disturbing the rest.
 type fileWriter struct {
-	file string
-	dir  string
-
-	mode string
-
-	check bool
-
+	writer   io.Writer
+	file     string
+	dir      string
+	mode     string
 	template string
 	begin    string
 	end      string
-
-	writer io.Writer
+	check    bool
 }
 
 // Write content to target file. The logic branches on output mode:
@@ -70,6 +66,7 @@ func (fw *fileWriter) Write(p []byte) (int, error) {
 		if fw.mode == print.OutputModeReplace {
 			return fw.write(filename, p)
 		}
+
 		return 0, errors.New("template is missing")
 	}
 
@@ -108,6 +105,7 @@ func (fw *fileWriter) fullFilePath() string {
 	if filepath.IsAbs(fw.file) {
 		return fw.file
 	}
+
 	return filepath.Join(fw.dir, fw.file)
 }
 
@@ -130,7 +128,7 @@ func (fw *fileWriter) apply(p []byte) (bytes.Buffer, error) {
 // end comment markers. This preserves any hand-written content above and below
 // the markers. The function validates marker presence and ordering to prevent
 // silent data corruption from malformed files.
-func (fw *fileWriter) inject(filename string, content string, generated string) (int, error) {
+func (fw *fileWriter) inject(filename, content, generated string) (int, error) {
 	before := strings.Index(content, fw.begin)
 	after := strings.Index(content, fw.end)
 
@@ -180,6 +178,7 @@ func (fw *fileWriter) write(filename string, p []byte) (int, error) {
 		}
 
 		fmt.Printf("%s is up to date\n", filename)
+
 		return 0, nil
 	}
 
@@ -192,5 +191,6 @@ func (fw *fileWriter) write(filename string, p []byte) (int, error) {
 	if err == nil {
 		fmt.Printf("%s updated successfully\n", filename)
 	}
+
 	return len(p), err
 }

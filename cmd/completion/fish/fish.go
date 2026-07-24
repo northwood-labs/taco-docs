@@ -1,5 +1,5 @@
-// Copyright 2021 The terraform-docs Authors.
-// Copyright 2026 Northwood Labs, LLC <license@northwood-labs.com>.
+// Copyright 2018-2026 The terraform-docs Authors.
+// Copyright 2026 Northwood Labs, LLC <license@northwood-labs.com>
 //
 // Licensed under the MIT license (the "License"); you may not
 // use this file except in compliance with the License.
@@ -31,5 +31,6 @@ func NewCommand() *cobra.Command {
 			return cmd.Parent().Parent().GenFishCompletion(os.Stdout, true)
 		},
 	}
+
 	return cmd
 }

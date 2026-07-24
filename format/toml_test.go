@@ -1,5 +1,5 @@
-// Copyright 2021 The terraform-docs Authors.
-// Copyright 2026 Northwood Labs, LLC <license@northwood-labs.com>.
+// Copyright 2018-2026 The terraform-docs Authors.
+// Copyright 2026 Northwood Labs, LLC <license@northwood-labs.com>
 //
 // Licensed under the MIT license (the "License"); you may not
 // use this file except in compliance with the License.
@@ -23,7 +23,7 @@ func TestToml(t *testing.T) {
 	tests := map[string]struct {
 		config print.Config
 	}{
-		// Base
+		// Base.
 		"Base": {
 			config: testutil.WithSections(),
 		},
@@ -36,12 +36,12 @@ func TestToml(t *testing.T) {
 		},
 		"HideAll": {
 			config: testutil.With(func(c *print.Config) {
-				c.Sections.Header = false // Since we don't show the header, the file won't be loaded at all
+				c.Sections.Header = false // Since we don't show the header, the file won't be loaded at all.
 				c.HeaderFrom = "bad.tf"
 			}),
 		},
 
-		// Settings
+		// Settings.
 		"OutputValues": {
 			config: testutil.With(func(c *print.Config) {
 				c.Sections.Outputs = true
@@ -51,7 +51,7 @@ func TestToml(t *testing.T) {
 			}),
 		},
 
-		// Only section
+		// Only section.
 		"OnlyDataSources": {
 			config: testutil.With(func(c *print.Config) { c.Sections.DataSources = true }),
 		},
@@ -88,15 +88,15 @@ func TestToml(t *testing.T) {
 			assert := assert.New(t)
 
 			expected, err := testutil.GetExpected("toml", "toml-"+name)
-			assert.Nil(err)
+			assert.NoError(err)
 
 			module, err := testutil.GetModule(&tt.config)
-			assert.Nil(err)
+			assert.NoError(err)
 
 			formatter := NewTOML(&tt.config)
 
 			err = formatter.Generate(module)
-			assert.Nil(err)
+			assert.NoError(err)
 
 			assert.Equal(expected, formatter.Content())
 		})
