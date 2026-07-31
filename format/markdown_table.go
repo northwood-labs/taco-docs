@@ -7,10 +7,11 @@
 // You may obtain a copy of the License at the LICENSE file in
 // the root directory of this source tree.
 
-package format
+package format // lint:allow_naming_conflict_stdlib lint:no_dupe
 
 import (
 	"embed"
+	"fmt"
 	gotemplate "text/template"
 
 	"github.com/northwood-labs/taco-docs/print"
@@ -23,11 +24,10 @@ var markdownTableFS embed.FS
 
 // markdownTable represents Markdown Table format.
 //
-// WHY: This is the most popular output format because GitHub, GitLab,
-// and Bitbucket all render Markdown tables natively in README files.
-// The compact tabular layout fits modules with many variables while
-// remaining scannable without scrolling through verbose per-variable
-// subsections.
+// This is the most popular output format because GitHub, GitLab, and Bitbucket
+// all render Markdown tables natively in README files. The compact tabular
+// layout fits modules with many variables while remaining scannable without
+// scrolling through verbose per-variable subsections.
 type markdownTable struct {
 	*generator
 
@@ -35,15 +35,29 @@ type markdownTable struct {
 	template *template.Template
 }
 
+// Multiple aliases ("markdown", "md", "md table", etc.) are registered because
+// this is the default and most common format. Users expect short names to work,
+// and older tutorials reference different variants.
+func init() { // lint:allow_init
+	register(map[string]initializerFn{
+		"markdown":       asInitializer(NewMarkdownTable),
+		"markdown table": asInitializer(NewMarkdownTable),
+		"markdown tbl":   asInitializer(NewMarkdownTable),
+		"md":             asInitializer(NewMarkdownTable),
+		"md table":       asInitializer(NewMarkdownTable),
+		"md tbl":         asInitializer(NewMarkdownTable),
+	})
+}
+
 // NewMarkdownTable returns new instance of Markdown Table.
-func NewMarkdownTable(config *print.Config) *markdownTable {
+func NewMarkdownTable(config *print.Config) *markdownTable { // lint:allow_unexported_return
 	items := readTemplateItems(markdownTableFS, "markdown_table")
 
 	tt := template.New(config, items...)
 	tt.CustomFunc(gotemplate.FuncMap{
-		// WHY: Types and values must be rendered as inline code so they
-		// don't break table cell alignment or get interpreted as Markdown
-		// formatting (e.g. a type containing `*` would become italic).
+		// Types and values must be rendered as inline code so they don't break
+		// table cell alignment or get interpreted as Markdown formatting (e.g.,
+		// a type containing `*` would become italic).
 		"type": func(t string) string {
 			inputType, _ := PrintFencedCodeBlock(t, "")
 			return inputType
@@ -67,14 +81,14 @@ func NewMarkdownTable(config *print.Config) *markdownTable {
 
 // Generate a Terraform module as Markdown tables.
 //
-// WHY: forEach renders each section independently so that users with
-// custom content templates can reference individual sections (e.g.
-// {{ .Inputs }}) and reorder them freely.
+// forEach renders each section independently so that users with custom content
+// templates can reference individual sections (e.g., {{ .Inputs }}) and reorder
+// them freely.
 func (t *markdownTable) Generate(module *terraform.Module) error {
 	err := t.forEach(func(name string) (string, error) {
 		rendered, err := t.template.Render(name, module)
 		if err != nil {
-			return "", err
+			return "", fmt.Errorf("rendering template %q: %w", name, err)
 		}
 
 		return sanitize(rendered), nil
@@ -82,19 +96,9 @@ func (t *markdownTable) Generate(module *terraform.Module) error {
 
 	t.funcs(withModule(module))
 
-	return err
-}
+	if err != nil {
+		return fmt.Errorf("generating markdown table: %w", err)
+	}
 
-// WHY: Multiple aliases ("markdown", "md", "md table", etc.) are registered
-// because this is the default and most common format. Users expect short
-// names to work, and older tutorials reference different variants.
-func init() {
-	register(map[string]initializerFn{
-		"markdown":       NewMarkdownTable,
-		"markdown table": NewMarkdownTable,
-		"markdown tbl":   NewMarkdownTable,
-		"md":             NewMarkdownTable,
-		"md table":       NewMarkdownTable,
-		"md tbl":         NewMarkdownTable,
-	})
+	return nil
 }

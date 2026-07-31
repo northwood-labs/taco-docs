@@ -7,16 +7,16 @@
 // You may obtain a copy of the License at the LICENSE file in
 // the root directory of this source tree.
 
-// Package plugin contains the implementations needed to make
-// the built binary act as a plugin.
+// Package plugin contains the implementations needed to make the built binary
+// act as a plugin.
 //
-// A plugin is implemented as an RPC server and the host acts
-// as the client, sending analysis requests to the plugin.
-// Note that the server-client relationship here is the opposite of
-// the communication that takes place during the checking phase.
+// A plugin is implemented as an RPC server and the host acts as the client,
+// sending analysis requests to the plugin. The server-client relationship here
+// is the opposite of the communication that takes place during the checking
+// phase.
 //
-// Implementation details are hidden in go-plugin. This package is
-// essentially a wrapper for go-plugin.
+// Implementation details are hidden in go-plugin. This package is essentially a
+// wrapper for go-plugin.
 //
 // # Usage
 //
@@ -57,4 +57,4 @@
 //
 //	    return rendered, nil
 //	}
-package plugin
+package plugin // lint:allow_naming_conflict_stdlib

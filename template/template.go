@@ -7,11 +7,10 @@
 // You may obtain a copy of the License at the LICENSE file in
 // the root directory of this source tree.
 
-package template
+package template // lint:allow_naming_conflict_stdlib
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"strings"
 	gotemplate "text/template"
@@ -23,23 +22,26 @@ import (
 	"github.com/northwood-labs/taco-docs/terraform"
 )
 
-// Item represents a named templated which can reference other named templated too.
-type Item struct {
-	Name      string
-	Text      string
-	TrimSpace bool
-}
+type (
+	// Item represents a named templated which can reference other named
+	// templated too.
+	Item struct {
+		Name      string
+		Text      string
+		TrimSpace bool
+	}
 
-// Template wraps Go's text/template with terraform-docs-specific concerns:
-// section rendering, config-aware functions, and custom function registration.
-// This abstraction lets formatters focus on defining template text without
-// worrying about function wiring or template composition.
-type Template struct {
-	config     *print.Config
-	funcMap    gotemplate.FuncMap
-	customFunc gotemplate.FuncMap
-	items      []*Item
-}
+	// Template wraps Go's text/template with terraform-docs-specific concerns:
+	// section rendering, config-aware functions, and custom function
+	// registration. This abstraction lets formatters focus on defining template
+	// text without worrying about function wiring or template composition.
+	Template struct {
+		config     *print.Config
+		funcMap    gotemplate.FuncMap
+		customFunc gotemplate.FuncMap
+		items      []*Item
+	}
+)
 
 // New returns new instance of Template.
 func New(config *print.Config, items ...*Item) *Template {
@@ -69,17 +71,9 @@ func (t *Template) CustomFunc(funcs gotemplate.FuncMap) {
 	t.applyCustomFunc()
 }
 
-// applyCustomFunc is re-adding the custom functions to list of available functions.
-func (t *Template) applyCustomFunc() {
-	for name, fn := range t.customFunc {
-		if _, found := t.funcMap[name]; !found {
-			t.funcMap[name] = fn
-		}
-	}
-}
-
 // Render is the high-level convenience method for rendering a terraform.Module.
-// It wraps Module and Config into the standard data structure that templates expect.
+// It wraps Module and Config into the standard data structure that templates
+// expect.
 func (t *Template) Render(name string, module *terraform.Module) (string, error) {
 	data := struct {
 		Config *print.Config
@@ -89,20 +83,25 @@ func (t *Template) Render(name string, module *terraform.Module) (string, error)
 		Module: module,
 	}
 
-	return t.RenderContent(name, data)
+	result, err := t.RenderContent(name, data)
+	if err != nil {
+		return "", fmt.Errorf("rendering template %q: %w", name, err)
+	}
+
+	return result, nil
 }
 
-// RenderContent is the low-level rendering method for arbitrary data. Used by
-// generator.Render for content templates where the data isn't necessarily a
-// terraform.Module (e.g., custom content templates with mixed data).
+// RenderContent is the low-level rendering method for arbitrary data. Used
+// by generator.Render for content templates where the data isn't necessarily
+// a terraform.Module (e.g., custom content templates with mixed data).
 func (t *Template) RenderContent(name string, data any) (string, error) {
 	if len(t.items) < 1 {
-		return "", errors.New("base template not found")
+		return "", ErrBaseTemplateNotFound
 	}
 
 	item := t.findByName(name)
 	if item == nil {
-		return "", fmt.Errorf("%s template not found", name)
+		return "", fmt.Errorf("%w: %s", ErrTemplateNotFound, name)
 	}
 
 	var buffer bytes.Buffer
@@ -118,10 +117,20 @@ func (t *Template) RenderContent(name string, data any) (string, error) {
 	}
 
 	if err := tmpl.ExecuteTemplate(&buffer, item.Name, data); err != nil {
-		return "", err
+		return "", fmt.Errorf("executing template %q: %w", item.Name, err)
 	}
 
 	return buffer.String(), nil
+}
+
+// applyCustomFunc is re-adding the custom functions to list of available
+// functions.
+func (t *Template) applyCustomFunc() {
+	for name, fn := range t.customFunc {
+		if _, found := t.funcMap[name]; !found {
+			t.funcMap[name] = fn
+		}
+	}
 }
 
 func (t *Template) findByName(name string) *Item {
@@ -142,11 +151,12 @@ func (t *Template) findByName(name string) *Item {
 	return nil
 }
 
-// builtinFuncs provides the standard function library available in all templates.
-// It includes sprig for rich text processing (date formatting, string manipulation,
-// etc.) as a fallback, while terraform-docs-specific functions take priority to
-// ensure correct behavior for documentation generation.
-func builtinFuncs(config *print.Config) gotemplate.FuncMap { // nolint:gocyclo
+// builtinFuncs provides the standard function library available in all
+// templates. It includes sprig for rich text processing (date formatting,
+// string manipulation, etc.) as a fallback, while terraform-docs-specific
+// functions take priority to ensure correct behavior for documentation
+// generation.
+func builtinFuncs(config *print.Config) gotemplate.FuncMap {
 	fns := gotemplate.FuncMap{
 		"default": func(_default, value string) string {
 			if value != "" {
@@ -164,13 +174,15 @@ func builtinFuncs(config *print.Config) gotemplate.FuncMap { // nolint:gocyclo
 		"ternary": func(condition any, trueValue, falseValue string) string {
 			var c bool
 
-			switch x := fmt.Sprintf("%T", condition); x {
-			case "string":
-				c = condition.(string) != ""
-			case "int":
-				c = condition.(int) != 0
-			case "bool":
-				c = condition.(bool)
+			switch v := condition.(type) {
+			case string:
+				c = v != ""
+			case int:
+				c = v != 0
+			case bool:
+				c = v
+			default:
+				_ = v
 			}
 
 			if c {
@@ -256,7 +268,7 @@ func builtinFuncs(config *print.Config) gotemplate.FuncMap { // nolint:gocyclo
 // source templates don't produce indented output. This makes it possible to
 // write human-readable, well-indented template definitions in .go files without
 // that indentation leaking into the generated documentation.
-func normalize(s string, trimSpace bool) string {
+func normalize(s string, trimSpace bool) string { // lint:allow_param lint:allow_control_coupling_antipattern
 	if !trimSpace {
 		return s
 	}

@@ -7,50 +7,55 @@
 // You may obtain a copy of the License at the LICENSE file in
 // the root directory of this source tree.
 
-package types
+package types // lint:allow_bad_package_name
 
 import (
 	"reflect"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	assertpkg "github.com/go-openapi/testify/assert"
 )
 
-type expected struct {
-	typeName   string
-	valueKind  string
-	hasDefault bool
-}
+type (
+	expected struct {
+		typeName   string
+		valueKind  string
+		hasDefault bool
+	}
 
-type testprimitive struct {
-	name     string
-	values   List
-	types    string
-	expected expected
-}
+	testprimitive struct {
+		name     string
+		values   List
+		types    string
+		expected expected
+	}
 
-type testlist struct {
-	name     string
-	values   []List
-	types    string
-	expected expected
-}
+	testlist struct {
+		name     string
+		values   []List
+		types    string
+		expected expected
+	}
 
-type testmap struct {
-	name     string
-	values   []Map
-	types    string
-	expected expected
-}
+	testmap struct {
+		name     string
+		values   []Map
+		types    string
+		expected expected
+	}
+)
 
-// WHY: Verifies the type system's core ValueOf/TypeOf dispatch logic for primitive values. This is the
-// foundation for rendering input defaults—incorrect type detection cascades into wrong output everywhere.
+// Verifies the type system's core ValueOf/TypeOf dispatch logic for primitive
+// values. This is the foundation for rendering input defaults—incorrect type
+// detection cascades into wrong output everywhere.
 func testPrimitive(t *testing.T, tests []testprimitive) {
+	t.Helper()
+
 	for i := range tests {
 		tt := tests[i]
 		for _, tv := range tt.values {
 			t.Run(tt.name, func(t *testing.T) {
-				assert := assert.New(t)
+				assert := assertpkg.New(t)
 
 				actualValue := ValueOf(tv)
 				actualType := TypeOf(tt.types, tv)

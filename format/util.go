@@ -7,7 +7,7 @@
 // You may obtain a copy of the License at the LICENSE file in
 // the root directory of this source tree.
 
-package format
+package format // lint:allow_naming_conflict_stdlib lint:no_dupe
 
 import (
 	"embed"
@@ -24,15 +24,16 @@ import (
 
 // sanitize cleans a Markdown document to soothe linters.
 //
-// WHY: Generated markdown is injected into existing repos that typically enforce
-// markdownlint or similar rules. Trailing spaces, excessive blank lines, and bare
-// URLs would cause CI linter failures for users. By normalizing whitespace and
-// wrapping URLs here, the output is linter-friendly out of the box.
+// Generated markdown is injected into existing repos that typically enforce
+// markdownlint or similar rules. Trailing spaces, excessive blank lines, and
+// bare URLs would cause CI linter failures for users. By normalizing whitespace
+// and wrapping URLs here, the output is linter-friendly out of the box.
 func sanitize(markdown string) string {
 	result := markdown
 
-	// WHY: Double trailing spaces are intentional line breaks in Markdown (soft break).
-	// We must preserve them while stripping all other trailing whitespace.
+	// Double trailing spaces are intentional line breaks in Markdown (soft
+	// break). We must preserve them while stripping all other trailing
+	// whitespace.
 	result = regexp.MustCompile(` {2}(\r?\n)`).ReplaceAllString(result, "‡‡‡DOUBLESPACES‡‡‡$1")
 
 	// Remove trailing spaces from the end of lines.
@@ -42,12 +43,12 @@ func sanitize(markdown string) string {
 	// Restore the preserved double spaces.
 	result = regexp.MustCompile(`‡‡‡DOUBLESPACES‡‡‡(\r?\n)`).ReplaceAllString(result, "  $1")
 
-	// WHY: A blank line containing only double spaces is an artifact of template
+	// A blank line containing only double spaces is an artifact of template
 	// rendering; it serves no formatting purpose and triggers linter warnings.
-	result = regexp.MustCompile(`(\r?\n)  (\r?\n)`).ReplaceAllString(result, "$1")
+	result = regexp.MustCompile(`(\r?\n) {2}(\r?\n)`).ReplaceAllString(result, "$1")
 
-	// WHY: Multiple consecutive blank lines add no semantic value in generated
-	// docs and violate most markdown style guides (MD012).
+	// Multiple consecutive blank lines add no semantic value in generated docs
+	// and violate most markdown style guides (MD012).
 	result = regexp.MustCompile(`(\r?\n){3,}`).ReplaceAllString(result, "$1$1")
 	result = regexp.MustCompile(`(\r?\n){2,}$`).ReplaceAllString(result, "")
 
@@ -58,7 +59,7 @@ func sanitize(markdown string) string {
 
 // SanitizeBareLinks converts bare links to Markdown representation.
 //
-// WHY: Bare URLs (without angle brackets or markdown link syntax) violate
+// Bare URLs (without angle brackets or markdown link syntax) violate
 // markdownlint rule MD034. Wrapping them in <> produces valid auto-links that
 // render identically in all Markdown renderers while satisfying linters.
 func SanitizeBareLinks(s string) string {
@@ -76,14 +77,14 @@ func SanitizeBareLinks(s string) string {
 	for _, match := range matches {
 		start, end := match[0], match[1]
 
-		// WHY: Skip URLs already wrapped in angle brackets—re-wrapping would
-		// produce <<url>> which is invalid Markdown.
+		// Skip URLs already wrapped in angle brackets—re-wrapping would produce
+		// <<url>> which is invalid Markdown.
 		if start > 0 && s[start-1] == '<' && end < len(s) && s[end] == '>' {
 			continue
 		}
 
-		// WHY: Skip URLs already inside markdown link syntax ]({url})—these
-		// are intentional references and don't need auto-link wrapping.
+		// Skip URLs already inside markdown link syntax ]({url})—these are
+		// intentional references and don't need auto-link wrapping.
 		if start > 1 && s[start-2:start] == "](" && end < len(s) && s[end] == ')' {
 			continue
 		}
@@ -107,16 +108,18 @@ func SanitizeBareLinks(s string) string {
 	return result.String()
 }
 
-// PrintFencedCodeBlock prints codes in fences, it automatically detects if
-// the input 'code' contains '\n' it will use multi line fence, otherwise it
-// wraps the 'code' inside single-tick block.
+// PrintFencedCodeBlock prints codes in fences, it automatically detects if the
+// input 'code' contains '\n' it will use multi line fence, otherwise it wraps
+// the 'code' inside single-tick block.
+//
 // If the fenced is multi-line it also appends an extra '\n` at the end and
 // returns true accordingly, otherwise returns false for non-carriage return.
 //
-// WHY: Terraform types and default values can be single-line primitives or
+// Terraform types and default values can be single-line primitives or
 // multi-line complex objects. Using single backticks for short values keeps
 // tables compact, while triple-fence blocks preserve readability for HCL maps
-// and lists. The boolean return signals callers whether extra spacing is needed.
+// and lists. The boolean return signals callers whether extra spacing is
+// needed.
 func PrintFencedCodeBlock(code, language string) (string, bool) {
 	if strings.Contains(code, "\n") {
 		return fmt.Sprintf("\n\n```%s\n%s\n```\n", language, code), true
@@ -125,13 +128,13 @@ func PrintFencedCodeBlock(code, language string) (string, bool) {
 	return fmt.Sprintf("`%s`", code), false
 }
 
-// PrintFencedAsciidocCodeBlock prints codes in fences, it automatically detects if
-// the input 'code' contains '\n' it will use multi line fence, otherwise it
-// wraps the 'code' inside single-tick block.
-// If the fenced is multi-line it also appends an extra '\n` at the end and
-// returns true accordingly, otherwise returns false for non-carriage return.
+// PrintFencedAsciidocCodeBlock prints codes in fences, it automatically detects
+// if the input 'code' contains '\n' it will use multi line fence, otherwise it
+// wraps the 'code' inside single-tick block. If the fenced is multi-line it
+// also appends an extra '\n` at the end and returns true accordingly, otherwise
+// returns false for non-carriage return.
 //
-// WHY: AsciiDoc uses a different fence syntax ([source,lang] + ---- delimiters).
+// AsciiDoc uses a different fence syntax ([source,lang] + ---- delimiters).
 // This parallel function ensures AsciiDoc formatters produce valid Asciidoctor
 // source blocks without duplicating the single-vs-multi decision logic.
 func PrintFencedAsciidocCodeBlock(code, language string) (string, bool) {
@@ -142,16 +145,16 @@ func PrintFencedAsciidocCodeBlock(code, language string) (string, bool) {
 	return fmt.Sprintf("`%s`", code), false
 }
 
-// readTemplateItems reads all static formatter .tmpl files prefixed by specific string
-// from an embed file system.
+// readTemplateItems reads all static formatter .tmpl files prefixed by specific
+// string from an embed file system.
 //
-// WHY: Each template-based formatter stores its section templates as separate
-// embedded files (e.g. markdown_table_inputs.tmpl). This function abstracts the
-// embed.FS traversal so formatters don't duplicate file-glob-and-parse logic.
-// The prefix stripping and underscore removal normalize filenames into the
-// canonical section names ("inputs", "outputs", etc.) expected by forEach.
+// Each template-based formatter stores its section templates as separate
+// embedded files (e.g., markdown_table_inputs.tmpl). This function abstracts
+// the [embed.FS] traversal so formatters don't duplicate file-glob-and-parse
+// logic. The prefix stripping and underscore removal normalize filenames into
+// the canonical section names ("inputs", "outputs", etc.) expected by forEach.
 func readTemplateItems(efs embed.FS, prefix string) []*template.Item {
-	items := make([]*template.Item, 0)
+	var items []*template.Item
 
 	files, err := fs.ReadDir(efs, "templates")
 	if err != nil {
@@ -169,8 +172,9 @@ func readTemplateItems(efs embed.FS, prefix string) []*template.Item {
 		name = strings.ReplaceAll(name, prefix, "")
 		name = strings.ReplaceAll(name, "_", "")
 		name = strings.ReplaceAll(name, ".tmpl", "")
-		// WHY: The base template (no section suffix) renders all sections
-		// combined. Naming it "all" matches the forEach mapping key.
+
+		// The base template (no section suffix) renders all sections combined.
+		// Naming it "all" matches the forEach mapping key.
 		if name == "" {
 			name = "all"
 		}
@@ -187,22 +191,23 @@ func readTemplateItems(efs embed.FS, prefix string) []*template.Item {
 
 // copySections sets the sections that'll be printed
 //
-// WHY: Users configure which sections to show or hide via the config file or CLI
-// flags. Rather than threading conditional logic through every template, we build
-// a filtered copy of the module upfront. Templates then render unconditionally
-// against a module that already contains only the desired sections—keeping
-// template logic simple and the show/hide decision in one place.
+// Users configure which sections to show or hide via the config file or CLI
+// flags. Rather than threading conditional logic through every template, we
+// build a filtered copy of the module upfront. Templates then render
+// unconditionally against a module that already contains only the desired
+// sections—keeping template logic simple and the show/hide decision in one
+// place.
 func copySections(config *print.Config, src *terraform.Module) *terraform.Module {
 	dest := &terraform.Module{
 		Header:            "",
 		Footer:            "",
-		Inputs:            make([]*terraform.Input, 0),
-		ModuleCalls:       make([]*terraform.ModuleCall, 0),
-		Outputs:           make([]*terraform.Output, 0),
-		Providers:         make([]*terraform.Provider, 0),
-		ProviderFunctions: make([]*terraform.ProviderFunction, 0),
-		Requirements:      make([]*terraform.Requirement, 0),
-		Resources:         make([]*terraform.Resource, 0),
+		Inputs:            nil,
+		ModuleCalls:       nil,
+		Outputs:           nil,
+		Providers:         nil,
+		ProviderFunctions: nil,
+		Requirements:      nil,
+		Resources:         nil,
 	}
 
 	if config.Sections.Header {
@@ -244,14 +249,15 @@ func copySections(config *print.Config, src *terraform.Module) *terraform.Module
 	return dest
 }
 
-// filterResourcesByMode returns the managed or data resources defined by the show argument
+// filterResourcesByMode returns the managed or data resources defined by the
+// show argument
 //
-// WHY: Terraform distinguishes managed resources ("resource" blocks) from data
+// Terraform distinguishes managed resources ("resource" blocks) from data
 // sources ("data" blocks) by mode. Users may want to document one, both, or
 // neither independently. Filtering here ensures the template receives only the
 // resource types the user asked for.
 func filterResourcesByMode(config *print.Config, module []*terraform.Resource) []*terraform.Resource {
-	resources := make([]*terraform.Resource, 0)
+	var resources []*terraform.Resource
 
 	for _, r := range module {
 		if config.Sections.Resources && r.Mode == "managed" {

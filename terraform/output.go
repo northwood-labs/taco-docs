@@ -11,44 +11,61 @@ package terraform
 
 import (
 	"bytes"
+	"cmp"
 	"encoding/json"
 	"encoding/xml"
-	"sort"
+	"fmt"
+	"slices"
+	"strings"
 
 	"github.com/northwood-labs/taco-docs/internal/types"
 )
 
-// Output represents a Terraform output.
-//
-// WHY: Custom MarshalJSON/XML/YAML methods exist because the --output-values feature conditionally
-// includes or excludes the Value and Sensitive fields. When output values are disabled (default),
-// these fields are omitted so generated docs don't contain misleading empty entries. When enabled,
-// the "withvalue" shadow struct forces serialization of even zero-valued fields (empty string,
-// false) so users see the actual state. The ShowValue flag drives this switch at marshal time.
-type Output struct {
-	Value       types.Value  `json:"value,omitempty"     toml:"value,omitempty"     xml:"value,omitempty"     yaml:"value,omitempty"`
-	Name        string       `json:"name"                toml:"name"                xml:"name"                yaml:"name"`
-	Description types.String `json:"description"         toml:"description"         xml:"description"         yaml:"description"`
-	Position    Position     `json:"-"                   toml:"-"                   xml:"-"                   yaml:"-"`
-	Sensitive   bool         `json:"sensitive,omitempty" toml:"sensitive,omitempty" xml:"sensitive,omitempty" yaml:"sensitive,omitempty"`
-	ShowValue   bool         `json:"-"                   toml:"-"                   xml:"-"                   yaml:"-"`
-}
+type (
+	// Output represents a Terraform output.
+	//
+	// Custom MarshalJSON/XML/YAML methods exist because the --output-values
+	// feature conditionally includes or excludes the Value and Sensitive
+	// fields. When output values are disabled (default), these fields are
+	// omitted so generated docs don't contain misleading empty entries. When
+	// enabled, the "withvalue" shadow struct forces serialization of even
+	// zero-valued fields (empty string, false) so users see the actual state.
+	// The ShowValue flag drives this switch at marshal time.
+	Output struct {
+		Value       types.Value  `json:"value,omitempty"     toml:"value,omitempty"     xml:"value,omitempty"     yaml:"value,omitempty"`     // lint:ignore_length
+		Name        string       `json:"name"                toml:"name"                xml:"name"                yaml:"name"`                // lint:ignore_length
+		Description types.String `json:"description"         toml:"description"         xml:"description"         yaml:"description"`         // lint:ignore_length
+		Position    Position     `json:"-"                   toml:"-"                   xml:"-"                   yaml:"-"`                   // lint:ignore_length
+		Sensitive   bool         `json:"sensitive,omitempty" toml:"sensitive,omitempty" xml:"sensitive,omitempty" yaml:"sensitive,omitempty"` // lint:ignore_length
+		ShowValue   bool         `json:"-"                   toml:"-"                   xml:"-"                   yaml:"-"`                   // lint:ignore_length
+	}
 
-// WHY: withvalue is a shadow struct identical to Output but without omitempty on Value/Sensitive.
-// Go's encoding packages check struct tags at marshal time, so we need a separate type to force
-// serialization of zero-valued fields when --output-values is active.
-type withvalue struct {
-	Value       types.Value  `json:"value"       toml:"value"       xml:"value"       yaml:"value"`
-	Name        string       `json:"name"        toml:"name"        xml:"name"        yaml:"name"`
-	Description types.String `json:"description" toml:"description" xml:"description" yaml:"description"`
-	Position    Position     `json:"-"           toml:"-"           xml:"-"           yaml:"-"`
-	Sensitive   bool         `json:"sensitive"   toml:"sensitive"   xml:"sensitive"   yaml:"sensitive"`
-	ShowValue   bool         `json:"-"           toml:"-"           xml:"-"           yaml:"-"`
-}
+	// withvalue is a shadow struct identical to Output but without omitempty on
+	// Value/Sensitive. Go's encoding packages check struct tags at marshal
+	// time, so we need a separate type to force serialization of zero-valued
+	// fields when --output-values is active.
+	withvalue struct {
+		Value       types.Value  `json:"value"       toml:"value"       xml:"value"       yaml:"value"`
+		Name        string       `json:"name"        toml:"name"        xml:"name"        yaml:"name"`
+		Description types.String `json:"description" toml:"description" xml:"description" yaml:"description"`
+		Position    Position     `json:"-"           toml:"-"           xml:"-"           yaml:"-"`
+		Sensitive   bool         `json:"sensitive"   toml:"sensitive"   xml:"sensitive"   yaml:"sensitive"`
+		ShowValue   bool         `json:"-"           toml:"-"           xml:"-"           yaml:"-"`
+	}
+
+	// output is used for unmarshalling `terraform outputs --json` into.
+	output struct {
+		Type      any  `json:"type"`
+		Value     any  `json:"value"`
+		Sensitive bool `json:"sensitive"`
+	}
+
+	outputs []*Output
+)
 
 // GetValue returns JSON representation of the 'Value', which is an 'interface'.
-// If 'Value' is a primitive type, the primitive value of 'Value' will be returned
-// and not the JSON formatted of it.
+// If 'Value' is a primitive type, the primitive value of 'Value' will be
+// returned and not the JSON formatted of it.
 func (o *Output) GetValue() string {
 	if !o.ShowValue || o.Value == nil {
 		return ""
@@ -78,10 +95,10 @@ func (o *Output) HasDefault() bool {
 
 // MarshalJSON custom yaml marshal function to take '--output-values' flag into
 // consideration. It means if the flag is not set Value and Sensitive fields are
-// set to 'omitempty', otherwise if output values are being shown 'omitempty' gets
-// explicitly removed to show even empty and false values.
+// set to 'omitempty', otherwise if output values are being shown 'omitempty'
+// gets explicitly removed to show even empty and false values.
 func (o *Output) MarshalJSON() ([]byte, error) {
-	fn := func(oo any) ([]byte, error) {
+	fn := func(oo any) ([]byte, error) { // lint:allow_param
 		buf := new(bytes.Buffer)
 		enc := json.NewEncoder(buf)
 		enc.SetEscapeHTML(false)
@@ -93,18 +110,28 @@ func (o *Output) MarshalJSON() ([]byte, error) {
 		return buf.Bytes(), nil
 	}
 	if o.ShowValue {
-		return fn(withvalue(*o))
+		result, err := fn(withvalue(*o))
+		if err != nil {
+			return nil, fmt.Errorf("encoding output as JSON: %w", err)
+		}
+
+		return result, nil
 	}
 
 	o.Value = nil       // explicitly make empty.
 	o.Sensitive = false // explicitly make empty.
 
-	return fn(*o)
+	result, err := fn(*o)
+	if err != nil {
+		return nil, fmt.Errorf("encoding output as JSON: %w", err)
+	}
+
+	return result, nil
 }
 
 // MarshalXML custom xml marshal function to take '--output-values' flag into
-// consideration. It means if the flag is not set Value and Sensitive fields
-// are set to 'omitempty', otherwise if output values are being shown 'omitempty'
+// consideration. It means if the flag is not set Value and Sensitive fields are
+// set to 'omitempty', otherwise if output values are being shown 'omitempty'
 // gets explicitly removed to show even empty and false values.
 func (o *Output) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 	fn := func(v any, name string) error {
@@ -113,25 +140,39 @@ func (o *Output) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 
 	err := e.EncodeToken(start)
 	if err != nil {
-		return err
+		return fmt.Errorf("encoding XML start token: %w", err)
 	}
 
-	fn(o.Name, "name")               //nolint:errcheck,gosec
-	fn(o.Description, "description") //nolint:errcheck,gosec
+	if err := fn(o.Name, "name"); err != nil {
+		return fmt.Errorf("encoding output name as XML: %w", err)
+	}
+
+	if err := fn(o.Description, "description"); err != nil {
+		return fmt.Errorf("encoding output description as XML: %w", err)
+	}
 
 	if o.ShowValue {
-		fn(o.Value, "value")         //nolint:errcheck,gosec
-		fn(o.Sensitive, "sensitive") //nolint:errcheck,gosec
+		if err := fn(o.Value, "value"); err != nil {
+			return fmt.Errorf("encoding output value as XML: %w", err)
+		}
+
+		if err := fn(o.Sensitive, "sensitive"); err != nil {
+			return fmt.Errorf("encoding output sensitive flag as XML: %w", err)
+		}
 	}
 
-	return e.EncodeToken(start.End())
+	if err := e.EncodeToken(start.End()); err != nil {
+		return fmt.Errorf("encoding XML end token: %w", err)
+	}
+
+	return nil
 }
 
 // MarshalYAML custom yaml marshal function to take '--output-values' flag into
 // consideration. It means if the flag is not set Value and Sensitive fields are
-// set to 'omitempty', otherwise if output values are being shown 'omitempty' gets
-// explicitly removed to show even empty and false values.
-func (o *Output) MarshalYAML() (any, error) {
+// set to 'omitempty', otherwise if output values are being shown 'omitempty'
+// gets explicitly removed to show even empty and false values.
+func (o *Output) MarshalYAML() (any, error) { // lint:allow_param
 	if o.ShowValue {
 		return withvalue(*o), nil
 	}
@@ -142,34 +183,26 @@ func (o *Output) MarshalYAML() (any, error) {
 	return *o, nil
 }
 
-// output is used for unmarshalling `terraform outputs --json` into.
-type output struct {
-	Type      any  `json:"type"`
-	Value     any  `json:"value"`
-	Sensitive bool `json:"sensitive"`
-}
-
 func sortOutputsByName(x []*Output) {
-	sort.Slice(x, func(i, j int) bool {
-		return x[i].Name < x[j].Name
+	slices.SortFunc(x, func(a, b *Output) int {
+		return strings.Compare(a.Name, b.Name)
 	})
 }
 
 func sortOutputsByPosition(x []*Output) {
-	sort.Slice(x, func(i, j int) bool {
-		if x[i].Position.Filename == x[j].Position.Filename {
-			return x[i].Position.Line < x[j].Position.Line
+	slices.SortFunc(x, func(a, b *Output) int {
+		if a.Position.Filename == b.Position.Filename {
+			return cmp.Compare(a.Position.Line, b.Position.Line)
 		}
 
-		return x[i].Position.Filename < x[j].Position.Filename
+		return strings.Compare(a.Position.Filename, b.Position.Filename)
 	})
 }
 
-type outputs []*Output
-
-// WHY: Outputs support only name-based and position-based sorting. Unlike inputs, outputs have
-// no "required" or "type" dimension, so fewer strategies are needed.
-func (oo outputs) sort(enabled bool, by string) { //nolint:unparam
+// Outputs support only name-based and position-based sorting. Unlike inputs,
+// outputs have no "required" or "type" dimension, so fewer strategies are
+// needed.
+func (oo outputs) sort(enabled bool, _ string) { // lint:allow_param lint:allow_control_coupling_antipattern
 	if !enabled {
 		sortOutputsByPosition(oo)
 	} else {

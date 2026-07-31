@@ -14,13 +14,13 @@ import (
 	"path/filepath"
 	"testing"
 
+	assertpkg "github.com/go-openapi/testify/assert"
 	"github.com/spf13/viper"
-	"github.com/stretchr/testify/assert"
 
 	"github.com/northwood-labs/taco-docs/print"
 )
 
-// WHY: Ensures config file lookup works with absolute paths. If broken, users specifying --config with
+// Ensures config file lookup works with absolute paths. If broken, users specifying --config with
 // a full path would silently fall back to defaults, producing unexpected output.
 func TestReadConfigAbsolutePath(t *testing.T) {
 	dir := t.TempDir()
@@ -47,7 +47,7 @@ func TestReadConfigAbsolutePath(t *testing.T) {
 
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			assert := assert.New(t)
+			assert := assertpkg.New(t)
 
 			runtime := &Runtime{
 				formatter: "markdown",
@@ -69,7 +69,7 @@ func TestReadConfigAbsolutePath(t *testing.T) {
 	}
 }
 
-// WHY: Ensures version constraints in config files are enforced. Without this, users running an old
+// Ensures version constraints in config files are enforced. Without this, users running an old
 // terraform-docs version against a newer config would get silent misbehavior instead of a clear error.
 func TestVersionConstraint(t *testing.T) {
 	type tuple struct {
@@ -136,7 +136,7 @@ func TestVersionConstraint(t *testing.T) {
 	}
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			assert := assert.New(t)
+			assert := assertpkg.New(t)
 
 			for _, v := range tt.versions {
 				err := checkConstraint(v.constraint, v.version)

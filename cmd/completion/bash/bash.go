@@ -21,14 +21,15 @@ import (
 // it to a file or source it directly in their shell session.
 //
 // We navigate to the root command via Parent().Parent() because the completion
-// script needs the full command tree to generate completions for all subcommands
-// and flags — generating from a leaf command would only produce partial output.
+// script needs the full command tree to generate completions for all
+// subcommands and flags — generating from a leaf command would only produce
+// partial output.
 func NewCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Args:  cobra.NoArgs,
 		Use:   "bash",
 		Short: "Generate shell completion for bash",
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, _ []string) error {
 			return cmd.Parent().Parent().GenBashCompletion(os.Stdout)
 		},
 	}

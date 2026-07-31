@@ -7,18 +7,19 @@
 // You may obtain a copy of the License at the LICENSE file in
 // the root directory of this source tree.
 
-package types
+package types // lint:allow_bad_package_name
 
 import (
 	"bytes"
 	"encoding/xml"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	assertpkg "github.com/go-openapi/testify/assert"
 )
 
-// WHY: Validates nil detection across all type annotations. Nil means "no default"—getting this wrong
-// would show "null" as a default value when the input is actually required.
+// Validates nil detection across all type annotations. Nil means "no
+// default"—getting this wrong would show "null" as a default value when the
+// input is actually required.
 func TestNil(t *testing.T) {
 	nils := List{nil}
 	testPrimitive(t, []testprimitive{
@@ -85,7 +86,7 @@ func TestNil(t *testing.T) {
 	})
 }
 
-// WHY: Nil is not a collection—Length must be 0.
+// Nil is not a collection—Length must be 0.
 func TestNilLength(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -98,13 +99,13 @@ func TestNilLength(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert := assert.New(t)
+			assert := assertpkg.New(t)
 			assert.Equal(tt.expected, new(Nil).Length())
 		})
 	}
 }
 
-// WHY: Ensures nil serializes to JSON "null" literal for correct json format output.
+// Ensures nil serializes to JSON "null" literal for correct json format output.
 func TestNilMarshalJSON(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -117,7 +118,7 @@ func TestNilMarshalJSON(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert := assert.New(t)
+			assert := assertpkg.New(t)
 			actual, err := new(Nil).MarshalJSON()
 
 			assert.NoError(err)
@@ -126,7 +127,7 @@ func TestNilMarshalJSON(t *testing.T) {
 	}
 }
 
-// WHY: Ensures nil serializes to xsi:nil="true" in XML for spec-compliant output.
+// Ensures nil serializes to xsi:nil="true" in XML for spec-compliant output.
 func TestNilMarshalXML(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -139,7 +140,7 @@ func TestNilMarshalXML(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert := assert.New(t)
+			assert := assertpkg.New(t)
 
 			var b bytes.Buffer
 
@@ -157,7 +158,8 @@ func TestNilMarshalXML(t *testing.T) {
 	}
 }
 
-// WHY: Ensures nil serializes to Go nil for YAML marshaling (renders as "null" or omitted in YAML).
+// Ensures nil serializes to Go nil for YAML marshaling (renders as "null" or
+// omitted in YAML).
 func TestNilMarshalYAML(t *testing.T) {
 	tests := []struct {
 		expected any
@@ -170,7 +172,7 @@ func TestNilMarshalYAML(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert := assert.New(t)
+			assert := assertpkg.New(t)
 			actual, err := new(Nil).MarshalYAML()
 
 			assert.NoError(err)

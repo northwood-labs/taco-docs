@@ -7,32 +7,36 @@
 // You may obtain a copy of the License at the LICENSE file in
 // the root directory of this source tree.
 
-package plugin
+package plugin // lint:allow_naming_conflict_stdlib
 
 import (
+	"fmt"
+
 	goplugin "github.com/hashicorp/go-plugin"
 
 	"github.com/northwood-labs/taco-docs/print"
 	"github.com/northwood-labs/taco-docs/terraform"
 )
 
-// Server is an RPC Server acting as a plugin.
-type Server struct {
-	impl   *formatter
-	broker *goplugin.MuxBroker
-}
+type (
+	// Server is an RPC Server acting as a plugin.
+	Server struct {
+		impl   *formatter
+		broker *goplugin.MuxBroker
+	}
 
-// printFunc is a type alias that keeps plugin authors' code simple. They only
-// need to provide a single function with this signature rather than implementing
-// a full interface.
-type printFunc func(*print.Config, *terraform.Module) (string, error)
+	// printFunc is a type alias that keeps plugin authors' code simple. They
+	// only need to provide a single function with this signature rather than
+	// implementing a full interface.
+	printFunc func(*print.Config, *terraform.Module) (string, error)
 
-// ServeOpts is an option for serving a plugin.
-type ServeOpts struct {
-	Printer printFunc
-	Name    string
-	Version string
-}
+	// ServeOpts is an option for serving a plugin.
+	ServeOpts struct {
+		Printer printFunc
+		Name    string
+		Version string
+	}
+)
 
 // Serve is the single entry point for plugin binaries. One call sets up the
 // entire RPC server, handshake, and connection lifecycle. Plugin authors call
@@ -51,13 +55,13 @@ func Serve(opts *ServeOpts) {
 // implementation, bridging the network boundary transparently.
 
 // Name returns the version of the plugin.
-func (s *Server) Name(args any, resp *string) error {
+func (s *Server) Name(_ any, resp *string) error { // lint:allow_param
 	*resp = s.impl.Name()
 	return nil
 }
 
 // Version returns the version of the plugin.
-func (s *Server) Version(args any, resp *string) error {
+func (s *Server) Version(_ any, resp *string) error { // lint:allow_param
 	*resp = s.impl.Version()
 	return nil
 }
@@ -68,5 +72,9 @@ func (s *Server) Execute(args *ExecuteArgs, resp *string) error {
 
 	*resp = r
 
-	return err
+	if err != nil {
+		return fmt.Errorf("executing plugin formatter: %w", err)
+	}
+
+	return nil
 }

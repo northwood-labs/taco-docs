@@ -19,25 +19,157 @@ import (
 	"github.com/spf13/viper"
 )
 
-// Config is the central data model for all user preferences. It serves as the
-// single source of truth passed to formatters, templates, and plugins.
-// mapstructure tags enable viper to decode YAML config files directly into this
-// struct without manual field-by-field assignment.
-type Config struct {
-	Output       output       `mapstructure:"output"`
-	Sort         sort         `mapstructure:"sort"`
-	OutputValues outputvalues `mapstructure:"output-values"`
-	HeaderFrom   string       `mapstructure:"header-from"`
-	FooterFrom   string       `mapstructure:"footer-from"`
-	Content      string       `mapstructure:"content"`
-	File         string       `mapstructure:"-"`
-	Version      string       `mapstructure:"version"`
-	Formatter    string       `mapstructure:"formatter"`
-	ModuleRoot   string
-	Recursive    recursive `mapstructure:"recursive"`
-	Sections     sections  `mapstructure:"sections"`
-	Settings     settings  `mapstructure:"settings"`
-}
+const (
+	sectionAll               = "all"
+	sectionDataSources       = "data-sources"
+	sectionFooter            = "footer"
+	sectionHeader            = "header"
+	sectionInputs            = "inputs"
+	sectionModules           = "modules"
+	sectionOutputs           = "outputs"
+	sectionProviders         = "providers"
+	sectionProviderFunctions = "provider-functions"
+	sectionRequirements      = "requirements"
+	sectionResources         = "resources"
+
+	// OutputModeInject is the output mode that injects between markers.
+	OutputModeInject = "inject"
+	// OutputModeReplace is the output mode that replaces the entire file.
+	OutputModeReplace = "replace"
+
+	// OutputBeginComment is the default begin marker for inject mode.
+	OutputBeginComment = "<!-- BEGIN_TF_DOCS -->"
+	// OutputContent is the template placeholder for generated content.
+	OutputContent = "{{ .Content }}"
+	// OutputEndComment is the default end marker for inject mode.
+	OutputEndComment = "<!-- END_TF_DOCS -->"
+
+	// Sort types.
+
+	// SortName sorts items alphabetically by name.
+	SortName = "name"
+	// SortRequired sorts items with required first.
+	SortRequired = "required"
+	// SortType sorts items by their type.
+	SortType = "type"
+
+	// minTemplateLines is the minimum number of lines an output template must
+	// contain: begin comment, {{ .Content }}, and end comment.
+	minTemplateLines = 3
+)
+
+// Output to file template and modes.
+var (
+	allSections = []string{
+		sectionAll,
+		sectionDataSources,
+		sectionFooter,
+		sectionHeader,
+		sectionInputs,
+		sectionModules,
+		sectionOutputs,
+		sectionProviders,
+		sectionProviderFunctions,
+		sectionRequirements,
+		sectionResources,
+	}
+
+	// AllSections list.
+	AllSections = strings.Join(allSections, ", ")
+
+	OutputTemplate = fmt.Sprintf("%s\n%s\n%s", OutputBeginComment, OutputContent, OutputEndComment)
+	OutputModes    = OutputModeInject + ", " + OutputModeReplace
+
+	allSorts = []string{
+		SortName,
+		SortRequired,
+		SortType,
+	}
+
+	// SortTypes list.
+	SortTypes = strings.Join(allSorts, ", ")
+)
+
+type (
+	// Config is the central data model for all user preferences. It serves as
+	// the single source of truth passed to formatters, templates, and plugins.
+	// mapstructure tags enable viper to decode YAML config files directly into
+	// this struct without manual field-by-field assignment.
+	Config struct {
+		Output       output       `mapstructure:"output"`
+		Sort         sort         `mapstructure:"sort"`
+		OutputValues outputvalues `mapstructure:"output-values"`
+		HeaderFrom   string       `mapstructure:"header-from"`
+		FooterFrom   string       `mapstructure:"footer-from"`
+		Content      string       `mapstructure:"content"`
+		File         string       `mapstructure:"-"`
+		Version      string       `mapstructure:"version"`
+		Formatter    string       `mapstructure:"formatter"`
+		ModuleRoot   string
+		Recursive    recursive `mapstructure:"recursive"`
+		Sections     sections  `mapstructure:"sections"`
+		Settings     settings  `mapstructure:"settings"`
+	}
+
+	recursive struct {
+		Path        string   `mapstructure:"path"`
+		Exclude     []string `mapstructure:"exclude"`
+		Enabled     bool     `mapstructure:"enabled"`
+		IncludeMain bool     `mapstructure:"include-main"`
+	}
+
+	sections struct {
+		Show []string `mapstructure:"show"`
+		Hide []string `mapstructure:"hide"`
+
+		DataSources       bool
+		Header            bool
+		Footer            bool
+		Inputs            bool
+		ModuleCalls       bool
+		Outputs           bool
+		Providers         bool
+		ProviderFunctions bool
+		Requirements      bool
+		Resources         bool
+	}
+
+	output struct {
+		File         string `mapstructure:"file"`
+		Mode         string `mapstructure:"mode"`
+		Template     string `mapstructure:"template"`
+		BeginComment string
+		EndComment   string
+		Check        bool
+	}
+
+	outputvalues struct {
+		From    string `mapstructure:"from"`
+		Enabled bool   `mapstructure:"enabled"`
+	}
+
+	sort struct {
+		By      string `mapstructure:"by"`
+		Enabled bool   `mapstructure:"enabled"`
+	}
+
+	settings struct {
+		Anchor       bool `mapstructure:"anchor"`
+		AtxClosed    bool `mapstructure:"atx-closed"`
+		Color        bool `mapstructure:"color"`
+		Default      bool `mapstructure:"default"`
+		Description  bool `mapstructure:"description"`
+		Escape       bool `mapstructure:"escape"`
+		HideEmpty    bool `mapstructure:"hide-empty"`
+		HTML         bool `mapstructure:"html"`
+		Indent       int  `mapstructure:"indent"`
+		LockFile     bool `mapstructure:"lockfile"`
+		ReadComments bool `mapstructure:"read-comments"`
+		Required     bool `mapstructure:"required"`
+		Sensitive    bool `mapstructure:"sensitive"`
+		Type         bool `mapstructure:"type"`
+	}
+)
 
 // NewConfig returns neew instancee of Config with empty values.
 func NewConfig() *Config {
@@ -52,10 +184,10 @@ func NewConfig() *Config {
 	}
 }
 
-// DefaultConfig provides safe defaults that produce useful output without any
-// configuration. This implements the "convention over configuration" principle—
-// users get a reasonable result on first run and only need to customize what
-// they want to change.
+// DefaultConfig provides safe defaults that produce useful output without
+// any configuration. This implements the "convention over configuration"
+// principle— users get a reasonable result on first run and only need to
+// customize what they want to change.
 func DefaultConfig() *Config {
 	return &Config{
 		File:         "",
@@ -75,81 +207,27 @@ func DefaultConfig() *Config {
 	}
 }
 
-type recursive struct {
-	Path        string   `mapstructure:"path"`
-	Exclude     []string `mapstructure:"exclude"`
-	Enabled     bool     `mapstructure:"enabled"`
-	IncludeMain bool     `mapstructure:"include-main"`
-}
-
 func defaultRecursive() recursive {
 	return recursive{
 		Enabled:     false,
 		Path:        "modules",
 		IncludeMain: true,
-		Exclude:     []string{},
+		Exclude:     nil,
 	}
 }
 
 func (r *recursive) validate() error {
 	if r.Enabled && r.Path == "" {
-		return errors.New("value of '--recursive-path' can't be empty")
+		return ErrRecursivePathEmpty
 	}
 
 	return nil
 }
 
-const (
-	sectionAll               = "all"
-	sectionDataSources       = "data-sources"
-	sectionFooter            = "footer"
-	sectionHeader            = "header"
-	sectionInputs            = "inputs"
-	sectionModules           = "modules"
-	sectionOutputs           = "outputs"
-	sectionProviders         = "providers"
-	sectionProviderFunctions = "provider-functions"
-	sectionRequirements      = "requirements"
-	sectionResources         = "resources"
-)
-
-var allSections = []string{
-	sectionAll,
-	sectionDataSources,
-	sectionFooter,
-	sectionHeader,
-	sectionInputs,
-	sectionModules,
-	sectionOutputs,
-	sectionProviders,
-	sectionProviderFunctions,
-	sectionRequirements,
-	sectionResources,
-}
-
-// AllSections list.
-var AllSections = strings.Join(allSections, ", ")
-
-type sections struct {
-	Show []string `mapstructure:"show"`
-	Hide []string `mapstructure:"hide"`
-
-	DataSources       bool
-	Header            bool
-	Footer            bool
-	Inputs            bool
-	ModuleCalls       bool
-	Outputs           bool
-	Providers         bool
-	ProviderFunctions bool
-	Requirements      bool
-	Resources         bool
-}
-
 func defaultSections() sections {
 	return sections{
-		Show: []string{},
-		Hide: []string{},
+		Show: nil,
+		Hide: nil,
 
 		DataSources:       true,
 		Header:            true,
@@ -166,18 +244,18 @@ func defaultSections() sections {
 
 func (s *sections) validate() error {
 	if len(s.Show) > 0 && len(s.Hide) > 0 {
-		return errors.New("'--show' and '--hide' can't be used together")
+		return ErrShowHideConflict
 	}
 
 	for _, item := range s.Show {
 		if !contains(allSections, item) {
-			return fmt.Errorf("'%s' is not a valid section", item)
+			return fmt.Errorf("%w: '%s'", ErrInvalidSection, item)
 		}
 	}
 
 	for _, item := range s.Hide {
 		if !contains(allSections, item) {
-			return fmt.Errorf("'%s' is not a valid section", item)
+			return fmt.Errorf("%w: '%s'", ErrInvalidSection, item)
 		}
 	}
 
@@ -210,34 +288,6 @@ func (s *sections) visibility(section string) bool {
 	return len(s.Hide) > 0
 }
 
-// Output modes.
-const (
-	OutputModeInject  = "inject"
-	OutputModeReplace = "replace"
-)
-
-// Output template.
-const (
-	OutputBeginComment = "<!-- BEGIN_TF_DOCS -->"
-	OutputContent      = "{{ .Content }}"
-	OutputEndComment   = "<!-- END_TF_DOCS -->"
-)
-
-// Output to file template and modes.
-var (
-	OutputTemplate = fmt.Sprintf("%s\n%s\n%s", OutputBeginComment, OutputContent, OutputEndComment)
-	OutputModes    = OutputModeInject + ", " + OutputModeReplace
-)
-
-type output struct {
-	File         string `mapstructure:"file"`
-	Mode         string `mapstructure:"mode"`
-	Template     string `mapstructure:"template"`
-	BeginComment string
-	EndComment   string
-	Check        bool
-}
-
 func defaultOutput() output {
 	return output{
 		File:     "",
@@ -260,7 +310,7 @@ func (o *output) validate() error {
 	}
 
 	if o.Mode == "" {
-		return errors.New("value of '--output-mode' can't be empty")
+		return ErrOutputModeEmpty
 	}
 
 	// Template is optional for mode 'replace'.
@@ -269,17 +319,15 @@ func (o *output) validate() error {
 	}
 
 	if o.Template == "" {
-		return errors.New("value of '--output-template' can't be empty")
+		return ErrOutputTemplateEmpty
 	}
 
 	if !strings.Contains(o.Template, OutputContent) {
-		return errors.New(
-			"value of '--output-template' doesn't have '{{ .Content }}' (note that spaces inside '{{ }}' are mandatory)",
-		)
+		return ErrOutputTemplateNoContent
 	}
 
-	// No extra validation is needed for mode 'replace',
-	// the following only applies for every other modes.
+	// No extra validation is needed for mode 'replace', the following only
+	// applies for every other modes.
 	if o.Mode == OutputModeReplace {
 		return nil
 	}
@@ -288,32 +336,32 @@ func (o *output) validate() error {
 
 	lines := strings.Split(o.Template, "\n")
 	tests := []struct {
-		condition  func() bool
-		errMessage string
+		condition func() bool
+		err       error
 	}{
 		{
 			condition: func() bool {
-				return len(lines) < 3
+				return len(lines) < minTemplateLines
 			},
-			errMessage: "value of '--output-template' should contain at least 3 lines (begin comment, {{ .Content }}, and end comment)",
+			err: ErrOutputTemplateTooShort,
 		},
 		{
 			condition: func() bool {
 				return !isInlineComment(strings.TrimSpace(lines[0]))
 			},
-			errMessage: "value of '--output-template' is missing begin comment",
+			err: ErrOutputTemplateNoBegin,
 		},
 		{
 			condition: func() bool {
 				return !isInlineComment(strings.TrimSpace(lines[len(lines)-1]))
 			},
-			errMessage: "value of '--output-template' is missing end comment",
+			err: ErrOutputTemplateNoEnd,
 		},
 	}
 
 	for _, t := range tests {
 		if t.condition() {
-			return fmt.Errorf("%s", t.errMessage)
+			return t.err
 		}
 	}
 
@@ -356,11 +404,6 @@ func isInlineComment(line string) bool {
 	return false
 }
 
-type outputvalues struct {
-	From    string `mapstructure:"from"`
-	Enabled bool   `mapstructure:"enabled"`
-}
-
 func defaultOutputValues() outputvalues {
 	return outputvalues{
 		Enabled: false,
@@ -370,31 +413,10 @@ func defaultOutputValues() outputvalues {
 
 func (o *outputvalues) validate() error {
 	if o.Enabled && o.From == "" {
-		return errors.New("value of '--output-values-from' is missing")
+		return ErrOutputValuesFromEmpty
 	}
 
 	return nil
-}
-
-// Sort types.
-const (
-	SortName     = "name"
-	SortRequired = "required"
-	SortType     = "type"
-)
-
-var allSorts = []string{
-	SortName,
-	SortRequired,
-	SortType,
-}
-
-// SortTypes list.
-var SortTypes = strings.Join(allSorts, ", ")
-
-type sort struct {
-	By      string `mapstructure:"by"`
-	Enabled bool   `mapstructure:"enabled"`
 }
 
 func defaultSort() sort {
@@ -406,27 +428,10 @@ func defaultSort() sort {
 
 func (s *sort) validate() error {
 	if !contains(allSorts, s.By) {
-		return fmt.Errorf("'%s' is not a valid sort type", s.By)
+		return fmt.Errorf("%w: '%s'", ErrInvalidSortType, s.By)
 	}
 
 	return nil
-}
-
-type settings struct {
-	Anchor       bool `mapstructure:"anchor"`
-	AtxClosed    bool `mapstructure:"atx-closed"`
-	Color        bool `mapstructure:"color"`
-	Default      bool `mapstructure:"default"`
-	Description  bool `mapstructure:"description"`
-	Escape       bool `mapstructure:"escape"`
-	HideEmpty    bool `mapstructure:"hide-empty"`
-	HTML         bool `mapstructure:"html"`
-	Indent       int  `mapstructure:"indent"`
-	LockFile     bool `mapstructure:"lockfile"`
-	ReadComments bool `mapstructure:"read-comments"`
-	Required     bool `mapstructure:"required"`
-	Sensitive    bool `mapstructure:"sensitive"`
-	Type         bool `mapstructure:"type"`
 }
 
 func defaultSettings() settings {
@@ -448,13 +453,13 @@ func defaultSettings() settings {
 	}
 }
 
-func (s *settings) validate() error {
+func (*settings) validate() error {
 	return nil
 }
 
-// Parse translates user-facing show/hide lists into boolean flags that templates
-// can check efficiently. Templates use these booleans to decide which sections
-// to render, avoiding repeated list lookups during template execution.
+// Parse translates user-facing show/hide lists into boolean flags that
+// templates can check efficiently. Templates use these booleans to decide which
+// sections to render, avoiding repeated list lookups during template execution.
 func (c *Config) Parse() {
 	// sections.
 	c.Sections.DataSources = c.Sections.visibility("data-sources")
@@ -467,37 +472,37 @@ func (c *Config) Parse() {
 	c.Sections.Requirements = c.Sections.visibility("requirements")
 	c.Sections.Resources = c.Sections.visibility("resources")
 
-	// Footer section is optional and should only be enabled if --footer-from
-	// is explicitly set, either via CLI or config file.
+	// Footer section is optional and should only be enabled if --footer-from is
+	// explicitly set, either via CLI or config file.
 	if c.FooterFrom != "" {
 		c.Sections.Footer = c.Sections.visibility("footer")
 	}
 }
 
 // Validate catches misconfiguration early with clear error messages before
-// expensive module parsing begins. Failing fast here means users don't wait
-// for Terraform file traversal only to discover an invalid option.
+// expensive module parsing begins. Failing fast here means users don't wait for
+// Terraform file traversal only to discover an invalid option.
 func (c *Config) Validate() error {
 	// formatter.
 	if c.Formatter == "" {
-		return errors.New("value of 'formatter' can't be empty")
+		return ErrFormatterEmpty
 	}
 
 	// header-from.
 	if c.HeaderFrom == "" {
-		return errors.New("value of '--header-from' can't be empty")
+		return ErrHeaderFromEmpty
 	}
 
 	// footer-from, not a 'default' section so can be empty.
 	if c.Sections.Footer && c.FooterFrom == "" {
-		return errors.New("value of '--footer-from' can't be empty")
+		return ErrFooterFromEmpty
 	}
 
 	if c.FooterFrom == c.HeaderFrom {
-		return errors.New("value of '--footer-from' can't equal value of '--header-from")
+		return ErrFooterEqualsHeader
 	}
 
-	for _, fn := range [](func() error){
+	for _, fn := range []func() error{
 		c.Recursive.validate,
 		c.Sections.validate,
 		c.Output.validate,
@@ -506,7 +511,7 @@ func (c *Config) Validate() error {
 		c.Settings.validate,
 	} {
 		if err := fn(); err != nil {
-			return err
+			return fmt.Errorf("validating config: %w", err)
 		}
 	}
 
@@ -514,8 +519,9 @@ func (c *Config) Validate() error {
 }
 
 // ReadConfig is a standalone config reader for use outside the CLI (e.g., in
-// tests or the plugin SDK). It encapsulates the full read→unmarshal→validate→parse
-// lifecycle so callers don't need to replicate the sequencing themselves.
+// tests or the plugin SDK). It encapsulates the full read → unmarshal →
+// validate → parse lifecycle so callers don't need to replicate the sequencing
+// themselves.
 func ReadConfig(rootDir, filename string) (*Config, error) {
 	cfg := NewConfig()
 
@@ -524,11 +530,11 @@ func ReadConfig(rootDir, filename string) (*Config, error) {
 
 	if err := v.ReadInConfig(); err != nil {
 		if _, ok := errors.AsType[*os.PathError](err); ok {
-			return nil, fmt.Errorf("config file %s not found", filename)
+			return nil, fmt.Errorf("%w: %s", ErrConfigFileNotFound, filename)
 		}
 
 		if _, ok := errors.AsType[viper.ConfigFileNotFoundError](err); !ok {
-			return nil, err
+			return nil, fmt.Errorf("reading config file: %w", err)
 		}
 	}
 
@@ -540,7 +546,7 @@ func ReadConfig(rootDir, filename string) (*Config, error) {
 
 	// process and validate configuration.
 	if err := cfg.Validate(); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("validating config: %w", err)
 	}
 
 	cfg.Parse()

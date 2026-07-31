@@ -12,12 +12,13 @@ package terraform
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	assertpkg "github.com/go-openapi/testify/assert"
 
 	"github.com/northwood-labs/taco-docs/internal/types"
 )
 
-// WHY: Verifies provider FullName includes alias when present (e.g. "provider.alias").
+// Verifies provider FullName includes alias when present (e.g.,
+// "provider.alias").
 func TestProviderName(t *testing.T) {
 	tests := map[string]struct {
 		expected string
@@ -44,13 +45,14 @@ func TestProviderName(t *testing.T) {
 	}
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			assert := assert.New(t)
+			assert := assertpkg.New(t)
 			assert.Equal(tt.expected, tt.provider.FullName())
 		})
 	}
 }
 
-// WHY: Ensures providers can be sorted by name and by position, including alias-based ordering.
+// Ensures providers can be sorted by name and by position, including
+// alias-based ordering.
 func TestProvidersSort(t *testing.T) {
 	providers := sampleProviders()
 
@@ -69,7 +71,7 @@ func TestProvidersSort(t *testing.T) {
 	}
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			assert := assert.New(t)
+			assert := assertpkg.New(t)
 
 			tt.sortType(providers)
 

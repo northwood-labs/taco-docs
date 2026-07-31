@@ -12,11 +12,11 @@ package terraform
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	assertpkg "github.com/go-openapi/testify/assert"
 )
 
-// WHY: Verifies module call FullName includes version when present. This affects how module
-// references display in generated documentation.
+// Verifies module call FullName includes version when present. This affects how
+// module references display in generated documentation.
 func TestModulecallName(t *testing.T) {
 	tests := map[string]struct {
 		expected string
@@ -40,14 +40,14 @@ func TestModulecallName(t *testing.T) {
 	}
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			assert := assert.New(t)
+			assert := assertpkg.New(t)
 			assert.Equal(tt.expected, tt.module.FullName())
 		})
 	}
 }
 
-// WHY: Ensures module calls can be sorted by name, source, and position. Consistent ordering
-// prevents noisy diffs when regenerating docs.
+// Ensures module calls can be sorted by name, source, and position. Consistent
+// ordering prevents noisy diffs when regenerating docs.
 func TestModulecallSort(t *testing.T) {
 	modules := sampleModulecalls()
 
@@ -70,7 +70,7 @@ func TestModulecallSort(t *testing.T) {
 	}
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			assert := assert.New(t)
+			assert := assertpkg.New(t)
 
 			tt.sortType(modules)
 

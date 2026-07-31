@@ -7,7 +7,7 @@
 // You may obtain a copy of the License at the LICENSE file in
 // the root directory of this source tree.
 
-package plugin
+package plugin // lint:allow_naming_conflict_stdlib
 
 import (
 	"context"
@@ -24,27 +24,42 @@ import (
 	pluginsdk "github.com/northwood-labs/taco-docs/plugin"
 )
 
-// Discover scans well-known directories for plugin binaries and initializes
-// RPC connections to each one. The priority order (env var > local > home)
-// allows CI pipelines to override plugin locations via TFDOCS_PLUGIN_DIR while
+// Discover scans well-known directories for plugin binaries and initializes RPC
+// connections to each one. The priority order (env var > local > home) allows
+// CI pipelines to override plugin locations via TFDOCS_PLUGIN_DIR while
 // developers use the conventional local or home-based paths. Only the first
 // matching directory is used — this avoids confusion from loading the same
 // plugin from multiple locations.
 func Discover() (*List, error) {
 	if dir := os.Getenv("TFDOCS_PLUGIN_DIR"); dir != "" {
-		return findPlugins(dir)
+		plugins, err := findPlugins(dir)
+		if err != nil {
+			return nil, fmt.Errorf("finding plugins in TFDOCS_PLUGIN_DIR: %w", err)
+		}
+
+		return plugins, nil
 	}
 
 	if _, err := os.Stat(localPluginsRoot); !os.IsNotExist(err) {
-		return findPlugins(localPluginsRoot)
+		plugins, err := findPlugins(localPluginsRoot)
+		if err != nil {
+			return nil, fmt.Errorf("finding plugins in local root: %w", err)
+		}
+
+		return plugins, nil
 	}
 
 	dir, err := homedir.Expand(homePluginsRoot)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("expanding home plugins path: %w", err)
 	}
 
-	return findPlugins(dir)
+	plugins, err := findPlugins(dir)
+	if err != nil {
+		return nil, fmt.Errorf("finding plugins in home directory: %w", err)
+	}
+
+	return plugins, nil
 }
 
 // findPlugins iterates over all files in a directory, treats each one as a
@@ -52,12 +67,12 @@ func Discover() (*List, error) {
 // subprocess, and establishes an RPC connection. The go-plugin library handles
 // the handshake to ensure version compatibility between host and plugin.
 func findPlugins(dir string) (*List, error) {
-	clients := map[string]*goplugin.Client{}
-	formatters := map[string]*pluginsdk.Client{}
+	clients := make(map[string]*goplugin.Client)
+	formatters := make(map[string]*pluginsdk.Client)
 
 	files, err := os.ReadDir(dir)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("reading plugin directory: %w", err)
 	}
 
 	for _, f := range files {
@@ -67,15 +82,13 @@ func findPlugins(dir string) (*List, error) {
 
 		path, err := getPluginPath(dir, name)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("resolving plugin path for %q: %w", name, err)
 		}
 
 		// Each plugin runs as a separate process communicating over RPC. This
-		// isolation means a crashing plugin can't bring down the host, and plugins
-		// can be written in any language that implements the protocol.
-		//
-		//nolint:gosec
-		cmd := exec.CommandContext(context.TODO(), path)
+		// isolation means a crashing plugin can't bring down the host, and
+		// plugins can be written in any language that implements the protocol.
+		cmd := exec.CommandContext(context.TODO(), path) // lint:allow_possible_insecure
 
 		client := pluginsdk.NewClient(&pluginsdk.ClientOpts{
 			Cmd: cmd,
@@ -83,19 +96,22 @@ func findPlugins(dir string) (*List, error) {
 
 		rpcClient, err := client.Client()
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("creating RPC client for plugin %q: %w", name, err)
 		}
 
 		raw, err := rpcClient.Dispense("formatter")
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("dispensing formatter for plugin %q: %w", name, err)
 		}
 
-		formatter := raw.(*pluginsdk.Client)
+		formatter, ok := raw.(*pluginsdk.Client)
+		if !ok {
+			return nil, fmt.Errorf("%w: %s", ErrPluginUnexpectedType, name)
+		}
 
 		// Duplicate plugin names would cause silent shadowing — fail loudly.
 		if _, ok := clients[name]; ok {
-			return nil, fmt.Errorf("plugin %s is already registered", name)
+			return nil, fmt.Errorf("%w: %s", ErrPluginAlreadyRegistered, name)
 		}
 
 		clients[name] = client
@@ -117,7 +133,7 @@ func getPluginPath(dir, name string) (string, error) {
 
 	path := filepath.Join(dir, fmt.Sprintf("%s%s%s", namePrefix, name, suffix))
 
-	if _, err := os.Stat(path); os.IsNotExist(err) {
+	if _, err := os.Stat(path); os.IsNotExist(err) { // lint:allow_possible_insecure
 		return "", os.ErrNotExist
 	}
 

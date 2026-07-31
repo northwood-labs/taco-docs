@@ -21,7 +21,7 @@ import (
 // compressing everything into a table. This is preferred when modules have
 // lengthy descriptions, complex default values, or when the documentation will
 // be read on platforms that poorly render wide Markdown tables.
-func NewCommand(runtime *cli.Runtime, config *print.Config) *cobra.Command {
+func NewCommand(runtime *cli.Runtime, _ *print.Config) *cobra.Command {
 	cmd := &cobra.Command{
 		Args:        cobra.ExactArgs(1),
 		Use:         "document [PATH]",

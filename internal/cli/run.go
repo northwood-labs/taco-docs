@@ -31,18 +31,29 @@ import (
 	"github.com/northwood-labs/taco-docs/terraform"
 )
 
-// Runtime holds the state accumulated during a single CLI invocation. It bridges
-// the gap between cobra's stateless command handlers and the multi-step process
-// of reading config, discovering modules, and generating output. A single Runtime
-// instance is shared across PreRunE and RunE so that config parsing only happens
-// once and the resolved state is available to the generation step.
-type Runtime struct {
-	config        *print.Config
-	cmd           *cobra.Command
-	isFlagChanged func(string) bool
-	rootDir       string
-	formatter     string
-}
+type (
+	// Runtime holds the state accumulated during a single CLI invocation. It
+	// bridges the gap between cobra's stateless command handlers and the
+	// multi-step process of reading config, discovering modules, and generating
+	// output. A single Runtime instance is shared across PreRunE and RunE so
+	// that config parsing only happens once and the resolved state is available
+	// to the generation step.
+	Runtime struct {
+		config        *print.Config
+		cmd           *cobra.Command
+		isFlagChanged func(string) bool
+		rootDir       string
+		formatter     string
+	}
+
+	// module pairs a filesystem path with its resolved configuration. Each
+	// module (root or sub) may have its own .terraform-docs.yml that overrides
+	// the root config.
+	module struct {
+		config  *print.Config
+		rootDir string
+	}
+)
 
 // NewRuntime returns a new instance of Runtime. A nil config is tolerated so
 // callers in tests or plugin contexts don't need to construct a full Config;
@@ -55,21 +66,30 @@ func NewRuntime(config *print.Config) *Runtime {
 	return &Runtime{config: config}
 }
 
-// PreRunEFunc is cobra's pre-run hook for all formatter commands. Its purpose is
-// to resolve configuration before the actual generation runs. The order matters:
-//  1. Extract the formatter name from annotations (avoids fragile string parsing of Use).
-//  2. Show help and exit for the root command with no args (UX: don't error, just help).
+// PreRunEFunc is cobra's pre-run hook for all formatter commands. Its
+// purpose is to resolve configuration before the actual generation runs. The
+// order matters:
+// 1. Extract the formatter name from annotations (avoids fragile string
+// parsing of Use).
+// 2. Show help and exit for the root command with no args (UX: don't error,
+// just help).
 //  3. Read the config file (with fallback search paths for discoverability).
 //  4. Overlay CLI flags onto the config (flags take precedence over file).
-//  5. Validate version constraints so mismatched configs fail early with clear messages.
+//
+// 5. Validate version constraints so mismatched configs fail early with
+// clear messages.
 func (r *Runtime) PreRunEFunc(cmd *cobra.Command, args []string) error {
 	r.formatter = cmd.Annotations["command"]
 
-	// Root command without arguments means the user ran bare `terraform-docs` —
-	// rather than erroring, show help since that's the conventional UX.
+	// Root command without arguments means the user ran bare
+	// `terraform-docs` — rather than erroring, show help since that's the
+	// conventional UX.
 	if r.formatter == "root" && len(args) == 0 {
-		cmd.Help() //nolint:errcheck,gosec
-		os.Exit(0)
+		if err := cmd.Help(); err != nil {
+			return fmt.Errorf("displaying help: %w", err)
+		}
+
+		return nil
 	}
 
 	r.isFlagChanged = cmd.Flags().Changed
@@ -79,56 +99,58 @@ func (r *Runtime) PreRunEFunc(cmd *cobra.Command, args []string) error {
 	// An empty --config value is an explicit user error (they passed -c ""),
 	// not a missing-file situation. Fail early with a clear message.
 	if r.config.File == "" {
-		return errors.New("value of '--config' can't be empty")
+		return ErrConfigEmpty
 	}
 
-	// Viper handles the layered config file search. A new instance is created
-	// per invocation to avoid stale state from prior runs in test scenarios.
+	// Viper handles the layered config file search. A new instance is
+	// created per invocation to avoid stale state from prior runs in test
+	// scenarios.
 	v := viper.New()
 
 	if err := r.readConfig(v, r.config.File, ""); err != nil {
-		return err
+		return fmt.Errorf("reading config: %w", err)
 	}
 
-	// CLI flags override config-file values — this is the standard UX expectation
-	// where explicit invocation-time choices win over persistent settings.
+	// CLI flags override config-file values — this is the standard UX
+	// expectation where explicit invocation-time choices win over persistent
+	// settings.
 	if err := r.unmarshalConfig(v, r.config); err != nil {
-		return err
+		return fmt.Errorf("unmarshalling config: %w", err)
 	}
 
-	// Version constraint checking prevents confusing failures when a config file
-	// requires features from a newer terraform-docs version than is installed.
-	return checkConstraint(r.config.Version, version.Core())
+	// Version constraint checking prevents confusing failures when a config
+	// file requires features from a newer terraform-docs version than is
+	// installed.
+	if err := checkConstraint(r.config.Version, version.Core()); err != nil {
+		return fmt.Errorf("checking version constraint: %w", err)
+	}
+
+	return nil
 }
 
-// module pairs a filesystem path with its resolved configuration. Each module
-// (root or sub) may have its own .terraform-docs.yml that overrides the root config.
-type module struct {
-	config  *print.Config
-	rootDir string
-}
+// RunEFunc is cobra's main execution hook. It orchestrates the end-to-end
+// flow: discover modules (potentially recursively), validate each module's
+// config, and generate + write output for each one. The recursive mode
+// exists because many Terraform repos contain a top-level module plus
+// submodules under a "modules/" directory, and users want all of them
+// documented in a single command.
+func (r *Runtime) RunEFunc(_ *cobra.Command, _ []string) error {
+	var modules []module
 
-// RunEFunc is cobra's main execution hook. It orchestrates the end-to-end flow:
-// discover modules (potentially recursively), validate each module's config, and
-// generate + write output for each one. The recursive mode exists because many
-// Terraform repos contain a top-level module plus submodules under a "modules/"
-// directory, and users want all of them documented in a single command.
-func (r *Runtime) RunEFunc(cmd *cobra.Command, args []string) error {
-	modules := []module{}
-
-	// Include the main module unless the user explicitly excluded it via config.
-	// This gives users control over documenting only submodules when needed.
+	// Include the main module unless the user explicitly excluded it via
+	// config. This gives users control over documenting only submodules when
+	// needed.
 	if !r.config.Recursive.Enabled || r.config.Recursive.IncludeMain {
 		modules = append(modules, module{config: r.config, rootDir: r.rootDir})
 	}
 
-	// Recursive discovery scans the configured path for Terraform submodules.
-	// This only makes sense when output goes to files — stdout output of multiple
-	// modules would be impossible to separate.
+	// Recursive discovery scans the configured path for Terraform
+	// submodules. This only makes sense when output goes to files — stdout
+	// output of multiple modules would be impossible to separate.
 	if r.config.Recursive.Enabled && r.config.Recursive.Path != "" {
 		items, err := r.findSubmodules()
 		if err != nil {
-			return err
+			return fmt.Errorf("finding submodules: %w", err)
 		}
 
 		modules = append(modules, items...)
@@ -137,8 +159,9 @@ func (r *Runtime) RunEFunc(cmd *cobra.Command, args []string) error {
 	for _, module := range modules {
 		cfg := r.config
 
-		// Submodules may override root config with their own .terraform-docs.yml,
-		// allowing per-module customization (e.g., different sections or formatters).
+		// Submodules may override root config with their own
+		// .terraform-docs.yml, allowing per-module customization (e.g.,
+		// different sections or formatters).
 		if module.config != nil {
 			cfg = module.config
 		}
@@ -146,32 +169,35 @@ func (r *Runtime) RunEFunc(cmd *cobra.Command, args []string) error {
 		cfg.ModuleRoot = module.rootDir
 
 		if err := cfg.Validate(); err != nil {
-			return err
+			return fmt.Errorf("validating config: %w", err)
 		}
 
-		// Recursive mode without an output file would produce concatenated stdout
-		// with no separator between modules — an unusable result. Fail explicitly.
+		// Recursive mode without an output file would produce concatenated
+		// stdout with no separator between modules — an unusable result.
+		// Fail explicitly.
 		if r.config.Recursive.Enabled && cfg.Output.File == "" {
-			return errors.New("value of '--output-file' cannot be empty with '--recursive'")
+			return ErrOutputFileEmpty
 		}
 
 		if err := generateContent(cfg); err != nil {
-			return err
+			return fmt.Errorf("generating content: %w", err)
 		}
 	}
 
 	return nil
 }
 
-// readConfig searches for and reads a configuration file using viper's multi-path
-// lookup. The search order is intentional:
-//   - If --config was explicitly provided, use that exact file (fail if missing).
-//   - Otherwise, search module root, then CWD, then user home — this supports both
-//     per-module configs and global user defaults without requiring any flags.
+// readConfig searches for and reads a configuration file using viper's
+// multi-path lookup. The search order is intentional:
+// - If --config was explicitly provided, use that exact file (fail if
+// missing).
+// - Otherwise, search module root, then CWD, then user home — this supports
+// both
+// per-module configs and global user defaults without requiring any flags.
 func (r *Runtime) readConfig(v *viper.Viper, file, submoduleDir string) error {
 	if r.isFlagChanged("config") {
-		// User explicitly specified a config file — resolve it absolutely so that
-		// relative paths work regardless of CWD vs. module path.
+		// User explicitly specified a config file — resolve it absolutely so
+		// that relative paths work regardless of CWD vs. module path.
 		if absFile, err := filepath.Abs(file); err == nil {
 			file = absFile
 		}
@@ -182,8 +208,9 @@ func (r *Runtime) readConfig(v *viper.Viper, file, submoduleDir string) error {
 		v.SetConfigType("yml")
 	}
 
-	// Search paths are ordered by proximity/specificity: submodule > module root > CWD > HOME.
-	// This lets more specific configs shadow broader ones.
+	// Search paths are ordered by proximity/specificity: submodule > module
+	// root > CWD > HOME. This lets more specific configs shadow broader
+	// ones.
 	if submoduleDir != "" {
 		v.AddConfigPath(submoduleDir)
 		v.AddConfigPath(submoduleDir + "/.config")
@@ -197,28 +224,32 @@ func (r *Runtime) readConfig(v *viper.Viper, file, submoduleDir string) error {
 
 	if err := v.ReadInConfig(); err != nil {
 		if _, ok := errors.AsType[*os.PathError](err); ok {
-			return fmt.Errorf("config file %s not found", file)
+			return fmt.Errorf("%w: %s", ErrConfigFileNotFound, file)
 		}
 
 		if _, ok := errors.AsType[viper.ConfigFileNotFoundError](err); !ok {
-			return err
+			return fmt.Errorf("reading config file: %w", err)
 		}
 
 		// When no config file exists and the user invoked the root command,
 		// there's nothing to do — show help rather than an obscure error.
 		if r.formatter == "root" {
-			r.cmd.Help() //nolint:errcheck,gosec
-			os.Exit(0)
+			if helpErr := r.cmd.Help(); helpErr != nil {
+				return fmt.Errorf("displaying help: %w", helpErr)
+			}
+
+			return nil
 		}
 	}
 
 	return nil
 }
 
-// unmarshalConfig decodes the viper config into the Config struct and applies
-// flag overrides. For explicit subcommands (non-root), the formatter is forced
-// to the subcommand name so that a config file's "formatter" field can't
-// silently redirect a user's explicit `terraform-docs json` to a different format.
+// unmarshalConfig decodes the viper config into the Config struct and
+// applies flag overrides. For explicit subcommands (non-root), the formatter
+// is forced to the subcommand name so that a config file's "formatter" field
+// can't silently redirect a user's explicit `terraform-docs json` to a
+// different format.
 func (r *Runtime) unmarshalConfig(v *viper.Viper, config *print.Config) error {
 	r.bindFlags(v)
 
@@ -226,9 +257,10 @@ func (r *Runtime) unmarshalConfig(v *viper.Viper, config *print.Config) error {
 		return fmt.Errorf("unable to decode config, %w", err)
 	}
 
-	// When a user explicitly runs e.g. `terraform-docs markdown table ./`, the
-	// subcommand name must win over any "formatter:" value in the config file.
-	// Only the root command defers to the config file's formatter choice.
+	// When a user explicitly runs e.g., `terraform-docs markdown table ./`,
+	// the subcommand name must win over any "formatter:" value in the config
+	// file. Only the root command defers to the config file's formatter
+	// choice.
 	if r.formatter != "root" {
 		config.Formatter = r.formatter
 	}
@@ -241,9 +273,9 @@ func (r *Runtime) unmarshalConfig(v *viper.Viper, config *print.Config) error {
 // bindFlags synchronizes CLI flag values into the viper config layer. Only
 // flags explicitly changed by the user are bound — this ensures that default
 // flag values don't accidentally override config-file settings. The special
-// handling of show/hide ensures that CLI flags fully replace (not merge with)
-// config-file section lists, which matches user expectations of "I said --show
-// inputs, so only show inputs.".
+// handling of show/hide ensures that CLI flags fully replace (not merge
+// with) config-file section lists, which matches user expectations of "I
+// said --show inputs, so only show inputs.".
 func (r *Runtime) bindFlags(v *viper.Viper) {
 	sectionsCleared := false
 	fs := r.cmd.Flags()
@@ -254,12 +286,13 @@ func (r *Runtime) bindFlags(v *viper.Viper) {
 
 		switch f.Name {
 		case "show", "hide":
-			// Clear both show and hide from config on first encounter of either
-			// flag. This implements "CLI flag replaces file config" semantics —
-			// without this, config-file items would persist and merge in unexpected ways.
+			// Clear both show and hide from config on first encounter of
+			// either flag. This implements "CLI flag replaces file config"
+			// semantics — without this, config-file items would persist and
+			// merge in unexpected ways.
 			if !sectionsCleared {
-				v.Set("sections.show", []string{})
-				v.Set("sections.hide", []string{})
+				v.Set("sections.show", []string(nil))
+				v.Set("sections.hide", []string(nil))
 
 				sectionsCleared = true
 			}
@@ -271,7 +304,8 @@ func (r *Runtime) bindFlags(v *viper.Viper) {
 
 			v.Set(flagMappings[f.Name], items)
 		case "sort-by-required", "sort-by-type":
-			// Legacy flags that set the sort criteria by their mere presence.
+			// Legacy flags that set the sort criteria by their mere
+			// presence.
 			v.Set("sort.by", flagMappings[f.Name])
 		default:
 			if _, ok := flagMappings[f.Name]; !ok {
@@ -284,43 +318,46 @@ func (r *Runtime) bindFlags(v *viper.Viper) {
 }
 
 // mergeConfig creates a copy of the root config and overlays a submodule's
-// config onto it. This preserves the root settings as defaults while allowing
-// submodules to selectively override specific values.
+// config onto it. This preserves the root settings as defaults while
+// allowing submodules to selectively override specific values.
 func (r *Runtime) mergeConfig(v *viper.Viper) (*print.Config, error) {
-	copy := *r.config
-	merged := &copy
+	configCopy := *r.config
+	merged := &configCopy
 
 	// If the submodule config specifies section visibility, reset both lists
-	// so that the submodule's preferences fully replace (not merge with) the root's.
+	// so that the submodule's preferences fully replace (not merge with) the
+	// root's.
 	if v.IsSet("sections.show") || v.IsSet("sections.hide") {
-		merged.Sections.Show = []string{}
-		merged.Sections.Hide = []string{}
+		merged.Sections.Show = nil
+		merged.Sections.Hide = nil
 	}
 
 	if err := r.unmarshalConfig(v, merged); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("unmarshalling merged config: %w", err)
 	}
 
 	return merged, nil
 }
 
-// findSubmodules walks the recursive path looking for directories that contain
-// Terraform files. It respects exclusion rules and hidden directories (prefixed
-// with ".") to avoid scanning vendor/, .terraform/, or other non-module dirs.
+// findSubmodules walks the recursive path looking for directories that
+// contain Terraform files. It respects exclusion rules and hidden
+// directories (prefixed with ".") to avoid scanning vendor/, .terraform/, or
+// other non-module dirs.
 func (r *Runtime) findSubmodules() ([]module, error) {
 	dir := filepath.Join(r.rootDir, r.config.Recursive.Path)
 
 	if _, err := os.Stat(dir); err != nil {
-		// A missing recursive path is not an error — the user may have configured
-		// a default "modules" path even though this particular repo doesn't have one.
+		// A missing recursive path is not an error — the user may have
+		// configured a default "modules" path even though this particular
+		// repo doesn't have one.
 		if os.IsNotExist(err) {
-			return []module{}, nil
+			return nil, nil
 		}
 
-		return nil, err
+		return nil, fmt.Errorf("checking recursive path %q: %w", dir, err)
 	}
 
-	modules := []module{}
+	var modules []module
 
 	err := filepath.WalkDir(dir, func(path string, file os.DirEntry, err error) error {
 		if err != nil {
@@ -332,58 +369,56 @@ func (r *Runtime) findSubmodules() ([]module, error) {
 			return nil
 		}
 
-		// Skip hidden dirs (like .terraform/) and explicitly excluded directories.
+		// Skip hidden dirs (like .terraform/) and explicitly excluded
+		// directories.
 		if strings.HasPrefix(file.Name(), ".") || slices.Contains(r.config.Recursive.Exclude, file.Name()) {
 			return filepath.SkipDir
 		}
 
-		module, err := r.loadSubModule(path)
+		hasTerraformFiles, err := containsTerraformFiles(path)
 		if err != nil {
-			return err
+			return fmt.Errorf("checking for terraform files: %w", err)
 		}
 
-		if module != nil {
-			modules = append(modules, *module)
+		if !hasTerraformFiles {
+			return nil
 		}
+
+		module, err := r.loadSubModule(path)
+		if err != nil {
+			return fmt.Errorf("loading submodule %q: %w", path, err)
+		}
+
+		modules = append(modules, *module)
 
 		return nil
 	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("walking submodule directory: %w", err)
 	}
 
 	return modules, nil
 }
 
-// loadSubModule checks whether a directory qualifies as a Terraform module
-// (contains .tf files) and, if so, loads any module-specific config. Directories
-// without Terraform files are silently skipped to avoid noisy errors for utility
-// directories (like shared scripts) that happen to live under the recursive path.
+// loadSubModule loads any module-specific config for a directory that has
+// already been confirmed to contain Terraform files.
 func (r *Runtime) loadSubModule(path string) (*module, error) {
-	hasTerraformFiles, err := containsTerraformFiles(path)
-	if err != nil {
-		return nil, err
-	}
-
-	if !hasTerraformFiles {
-		return nil, nil
-	}
-
 	cfg, err := r.loadModuleConfig(path)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("loading module config: %w", err)
 	}
 
 	return &module{rootDir: path, config: cfg}, nil
 }
 
-// containsTerraformFiles determines whether a directory has any .tf or .tf.json
-// files. This is the minimum signal that a directory is a Terraform module —
-// without it, attempting to parse the directory would produce confusing errors.
+// containsTerraformFiles determines whether a directory has any .tf or
+// .tf.json files. This is the minimum signal that a directory is a Terraform
+// module — without it, attempting to parse the directory would produce
+// confusing errors.
 func containsTerraformFiles(path string) (bool, error) {
 	files, err := os.ReadDir(path)
 	if err != nil {
-		return false, err
+		return false, fmt.Errorf("reading directory %q: %w", path, err)
 	}
 
 	for _, file := range files {
@@ -401,8 +436,9 @@ func containsTerraformFiles(path string) (bool, error) {
 }
 
 // loadModuleConfig attempts to read a submodule-specific config file. If it
-// exists, the submodule config is merged with the root config (submodule wins);
-// if no config file is found, nil is returned and the root config applies as-is.
+// exists, the submodule config is merged with the root config (submodule
+// wins); if no config file is found, nil is returned and the root config
+// applies as-is.
 func (r *Runtime) loadModuleConfig(path string) (*print.Config, error) {
 	var cfg *print.Config
 
@@ -410,22 +446,22 @@ func (r *Runtime) loadModuleConfig(path string) (*print.Config, error) {
 	if _, err := os.Stat(cfgfile); !os.IsNotExist(err) {
 		v := viper.New()
 
-		if err = r.readConfig(v, cfgfile, path); err != nil {
-			return nil, err
+		if readErr := r.readConfig(v, cfgfile, path); readErr != nil {
+			return nil, fmt.Errorf("reading submodule config: %w", readErr)
 		}
 
 		if cfg, err = r.mergeConfig(v); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("merging submodule config: %w", err)
 		}
 	}
 
 	return cfg, nil
 }
 
-// checkConstraint enforces the "version" field from .terraform-docs.yml. This
-// prevents silent misbehavior when a config file uses features from a newer
-// terraform-docs version — instead the user gets an explicit error with the
-// constraint and current version, guiding them to upgrade.
+// checkConstraint enforces the "version" field from .terraform-docs.yml.
+// This prevents silent misbehavior when a config file uses features from a
+// newer terraform-docs version — instead the user gets an explicit error
+// with the constraint and current version, guiding them to upgrade.
 func checkConstraint(versionRange, currentVersion string) error {
 	if versionRange == "" {
 		return nil
@@ -433,40 +469,46 @@ func checkConstraint(versionRange, currentVersion string) error {
 
 	semver, err := goversion.NewSemver(currentVersion)
 	if err != nil {
-		return err
+		return fmt.Errorf("parsing version %q: %w", currentVersion, err)
 	}
 
 	constraint, err := goversion.NewConstraint(versionRange)
 	if err != nil || !constraint.Check(semver) {
-		return fmt.Errorf("current version: %s, constraints: '%s'", semver, constraint)
+		return fmt.Errorf(
+			"%w: current version: %s, constraints: '%s'",
+			ErrVersionConstraint,
+			semver,
+			constraint,
+		)
 	}
 
 	return nil
 }
 
-// generateContent is the core pipeline: load Terraform module → format → write.
-// It first attempts built-in formatters, then falls through to plugin discovery.
-// This two-stage lookup allows the plugin system to extend terraform-docs with
-// custom formatters without modifying the core binary.
+// generateContent is the core pipeline: load Terraform module → format →
+// write. It first attempts built-in formatters, then falls through to plugin
+// discovery. This two-stage lookup allows the plugin system to extend
+// terraform-docs with custom formatters without modifying the core binary.
 func generateContent(config *print.Config) error {
 	module, err := terraform.LoadWithOptions(config)
 	if err != nil {
-		return err
+		return fmt.Errorf("loading terraform module: %w", err)
 	}
 
 	formatter, err := format.New(config)
-	// If the formatter name isn't recognized by built-in formatters, try plugins.
-	// This fallback design means plugins are transparent to users — they just
-	// specify a formatter name and it works whether built-in or plugin-provided.
+	// If the formatter name isn't recognized by built-in formatters, try
+	// plugins. This fallback design means plugins are transparent to users —
+	// they just specify a formatter name and it works whether built-in or
+	// plugin-provided.
 	if err != nil {
 		plugins, perr := plugin.Discover()
 		if perr != nil {
-			return fmt.Errorf("formatter '%s' not found", config.Formatter)
+			return fmt.Errorf("%w: %s", ErrFormatterNotFound, config.Formatter)
 		}
 
 		client, found := plugins.Get(config.Formatter)
 		if !found {
-			return fmt.Errorf("formatter '%s' not found", config.Formatter)
+			return fmt.Errorf("%w: %s", ErrFormatterNotFound, config.Formatter)
 		}
 
 		content, cerr := client.Execute(&pluginsdk.ExecuteArgs{
@@ -474,25 +516,35 @@ func generateContent(config *print.Config) error {
 			Config: config,
 		})
 		if cerr != nil {
-			return cerr
+			return fmt.Errorf("executing plugin: %w", cerr)
 		}
 
-		return writeContent(config, content)
+		writeErr := writeContent(config, content)
+		if writeErr != nil {
+			return fmt.Errorf("writing plugin output: %w", writeErr)
+		}
+
+		return nil
 	}
 
 	err = formatter.Generate(module)
 	if err != nil {
-		return err
+		return fmt.Errorf("generating output: %w", err)
 	}
 
 	// Render applies the user's custom content template (if provided) to the
-	// generated sections. An empty template means "use default section order.".
+	// generated sections. An empty template means "use default section
+	// order.".
 	content, err := formatter.Render(config.Content)
 	if err != nil {
-		return err
+		return fmt.Errorf("rendering content template: %w", err)
 	}
 
-	return writeContent(config, content)
+	if err := writeContent(config, content); err != nil {
+		return fmt.Errorf("writing output: %w", err)
+	}
+
+	return nil
 }
 
 // writeContent directs generated documentation to either stdout or a file,
@@ -502,8 +554,9 @@ func writeContent(config *print.Config, content string) error {
 	var w io.Writer
 
 	if config.Output.File != "" {
-		// File writing supports both inject (between markers) and replace modes,
-		// enabling users to maintain hand-written content around the generated sections.
+		// File writing supports both inject (between markers) and replace
+		// modes, enabling users to maintain hand-written content around the
+		// generated sections.
 		w = &fileWriter{
 			file: config.Output.File,
 			dir:  config.ModuleRoot,
@@ -521,6 +574,9 @@ func writeContent(config *print.Config, content string) error {
 	}
 
 	_, err := io.WriteString(w, content)
+	if err != nil {
+		return fmt.Errorf("writing content: %w", err)
+	}
 
-	return err
+	return nil
 }

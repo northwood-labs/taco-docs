@@ -12,10 +12,10 @@ package print
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	assertpkg "github.com/go-openapi/testify/assert"
 )
 
-// WHY: Validates the 'contains' helper used internally for section filtering.
+// Validates the 'contains' helper used internally for section filtering.
 func TestSliceContains(t *testing.T) {
 	list := []string{"foo", "bar", "buzz"}
 
@@ -47,14 +47,14 @@ func TestSliceContains(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert := assert.New(t)
+			assert := assertpkg.New(t)
 			actual := contains(list, tt.item)
 			assert.Equal(tt.expected, actual)
 		})
 	}
 }
 
-// WHY: Validates the 'index' helper used to locate items in section lists.
+// Validates the 'index' helper used to locate items in section lists.
 func TestSliceIndex(t *testing.T) {
 	list := []string{"foo", "bar", "buzz"}
 
@@ -86,15 +86,15 @@ func TestSliceIndex(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert := assert.New(t)
+			assert := assertpkg.New(t)
 			actual := index(list, tt.item)
 			assert.Equal(tt.expected, actual)
 		})
 	}
 }
 
-// WHY: Validates the 'remove' helper used to exclude sections from output. A bug here could leave
-// unwanted sections in the output or panic on missing items.
+// Validates the 'remove' helper used to exclude sections from output. A bug
+// here could leave unwanted sections in the output or panic on missing items.
 func TestSliceRemove(t *testing.T) {
 	list := []string{"foo", "bar", "buzz"}
 
@@ -126,7 +126,7 @@ func TestSliceRemove(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert := assert.New(t)
+			assert := assertpkg.New(t)
 			cpy := make([]string, len(list))
 			copy(cpy, list)
 

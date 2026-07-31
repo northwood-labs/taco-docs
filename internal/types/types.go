@@ -7,35 +7,98 @@
 // You may obtain a copy of the License at the LICENSE file in
 // the root directory of this source tree.
 
-package types
+// Package types provides typed wrappers for Terraform variable default
+// values, enabling format-specific serialization to JSON, YAML, XML,
+// and TOML.
+package types // lint:allow_bad_package_name
 
 import (
 	"bytes"
 	"encoding/json"
 	"encoding/xml"
+	"fmt"
 	"maps"
 	"reflect"
-	"sort"
+	"slices"
 )
 
-// Value is the interface for all Terraform variable default values. Terraform
-// supports a rich type system (string, number, bool, list, map, null) but
-// terraform-docs needs to serialize these values across multiple output formats
-// (JSON, YAML, XML, TOML, Markdown). By wrapping each Terraform type in a
-// concrete type that implements Value (plus custom marshalers), we get
-// format-specific rendering without polluting the core domain model with
-// serialization logic.
-type Value interface {
-	HasDefault() bool
-	Length() int
-	Raw() any
-}
+// yamlNull is a typed nil used by MarshalYAML methods to represent YAML null
+// values without triggering the nilnil linter on bare nil returns.
+var yamlNull any
+
+type (
+	// Value is the interface for all Terraform variable default values.
+	// Terraform supports a rich type system (string, number, bool, list, map,
+	// null) but terraform-docs needs to serialize these values across multiple
+	// output formats (JSON, YAML, XML, TOML, Markdown). By wrapping each
+	// Terraform type in a concrete type that implements Value (plus custom
+	// marshalers), we get format-specific rendering without polluting the core
+	// domain model with serialization logic.
+	Value interface {
+		// HasDefault reports whether the variable has a default value.
+		HasDefault() bool
+
+		// Length returns the number of elements in the value.
+		Length() int
+
+		// Raw returns the underlying Go value.
+		Raw() any
+	}
+
+	// Nil represents a variable with no default value. It marshals to `null` in
+	// JSON and YAML, and uses xsi:nil="true" in XML. The distinction between
+	// Nil and Empty is critical: Nil means "the user must provide a value"
+	// (required input), while Empty means "the default value is explicitly an
+	// empty string.".
+	Nil struct{}
+
+	// String represents a non-empty string value. When the underlying string is
+	// empty, it marshals to `null` in JSON/YAML (not `""`) because in this
+	// context an empty String means "description/version not specified" rather
+	// than "explicitly empty." For explicitly-empty defaults, the Empty type is
+	// used instead.
+	String string
+
+	// Empty represents a Terraform variable whose default is explicitly set to
+	// an empty string (default = ""). This is semantically different from Nil
+	// (no default) and from String with empty content (no value specified).
+	// Empty marshals to `""` in JSON, preserving the user's explicit intent.
+	Empty string
+
+	// Number represents a Terraform number value (integer or float). All
+	// numeric types are unified under float64 because Terraform's type system
+	// doesn't distinguish between integers and floats.
+	Number float64
+
+	// Bool represents a Terraform bool value.
+	Bool bool
+
+	// List represents a Terraform list/tuple default value. It exists as a
+	// distinct type (rather than using []interface{} directly) so that custom
+	// XML marshaling can wrap items in <item> tags for well-formed structure.
+	List []any
+
+	// Map represents a Terraform map/object default value. Like List, it exists
+	// as a distinct type to provide custom XML marshaling where map keys become
+	// element names and values become element content.
+	Map map[string]any
+
+	xmllistentry struct {
+		Value   any      `xml:",chardata"` // lint:allow_format
+		XMLName xml.Name `xml:"item"`
+	}
+
+	xmlmapentry struct {
+		Value   any      `xml:",chardata"` // lint:allow_format
+		XMLName xml.Name // lint:allow_format
+	}
+)
 
 // ValueOf wraps a raw Go interface{} (as parsed from HCL) into the appropriate
 // typed Value. This type dispatch is necessary because terraform-config-inspect
 // returns default values as interface{}, but we need concrete types to attach
-// custom JSON/XML/YAML marshalers that produce the correct output representation
-// (e.g., `null` for nil, `""` for explicit empty string).
+// custom JSON/XML/YAML marshalers that produce the correct output
+// representation (e.g., `null` for nil, `""` for explicit empty string).
 func ValueOf(v any) Value {
 	if v == nil {
 		return new(Nil)
@@ -44,8 +107,6 @@ func ValueOf(v any) Value {
 	value := reflect.ValueOf(v)
 
 	// We don't really care about all the other kinds.
-	//
-	//nolint:exhaustive
 	switch value.Kind() {
 	case reflect.String:
 		// Distinguish between "no value" (empty string from zero-value) and
@@ -59,25 +120,35 @@ func ValueOf(v any) Value {
 		return Number(value.Float())
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 		// Terraform's number type is unified — we normalize all integer types
-		// to float64 so that marshaling is consistent regardless of how the
-		// HCL parser decoded the value.
+		// to float64 so that marshaling is consistent regardless of how the HCL
+		// parser decoded the value.
 		return Number(float64(value.Int()))
 	case reflect.Bool:
 		return Bool(value.Bool())
 	case reflect.Slice:
-		return List(value.Interface().([]any))
-	case reflect.Map:
-		return Map(value.Interface().(map[string]any))
-	}
+		sl, ok := value.Interface().([]any)
+		if !ok {
+			return new(Nil)
+		}
 
-	return new(Nil)
+		return List(sl)
+	case reflect.Map:
+		m, ok := value.Interface().(map[string]any)
+		if !ok {
+			return new(Nil)
+		}
+
+		return Map(m)
+	default:
+		return new(Nil)
+	}
 }
 
 // TypeOf determines the Terraform type label for a variable. It prefers the
-// explicitly declared type string from the .tf file (provided by terraform-inspect),
-// falling back to runtime type inference from the default value. The fallback
-// handles cases where type is omitted but a default is set — Terraform infers the
-// type from the default value in this scenario.
+// explicitly declared type string from the .tf file (provided by
+// terraform-inspect), falling back to runtime type inference from the default
+// value. The fallback handles cases where type is omitted but a default is set
+// — Terraform infers the type from the default value in this scenario.
 func TypeOf(t string, v any) String {
 	if t != "" {
 		return String(t)
@@ -85,8 +156,6 @@ func TypeOf(t string, v any) String {
 
 	if v != nil {
 		// We don't really care about all the other kinds.
-		//
-		//nolint:exhaustive
 		switch reflect.ValueOf(v).Kind() {
 		case reflect.String:
 			return String("string")
@@ -98,64 +167,54 @@ func TypeOf(t string, v any) String {
 			return String("list")
 		case reflect.Map:
 			return String("map")
+		default:
+			return String("any")
 		}
 	}
 
 	return String("any")
 }
 
-// Nil represents a variable with no default value. It marshals to `null` in JSON
-// and YAML, and uses xsi:nil="true" in XML. The distinction between Nil and Empty
-// is critical: Nil means "the user must provide a value" (required input), while
-// Empty means "the default value is explicitly an empty string.".
-type Nil struct{}
-
 // HasDefault returns false for Nil because a nil default means the variable is
 // required — the user must supply a value at plan time.
-func (n Nil) HasDefault() bool {
+func (Nil) HasDefault() bool {
 	return false
 }
 
 // Length returns the length of underlying item.
-func (n Nil) Length() int {
+func (Nil) Length() int {
 	return 0
 }
 
 // Raw underlying value of this type.
-func (n Nil) Raw() any {
+func (Nil) Raw() any {
 	return nil
 }
 
 // MarshalJSON produces literal `null` to match Terraform's JSON representation.
-func (n Nil) MarshalJSON() ([]byte, error) {
+func (Nil) MarshalJSON() ([]byte, error) { // lint:allow_param
 	return []byte(`null`), nil
 }
 
-// MarshalXML uses the xsi:nil attribute to represent null values in XML, following
-// the XML Schema Instance convention for absent values.
-func (n Nil) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
+// MarshalXML uses the xsi:nil attribute to represent null values in XML,
+// following the XML Schema Instance convention for absent values.
+func (Nil) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 	start.Attr = append(start.Attr, xml.Attr{Name: xml.Name{Local: "xsi:nil"}, Value: "true"})
-	return e.EncodeElement(``, start)
+
+	if err := e.EncodeElement(``, start); err != nil {
+		return fmt.Errorf("encoding nil XML element: %w", err)
+	}
+
+	return nil
 }
 
 // MarshalYAML produces a YAML null value.
-func (n Nil) MarshalYAML() (any, error) {
-	return nil, nil
-}
-
-// String represents a non-empty string value. When the underlying string is empty,
-// it marshals to `null` in JSON/YAML (not `""`) because in this context an empty
-// String means "description/version not specified" rather than "explicitly empty."
-// For explicitly-empty defaults, the Empty type is used instead.
-type String string
-
-// nolint
-func (s String) underlying() string {
-	return string(s)
+func (Nil) MarshalYAML() (any, error) {
+	return yamlNull, nil
 }
 
 // HasDefault indicates a Terraform variable has a default value set.
-func (s String) HasDefault() bool {
+func (String) HasDefault() bool {
 	return true
 }
 
@@ -171,17 +230,18 @@ func (s String) Raw() any {
 
 // MarshalJSON produces `null` for empty strings (which represents "no value
 // specified" in fields like description) or the properly escaped JSON string.
-// SetEscapeHTML(false) prevents URLs and HTML in descriptions from being mangled.
+// SetEscapeHTML(false) prevents URLs and HTML in descriptions from being
+// mangled.
 func (s String) MarshalJSON() ([]byte, error) {
 	var buf bytes.Buffer
-	if len(string(s)) == 0 {
+	if string(s) == "" {
 		buf.WriteString(`null`)
 	} else {
 		encoder := json.NewEncoder(&buf)
 		encoder.SetEscapeHTML(false)
 
 		if err := encoder.Encode(string(s)); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("encoding string as JSON: %w", err)
 		}
 
 		buf.Truncate(buf.Len() - 1) // The json encoder adds a newline, this is not configurable.
@@ -195,35 +255,37 @@ func (s String) MarshalJSON() ([]byte, error) {
 func (s String) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 	if string(s) == "" {
 		start.Attr = append(start.Attr, xml.Attr{Name: xml.Name{Local: "xsi:nil"}, Value: "true"})
-		return e.EncodeElement(``, start)
+
+		if err := e.EncodeElement(``, start); err != nil {
+			return fmt.Errorf("encoding empty string XML element: %w", err)
+		}
+
+		return nil
 	}
 
-	return e.EncodeElement(string(s), start)
+	if err := e.EncodeElement(string(s), start); err != nil {
+		return fmt.Errorf("encoding string XML element: %w", err)
+	}
+
+	return nil
 }
 
-// MarshalYAML produces null for empty strings, matching the convention that
-// "no value specified" renders as null across all output formats.
-func (s String) MarshalYAML() (any, error) {
-	if len(string(s)) == 0 || string(s) == `""` {
-		return nil, nil
+// MarshalYAML produces null for empty strings, matching the convention that "no
+// value specified" renders as null across all output formats.
+func (s String) MarshalYAML() (any, error) { // lint:allow_param
+	if string(s) == "" || string(s) == `""` {
+		return yamlNull, nil
 	}
 
 	return string(s), nil
 }
 
-// Empty represents a Terraform variable whose default is explicitly set to an
-// empty string (default = ""). This is semantically different from Nil (no default)
-// and from String with empty content (no value specified). Empty marshals to `""`
-// in JSON, preserving the user's explicit intent.
-type Empty string
-
-// nolint
-func (e Empty) underlying() string {
-	return string(e)
+func (s String) underlying() string {
+	return string(s)
 }
 
 // HasDefault indicates a Terraform variable has a default value set.
-func (e Empty) HasDefault() bool {
+func (Empty) HasDefault() bool {
 	return true
 }
 
@@ -239,27 +301,21 @@ func (e Empty) Raw() any {
 
 // MarshalJSON produces `""` (not `null`) because the user explicitly set the
 // default to an empty string — we must preserve that distinction.
-func (e Empty) MarshalJSON() ([]byte, error) {
+func (Empty) MarshalJSON() ([]byte, error) { // lint:allow_param
 	return []byte(`""`), nil
 }
 
-// Number represents a Terraform number value (integer or float). All numeric
-// types are unified under float64 because Terraform's type system doesn't
-// distinguish between integers and floats.
-type Number float64
-
-// nolint
-func (n Number) underlying() float64 {
-	return float64(n)
+func (e Empty) underlying() string {
+	return string(e)
 }
 
 // HasDefault indicates a Terraform variable has a default value set.
-func (n Number) HasDefault() bool {
+func (Number) HasDefault() bool {
 	return true
 }
 
 // Length returns the length of underlying item.
-func (n Number) Length() int {
+func (Number) Length() int {
 	return 0
 }
 
@@ -268,21 +324,17 @@ func (n Number) Raw() any {
 	return n.underlying()
 }
 
-// Bool represents a Terraform bool value.
-type Bool bool
-
-// nolint
-func (b Bool) underlying() bool {
-	return bool(b)
+func (n Number) underlying() float64 {
+	return float64(n)
 }
 
 // HasDefault indicates a Terraform variable has a default value set.
-func (b Bool) HasDefault() bool {
+func (Bool) HasDefault() bool {
 	return true
 }
 
 // Length returns the length of underlying item.
-func (b Bool) Length() int {
+func (Bool) Length() int {
 	return 0
 }
 
@@ -291,14 +343,13 @@ func (b Bool) Raw() any {
 	return b.underlying()
 }
 
-// List represents a Terraform list/tuple default value. It exists as a distinct
-// type (rather than using []interface{} directly) so that custom XML marshaling
-// can wrap items in <item> tags for well-formed structure.
-type List []any
+func (b Bool) underlying() bool {
+	return bool(b)
+}
 
 // Underlying returns a defensive copy of the list elements.
 func (l List) Underlying() []any {
-	r := make([]any, 0)
+	var r []any
 	for _, i := range l {
 		r = append(r, i)
 	}
@@ -307,7 +358,7 @@ func (l List) Underlying() []any {
 }
 
 // HasDefault indicates a Terraform variable has a default value set.
-func (l List) HasDefault() bool {
+func (List) HasDefault() bool {
 	return true
 }
 
@@ -321,35 +372,35 @@ func (l List) Raw() any {
 	return l.Underlying()
 }
 
-type xmllistentry struct {
-	Value   any      `xml:",chardata"`
-	XMLName xml.Name `xml:"item"`
-}
-
-// MarshalXML wraps each list element in an <item> tag. This is necessary because
-// XML has no native list syntax — without wrapper elements, the structure would be
-// ambiguous when parsed back.
+// MarshalXML wraps each list element in an <item> tag. This is necessary
+// because XML has no native list syntax — without wrapper elements, the
+// structure would be ambiguous when parsed back.
 func (l List) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 	if len(l) == 0 {
-		return e.EncodeElement(``, start)
+		if err := e.EncodeElement(``, start); err != nil {
+			return fmt.Errorf("encoding empty list XML element: %w", err)
+		}
+
+		return nil
 	}
 
 	err := e.EncodeToken(start)
 	if err != nil {
-		return err
+		return fmt.Errorf("encoding list start token: %w", err)
 	}
 
 	for _, i := range l {
-		e.Encode(xmllistentry{XMLName: xml.Name{Local: "item"}, Value: i}) //nolint:errcheck,gosec
+		if encErr := e.Encode(xmllistentry{XMLName: xml.Name{Local: "item"}, Value: i}); encErr != nil {
+			return fmt.Errorf("encoding list item: %w", encErr)
+		}
 	}
 
-	return e.EncodeToken(start.End())
-}
+	if err := e.EncodeToken(start.End()); err != nil {
+		return fmt.Errorf("encoding list end token: %w", err)
+	}
 
-// Map represents a Terraform map/object default value. Like List, it exists as
-// a distinct type to provide custom XML marshaling where map keys become element
-// names and values become element content.
-type Map map[string]any
+	return nil
+}
 
 // Underlying returns a defensive copy of the map.
 func (m Map) Underlying() map[string]any {
@@ -365,7 +416,7 @@ func (m Map) Raw() any {
 }
 
 // HasDefault indicates a Terraform variable has a default value set.
-func (m Map) HasDefault() bool {
+func (Map) HasDefault() bool {
 	return true
 }
 
@@ -374,55 +425,65 @@ func (m Map) Length() int {
 	return len(m)
 }
 
-type xmlmapentry struct {
-	Value   any      `xml:",chardata"`
-	XMLName xml.Name `xml:","`
-}
-
-// sortmapkeys ensures deterministic XML output by sorting map keys alphabetically.
-// Without this, Go's random map iteration would produce non-reproducible output,
-// making diffs noisy and CI checks unreliable.
-type sortmapkeys []string
-
-func (s sortmapkeys) Len() int           { return len(s) }
-func (s sortmapkeys) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
-func (s sortmapkeys) Less(i, j int) bool { return s[i] < s[j] }
-
 // MarshalXML converts a map to XML where each key becomes an element name.
-// Nested maps and lists are handled recursively to produce well-formed XML
-// at any depth. Keys are sorted for deterministic output.
-func (m Map) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
+// Nested maps and lists are handled recursively to produce well-formed XML at
+// any depth. Keys are sorted for deterministic output.
+func (m Map) MarshalXML(e *xml.Encoder, start xml.StartElement) error { // lint:allow_complexity
 	if len(m) == 0 {
-		return e.EncodeElement(``, start)
+		if err := e.EncodeElement(``, start); err != nil {
+			return fmt.Errorf("encoding empty map XML element: %w", err)
+		}
+
+		return nil
 	}
 
 	err := e.EncodeToken(start)
 	if err != nil {
-		return err
+		return fmt.Errorf("encoding map start token: %w", err)
 	}
 
-	keys := make([]string, 0)
+	keys := make([]string, 0, len(m))
 	for k := range m {
 		keys = append(keys, k)
 	}
 
-	sort.Sort(sortmapkeys(keys))
+	slices.Sort(keys)
 
 	for _, k := range keys {
 		// We don't really care about all the other kinds.
-		//
-
 		switch reflect.TypeOf(m[k]).Kind() {
 		case reflect.Map:
 			is := xml.StartElement{Name: xml.Name{Local: k}}
-			Map(m[k].(map[string]any)).MarshalXML(e, is) //nolint:errcheck,gosec
+			mv, ok := m[k].(map[string]any)
+
+			if !ok {
+				break
+			}
+
+			if encErr := Map(mv).MarshalXML(e, is); encErr != nil {
+				return fmt.Errorf("encoding nested map %q: %w", k, encErr)
+			}
 		case reflect.Slice:
 			is := xml.StartElement{Name: xml.Name{Local: k}}
-			List(m[k].([]any)).MarshalXML(e, is) //nolint:errcheck,gosec
+			sv, ok := m[k].([]any)
+
+			if !ok {
+				break
+			}
+
+			if encErr := List(sv).MarshalXML(e, is); encErr != nil {
+				return fmt.Errorf("encoding nested list %q: %w", k, encErr)
+			}
 		default:
-			e.Encode(xmlmapentry{XMLName: xml.Name{Local: k}, Value: m[k]}) //nolint:errcheck,gosec
+			if encErr := e.Encode(xmlmapentry{XMLName: xml.Name{Local: k}, Value: m[k]}); encErr != nil {
+				return fmt.Errorf("encoding map entry %q: %w", k, encErr)
+			}
 		}
 	}
 
-	return e.EncodeToken(start.End())
+	if err := e.EncodeToken(start.End()); err != nil {
+		return fmt.Errorf("encoding map end token: %w", err)
+	}
+
+	return nil
 }

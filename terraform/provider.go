@@ -10,30 +10,37 @@
 package terraform
 
 import (
+	"cmp"
 	"fmt"
-	"sort"
+	"slices"
+	"strings"
 
 	"github.com/northwood-labs/taco-docs/internal/types"
 )
 
-// Provider represents a Terraform provider used by the module.
-//
-// WHY: Providers are discovered from actual resource usage (not just required_providers) so the
-// documentation reflects what the module truly depends on at runtime. The Alias field exists
-// because Terraform allows multiple configurations of the same provider (e.g., aws.us-east),
-// and documentation needs to distinguish them.
-type Provider struct {
-	Name     string       `json:"name"    toml:"name"    xml:"name"    yaml:"name"`
-	Alias    types.String `json:"alias"   toml:"alias"   xml:"alias"   yaml:"alias"`
-	Version  types.String `json:"version" toml:"version" xml:"version" yaml:"version"`
-	Position Position     `json:"-"       toml:"-"       xml:"-"       yaml:"-"`
-}
+type (
+	// Provider represents a Terraform provider used by the module.
+	//
+	// Providers are discovered from actual resource usage (not just
+	// required_providers) so the documentation reflects what the module truly
+	// depends on at runtime. The Alias field exists because Terraform allows
+	// multiple configurations of the same provider (e.g., aws.us-east), and
+	// documentation needs to distinguish them.
+	Provider struct {
+		Name     string       `json:"name"    toml:"name"    xml:"name"    yaml:"name"`
+		Alias    types.String `json:"alias"   toml:"alias"   xml:"alias"   yaml:"alias"`
+		Version  types.String `json:"version" toml:"version" xml:"version" yaml:"version"`
+		Position Position     `json:"-"       toml:"-"       xml:"-"       yaml:"-"`
+	}
+
+	providers []*Provider
+)
 
 // FullName returns full name of the provider, with alias if available.
 //
-// WHY: Terraform uses "name.alias" notation (e.g., aws.us-east) to reference aliased provider
-// configurations. FullName reconstructs this so documentation displays the same identifier
-// that users write in their provider meta-arguments.
+// Terraform uses "name.alias" notation (e.g., aws.us-east) to reference aliased
+// provider configurations. FullName reconstructs this so documentation displays
+// the same identifier that users write in their provider meta-arguments.
 func (p *Provider) FullName() string {
 	if p.Alias != "" {
 		return fmt.Sprintf("%s.%s", p.Name, p.Alias)
@@ -43,35 +50,34 @@ func (p *Provider) FullName() string {
 }
 
 func sortProvidersByName(x []*Provider) {
-	sort.Slice(x, func(i, j int) bool {
-		if x[i].Name == x[j].Name {
-			return x[i].Name == x[j].Name && x[i].Alias < x[j].Alias
+	slices.SortFunc(x, func(a, b *Provider) int {
+		if a.Name == b.Name {
+			return strings.Compare(string(a.Alias), string(b.Alias))
 		}
 
-		return x[i].Name < x[j].Name
+		return strings.Compare(a.Name, b.Name)
 	})
 }
 
 func sortProvidersByPosition(x []*Provider) {
-	sort.Slice(x, func(i, j int) bool {
-		if x[i].Position.Filename == x[j].Position.Filename {
-			if x[i].Position.Line == x[j].Position.Line {
-				return x[i].FullName() < x[j].FullName()
+	slices.SortFunc(x, func(a, b *Provider) int {
+		if a.Position.Filename == b.Position.Filename {
+			if a.Position.Line == b.Position.Line {
+				return strings.Compare(a.FullName(), b.FullName())
 			}
 
-			return x[i].Position.Line < x[j].Position.Line
+			return cmp.Compare(a.Position.Line, b.Position.Line)
 		}
 
-		return x[i].Position.Filename < x[j].Position.Filename
+		return strings.Compare(a.Position.Filename, b.Position.Filename)
 	})
 }
 
-type providers []*Provider
-
-// WHY: When sorting is disabled, position-based ordering preserves the author's original file
-// layout. When enabled, alphabetical by name is the only strategy for providers since there's
-// no meaningful "type" or "required" axis for providers the way there is for inputs.
-func (pp providers) sort(enabled bool, by string) { //nolint:unparam
+// When sorting is disabled, position-based ordering preserves the author's
+// original file layout. When enabled, alphabetical by name is the only strategy
+// for providers since there's no meaningful "type" or "required" axis for
+// providers the way there is for inputs.
+func (pp providers) sort(enabled bool, _ string) { // lint:allow_param lint:allow_control_coupling_antipattern
 	if !enabled {
 		sortProvidersByPosition(pp)
 	} else {

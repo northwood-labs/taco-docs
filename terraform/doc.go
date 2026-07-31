@@ -11,23 +11,31 @@
 //
 // It contains:
 //
-// • Header:        Module header found in shape of multi line '*.tf' comments or an entire file
+// • Header: Module header found in shape of multi line '*.tf' comments or an
+// entire file
 //
-// • Footer:        Module footer found in shape of multi line '*.tf' comments or an entire file
+// • Footer: Module footer found in shape of multi line '*.tf' comments or an
+// entire file
 //
-// • Inputs:        List of input 'variables' extracted from the Terraform module .tf files
+// • Inputs: List of input 'variables' extracted from the Terraform module
+// .tf files
 //
-// • ModuleCalls:   List of 'modules' extracted from the Terraform module .tf files
+// • ModuleCalls: List of 'modules' extracted from the Terraform module .tf
+// files
 //
-// • Outputs:       List of 'outputs' extracted from Terraform module .tf files
+// • Outputs: List of 'outputs' extracted from Terraform module .tf files
 //
-// • Providers:          List of 'providers' extracted from resources used in Terraform module
+// • Providers: List of 'providers' extracted from resources used in
+// Terraform module
 //
-// • ProviderFunctions:  List of provider function calls used in the Terraform module .tf files
+// • ProviderFunctions: List of provider function calls used in the Terraform
+// module .tf files
 //
-// • Requirements:       List of 'requirements' extracted from the Terraform module .tf files
+// • Requirements: List of 'requirements' extracted from the Terraform module
+// .tf files
 //
-// • Resources:     List of 'resources' extracted from the Terraform module .tf files
+// • Resources: List of 'resources' extracted from the Terraform module .tf
+// files
 //
 // Usage
 //

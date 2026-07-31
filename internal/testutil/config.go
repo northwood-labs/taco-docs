@@ -49,7 +49,8 @@ func With(fn func(*print.Config)) print.Config {
 	return base
 }
 
-// WithSections shows all sections (including footer) to provided print.Config.
+// WithSections shows all sections (including footer) to provided
+// print.Config.
 func WithSections(override ...print.Config) print.Config {
 	base := baseSections()
 
@@ -59,7 +60,8 @@ func WithSections(override ...print.Config) print.Config {
 	return apply(base, override...)
 }
 
-// WithDefaultSections shows default sections (everything except footer) to provided print.Config.
+// WithDefaultSections shows default sections (everything except footer) to
+// provided print.Config.
 func WithDefaultSections(override ...print.Config) print.Config {
 	base := baseSections()
 
@@ -84,7 +86,7 @@ func WithHideEmpty(override ...print.Config) print.Config {
 	return apply(base, override...)
 }
 
-func apply(base print.Config, override ...print.Config) print.Config { //nolint:gocritic
+func apply(base print.Config, override ...print.Config) print.Config { // lint:allow_large_memory
 	dest := base
 	for i := range override {
 		if err := mergo.Merge(&dest, override[i]); err != nil {

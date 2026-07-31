@@ -7,7 +7,7 @@
 // You may obtain a copy of the License at the LICENSE file in
 // the root directory of this source tree.
 
-package json
+package json // lint:allow_naming_conflict_stdlib
 
 import (
 	"github.com/spf13/cobra"
@@ -17,11 +17,11 @@ import (
 )
 
 // NewCommand registers the "json" subcommand. JSON output is useful for
-// programmatic consumption — CI pipelines, linters, or custom rendering
-// tools can parse the structured output without depending on fragile text
-// parsing of Markdown or AsciiDoc. The "escape" flag controls whether HTML
-// entities are escaped in the JSON encoder, which matters when the JSON
-// will later be embedded inside HTML pages.
+// programmatic consumption — CI pipelines, linters, or custom rendering tools
+// can parse the structured output without depending on fragile text parsing of
+// Markdown or AsciiDoc. The "escape" flag controls whether HTML entities are
+// escaped in the JSON encoder, which matters when the JSON will later be
+// embedded inside HTML pages.
 func NewCommand(runtime *cli.Runtime, config *print.Config) *cobra.Command {
 	cmd := &cobra.Command{
 		Args:        cobra.ExactArgs(1),

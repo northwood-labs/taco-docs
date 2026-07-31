@@ -40,7 +40,8 @@ func NewCommand(runtime *cli.Runtime, config *print.Config) *cobra.Command {
 	}
 
 	// Anchor links allow cross-referencing within the generated docs — users
-	// can link directly to a specific input or output from elsewhere in a README.
+	// can link directly to a specific input or output from elsewhere in a
+	// README.
 	cmd.PersistentFlags().BoolVar(&config.Settings.Anchor, "anchor", true, "create anchor links")
 
 	// ATX-closed headers (e.g., "## Title ##") satisfy certain Markdown linters
@@ -48,7 +49,8 @@ func NewCommand(runtime *cli.Runtime, config *print.Config) *cobra.Command {
 	cmd.PersistentFlags().BoolVar(&config.Settings.AtxClosed, "atx-closed", false, "close ATX style headers")
 
 	// Column visibility flags let users suppress columns that add noise for
-	// their specific use case (e.g., hiding "Default" when all inputs are required).
+	// their specific use case (e.g., hiding "Default" when all inputs are
+	// required).
 	cmd.PersistentFlags().BoolVar(&config.Settings.Default, "default", true, "show Default column or section")
 	cmd.PersistentFlags().BoolVar(&config.Settings.Required, "required", true, "show Required column or section")
 	cmd.PersistentFlags().BoolVar(&config.Settings.Sensitive, "sensitive", true, "show Sensitive column or section")
@@ -59,7 +61,8 @@ func NewCommand(runtime *cli.Runtime, config *print.Config) *cobra.Command {
 	cmd.PersistentFlags().BoolVar(&config.Settings.Escape, "escape", true, "escape special characters")
 
 	// HTML flag controls whether HTML tags (like <br/>) are used for multi-line
-	// content in tables. Disabling this is necessary for renderers that strip HTML.
+	// content in tables. Disabling this is necessary for renderers that strip
+	// HTML.
 	cmd.PersistentFlags().BoolVar(&config.Settings.HTML, "html", true, "use HTML tags in generated output")
 
 	// Hide-empty suppresses sections with no items, keeping the output concise
@@ -72,8 +75,8 @@ func NewCommand(runtime *cli.Runtime, config *print.Config) *cobra.Command {
 	cmd.PersistentFlags().
 		IntVar(&config.Settings.Indent, "indent", 2, "indentation level of Markdown sections [1, 2, 3, 4, 5]")
 
-	// Sub-formats: "document" renders each section as prose with headers,
-	// while "table" renders inputs/outputs as Markdown tables for compact viewing.
+	// Sub-formats: "document" renders each section as prose with headers, while
+	// "table" renders inputs/outputs as Markdown tables for compact viewing.
 	cmd.AddCommand(document.NewCommand(runtime, config))
 	cmd.AddCommand(table.NewCommand(runtime, config))
 

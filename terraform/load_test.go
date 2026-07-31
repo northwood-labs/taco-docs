@@ -16,18 +16,19 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
-	"sort"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	assertpkg "github.com/go-openapi/testify/assert"
+	"github.com/go-openapi/testify/require"
 
 	"github.com/northwood-labs/taco-docs/print"
 )
 
-// WHY: End-to-end check that LoadWithOptions correctly populates all module sections (header, inputs,
-// outputs, providers, etc.). A failure here means the entire doc generation pipeline is broken.
+// End-to-end check that LoadWithOptions correctly populates all module sections
+// (header, inputs, outputs, providers, etc.). A failure here means the entire
+// doc generation pipeline is broken.
 func TestLoadModuleWithOptions(t *testing.T) {
-	assert := assert.New(t)
+	a := assertpkg.New(t)
 
 	config := print.NewConfig()
 
@@ -36,27 +37,28 @@ func TestLoadModuleWithOptions(t *testing.T) {
 
 	module, err := LoadWithOptions(config)
 
-	assert.NoError(err)
-	assert.True(module.HasHeader())
-	assert.False(module.HasFooter())
-	assert.True(module.HasInputs())
-	assert.True(module.HasOutputs())
-	assert.True(module.HasModuleCalls())
-	assert.True(module.HasProviders())
-	assert.True(module.HasRequirements())
-	assert.True(module.HasResources())
+	require.NoError(t, err)
+	a.True(module.HasHeader())
+	a.False(module.HasFooter())
+	a.True(module.HasInputs())
+	a.True(module.HasOutputs())
+	a.True(module.HasModuleCalls())
+	a.True(module.HasProviders())
+	a.True(module.HasRequirements())
+	a.True(module.HasResources())
 
 	config.Sections.Header = false
 	config.Sections.Footer = true
 	config.FooterFrom = "doc.tf"
 
 	module, err = LoadWithOptions(config)
-	assert.NoError(err)
-	assert.True(module.HasFooter())
-	assert.False(module.HasHeader())
+	require.NoError(t, err)
+	a.True(module.HasFooter())
+	a.False(module.HasHeader())
 }
 
-// WHY: Confirms the HCL parser can load modules from valid paths and fails gracefully for missing ones.
+// Confirms the HCL parser can load modules from valid paths and fails
+// gracefully for missing ones.
 func TestLoadModule(t *testing.T) {
 	tests := []struct {
 		name    string
@@ -76,19 +78,18 @@ func TestLoadModule(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert := assert.New(t)
-
 			_, err := loadModule(filepath.Join("testdata", tt.path))
 			if tt.wantErr {
-				assert.Error(err)
+				require.Error(t, err)
 			} else {
-				assert.NoError(err)
+				require.NoError(t, err)
 			}
 		})
 	}
 }
 
-// WHY: Validates file extension extraction used to determine header/footer file type handling.
+// Validates file extension extraction used to determine header/footer file type
+// handling.
 func TestGetFileFormat(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -128,15 +129,16 @@ func TestGetFileFormat(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert := assert.New(t)
+			a := assertpkg.New(t)
 			actual := getFileFormat(tt.filename)
-			assert.Equal(tt.expected, actual)
+			a.Equal(tt.expected, actual)
 		})
 	}
 }
 
-// WHY: Guards the allow-list of supported file formats (.adoc, .md, .tf, .tofu, .txt). Without this,
-// unsupported formats could slip through silently or supported ones could be accidentally rejected.
+// Guards the allow-list of supported file formats (.adoc, .md, .tf, .tofu,
+// .txt). Without this, unsupported formats could slip through silently or
+// supported ones could be accidentally rejected.
 func TestIsFileFormatSupported(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -221,22 +223,23 @@ func TestIsFileFormatSupported(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert := assert.New(t)
+			a := assertpkg.New(t)
 
 			actual, err := isFileFormatSupported(tt.filename, tt.section)
 			if tt.wantErr {
-				assert.Error(err)
-				assert.Equal(tt.errText, err.Error())
+				require.Error(t, err)
+				a.Equal(tt.errText, err.Error())
 			} else {
-				assert.NoError(err)
-				assert.Equal(tt.expected, actual)
+				require.NoError(t, err)
+				a.Equal(tt.expected, actual)
 			}
 		})
 	}
 }
 
-// WHY: Verifies header extraction from .tf comment blocks and external files. If broken, module
-// descriptions in generated docs would be empty or contain raw HCL syntax.
+// Verifies header extraction from .tf comment blocks and external files. If
+// broken, module descriptions in generated docs would be empty or contain raw
+// HCL syntax.
 func TestLoadHeader(t *testing.T) {
 	tests := []struct {
 		expectedData func() (string, error)
@@ -250,7 +253,7 @@ func TestLoadHeader(t *testing.T) {
 			showHeader: true,
 			expectedData: func() (string, error) {
 				path := filepath.Join("testdata", "expected", "full-example-mainTf-Header.golden")
-				data, err := os.ReadFile(path)
+				data, err := os.ReadFile(path) // lint:allow_dynamic_filename
 
 				return string(data), err
 			},
@@ -266,7 +269,7 @@ func TestLoadHeader(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert := assert.New(t)
+			a := assertpkg.New(t)
 
 			config := print.NewConfig()
 
@@ -274,16 +277,17 @@ func TestLoadHeader(t *testing.T) {
 			config.Sections.Header = tt.showHeader
 
 			expected, err := tt.expectedData()
-			assert.NoError(err)
+			require.NoError(t, err)
 
 			header, err := loadHeader(config)
-			assert.NoError(err)
-			assert.Equal(expected, header)
+			require.NoError(t, err)
+			a.Equal(expected, header)
 		})
 	}
 }
 
-// WHY: Mirrors TestLoadHeader but for footers; ensures footer-from logic works independently.
+// Mirrors TestLoadHeader but for footers; ensures footer-from logic works
+// independently.
 func TestLoadFooter(t *testing.T) {
 	tests := []struct {
 		expectedData func() (string, error)
@@ -299,7 +303,7 @@ func TestLoadFooter(t *testing.T) {
 			showFooter: true,
 			expectedData: func() (string, error) {
 				path := filepath.Join("testdata", "expected", "full-example-mainTf-Header.golden")
-				data, err := os.ReadFile(path)
+				data, err := os.ReadFile(path) // lint:allow_dynamic_filename
 
 				return string(data), err
 			},
@@ -316,7 +320,7 @@ func TestLoadFooter(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert := assert.New(t)
+			a := assertpkg.New(t)
 
 			config := print.NewConfig()
 
@@ -325,17 +329,18 @@ func TestLoadFooter(t *testing.T) {
 			config.FooterFrom = tt.footerFile
 
 			expected, err := tt.expectedData()
-			assert.NoError(err)
+			require.NoError(t, err)
 
 			header, err := loadFooter(config)
-			assert.NoError(err)
-			assert.Equal(expected, header)
+			require.NoError(t, err)
+			a.Equal(expected, header)
 		})
 	}
 }
 
-// WHY: Comprehensive test for section loading from local files, including error cases (missing file,
-// unsupported format). Ensures correct content is extracted from various source formats.
+// Comprehensive test for section loading from local files, including error
+// cases (missing file, unsupported format). Ensures correct content is
+// extracted from various source formats.
 func TestLoadSections(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -347,13 +352,14 @@ func TestLoadSections(t *testing.T) {
 		wantErr  bool
 	}{
 		{
-			name:     "load module header from path",
-			path:     "full-example",
-			file:     "main.tf",
-			expected: "Example of 'foo_bar' module in `foo_bar.tf`.\n\n- list item 1\n- list item 2\n\nEven inline **formatting** in _here_ is possible.\nand some [link](https://domain.com/)",
-			wantErr:  false,
-			errText:  "",
-			section:  "header",
+			name: "load module header from path",
+			path: "full-example",
+			file: "main.tf",
+			expected: "Example of 'foo_bar' module in `foo_bar.tf`.\n\n- list item 1\n- list item 2\n\n" +
+				"Even inline **formatting** in _here_ is possible.\nand some [link](https://domain.com/)",
+			wantErr: false,
+			errText: "",
+			section: "header",
 		},
 		{
 			name:     "load module header from path",
@@ -466,7 +472,7 @@ func TestLoadSections(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert := assert.New(t)
+			a := assertpkg.New(t)
 
 			config := print.NewConfig()
 
@@ -474,18 +480,18 @@ func TestLoadSections(t *testing.T) {
 
 			actual, err := loadSection(config, tt.file, tt.section)
 			if tt.wantErr {
-				assert.Error(err)
-				assert.Equal(tt.errText, err.Error())
+				require.Error(t, err)
+				a.Equal(tt.errText, err.Error())
 			} else {
-				assert.NoError(err)
-				assert.Equal(tt.expected, actual)
+				require.NoError(t, err)
+				a.Equal(tt.expected, actual)
 			}
 		})
 	}
 }
 
-// WHY: Validates remote URL fetching for header/footer content. Allows users to share documentation
-// snippets across repos without duplicating files locally.
+// Validates remote URL fetching for header/footer content. Allows users to
+// share documentation snippets across repos without duplicating files locally.
 func TestLoadSectionsFromUrl(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -497,7 +503,7 @@ func TestLoadSectionsFromUrl(t *testing.T) {
 	}{
 		{
 			name:     "load module header from url",
-			file:     "https://raw.githubusercontent.com/terraform-docs/terraform-docs/master/terraform/testdata/full-example/doc.md",
+			file:     "https://raw.githubusercontent.com/terraform-docs/terraform-docs/master/terraform/testdata/full-example/doc.md", // lint:ignore_length
 			expected: "# Custom Header\n\nExample of 'foo_bar' module in `foo_bar.tf`.\n\n- list item 1\n- list item 2\n",
 			wantErr:  false,
 			errText:  "",
@@ -506,24 +512,25 @@ func TestLoadSectionsFromUrl(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert := assert.New(t)
+			a := assertpkg.New(t)
 
 			config := print.NewConfig()
 
 			actual, err := loadSection(config, tt.file, tt.section)
 			if tt.wantErr {
-				assert.Error(err)
-				assert.Equal(tt.errText, err.Error())
+				require.Error(t, err)
+				a.Equal(tt.errText, err.Error())
 			} else {
-				assert.NoError(err)
-				assert.Equal(tt.expected, actual)
+				require.NoError(t, err)
+				a.Equal(tt.expected, actual)
 			}
 		})
 	}
 }
 
-// WHY: Ensures correct classification of file sources (local vs web). Wrong classification would
-// cause local files to be fetched over HTTP or URLs to be opened as local paths.
+// Ensures correct classification of file sources (local vs web). Wrong
+// classification would cause local files to be fetched over HTTP or URLs to be
+// opened as local paths.
 func TestGetSource(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -572,12 +579,14 @@ func TestGetSource(t *testing.T) {
 	}
 }
 
-// WHY: Validates HTTP request handling for remote section loading, including timeout behavior.
+// Validates HTTP request handling for remote section loading, including timeout
+// behavior.
 func TestSendHTTPRequest(t *testing.T) {
 	// Create a mock server.
-	mockHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	mockHandler := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("Mock response"))
+
+		_, _ = w.Write([]byte("Mock response")) // lint:allow_unhandled
 	})
 
 	mockServer := httptest.NewServer(mockHandler)
@@ -624,12 +633,12 @@ func TestSendHTTPRequest(t *testing.T) {
 	}
 }
 
-// WHY: Verifies correct input count and required/optional classification from HCL.
+// Verifies correct input count and required/optional classification from HCL.
 // Misclassification would show wrong "required" badges in generated docs.
 func TestLoadInputs(t *testing.T) {
 	type expected struct {
 		inputs    int
-		requireds int // codespell:ignore requireds
+		requireds int
 		optionals int
 	}
 
@@ -643,7 +652,7 @@ func TestLoadInputs(t *testing.T) {
 			path: "full-example",
 			expected: expected{
 				inputs:    7,
-				requireds: 2, // codespell:ignore requireds
+				requireds: 2,
 				optionals: 5,
 			},
 		},
@@ -652,7 +661,7 @@ func TestLoadInputs(t *testing.T) {
 			path: "no-required-inputs",
 			expected: expected{
 				inputs:    6,
-				requireds: 0, // codespell:ignore requireds
+				requireds: 0,
 				optionals: 6,
 			},
 		},
@@ -661,7 +670,7 @@ func TestLoadInputs(t *testing.T) {
 			path: "no-optional-inputs",
 			expected: expected{
 				inputs:    6,
-				requireds: 6, // codespell:ignore requireds
+				requireds: 6,
 				optionals: 0,
 			},
 		},
@@ -670,27 +679,33 @@ func TestLoadInputs(t *testing.T) {
 			path: "no-inputs",
 			expected: expected{
 				inputs:    0,
-				requireds: 0, // codespell:ignore requireds
+				requireds: 0,
 				optionals: 0,
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert := assert.New(t)
+			a := assertpkg.New(t)
 
 			config := print.NewConfig()
-			module, _ := loadModule(filepath.Join("testdata", tt.path))
-			inputs, requireds, optionals := loadInputs(module, config) // codespell:ignore requireds
 
-			assert.Len(inputs, tt.expected.inputs)
-			assert.Len(requireds, tt.expected.requireds) // codespell:ignore requireds
-			assert.Len(optionals, tt.expected.optionals)
+			module, loadErr := loadModule(filepath.Join("testdata", tt.path))
+			if loadErr != nil {
+				t.Fatal(loadErr)
+			}
+
+			inputs, requireds, optionals := loadInputs(module, config)
+
+			a.Len(inputs, tt.expected.inputs)
+			a.Len(requireds, tt.expected.requireds)
+			a.Len(optionals, tt.expected.optionals)
 		})
 	}
 }
 
-// WHY: Confirms module call detection from source blocks. Missing modulecalls means incomplete dependency docs.
+// Confirms module call detection from source blocks. Missing modulecalls means
+// incomplete dependency docs.
 func TestLoadModulecalls(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -710,19 +725,25 @@ func TestLoadModulecalls(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert := assert.New(t)
+			a := assertpkg.New(t)
 
 			config := print.NewConfig()
-			module, _ := loadModule(filepath.Join("testdata", tt.path))
+
+			module, loadErr := loadModule(filepath.Join("testdata", tt.path))
+			if loadErr != nil {
+				t.Fatal(loadErr)
+			}
+
 			modulecalls := loadModulecalls(module, config)
 
-			assert.Len(modulecalls, tt.expected)
+			a.Len(modulecalls, tt.expected)
 		})
 	}
 }
 
-// WHY: Ensures CRLF line endings are normalized to LF in descriptions. Without this, Windows-authored
-// .tf files would produce descriptions with stray \r characters in generated docs.
+// Ensures CRLF line endings are normalized to LF in descriptions. Without this,
+// Windows-authored .tf files would produce descriptions with stray \r
+// characters in generated docs.
 func TestLoadInputsLineEnding(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -742,19 +763,25 @@ func TestLoadInputsLineEnding(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert := assert.New(t)
+			a := assertpkg.New(t)
 
 			config := print.NewConfig()
-			module, _ := loadModule(filepath.Join("testdata", tt.path))
+
+			module, loadErr := loadModule(filepath.Join("testdata", tt.path))
+			if loadErr != nil {
+				t.Fatal(loadErr)
+			}
+
 			inputs, _, _ := loadInputs(module, config)
 
-			assert.Len(inputs, 1)
-			assert.Equal(tt.expected, string(inputs[0].Description))
+			a.Len(inputs, 1)
+			a.Equal(tt.expected, string(inputs[0].Description))
 		})
 	}
 }
 
-// WHY: Verifies output extraction and that ShowValue defaults to false when output values are not enabled.
+// Verifies output extraction and that ShowValue defaults to false when output
+// values are not enabled.
 func TestLoadOutputs(t *testing.T) {
 	type expected struct {
 		outputs int
@@ -782,23 +809,28 @@ func TestLoadOutputs(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert := assert.New(t)
+			a := assertpkg.New(t)
 
 			config := print.NewConfig()
-			module, _ := loadModule(filepath.Join("testdata", tt.path))
+
+			module, loadErr := loadModule(filepath.Join("testdata", tt.path))
+			if loadErr != nil {
+				t.Fatal(loadErr)
+			}
+
 			outputs, err := loadOutputs(module, config)
 
-			assert.NoError(err)
-			assert.Len(outputs, tt.expected.outputs)
+			require.NoError(t, err)
+			a.Len(outputs, tt.expected.outputs)
 
 			for _, v := range outputs {
-				assert.False(v.ShowValue)
+				a.False(v.ShowValue)
 			}
 		})
 	}
 }
 
-// WHY: Same CRLF normalization test as inputs but for output descriptions.
+// Same CRLF normalization test as inputs but for output descriptions.
 func TestLoadOutputsLineEnding(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -818,20 +850,29 @@ func TestLoadOutputsLineEnding(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert := assert.New(t)
+			a := assertpkg.New(t)
 
 			config := print.NewConfig()
-			module, _ := loadModule(filepath.Join("testdata", tt.path))
-			outputs, _ := loadOutputs(module, config)
 
-			assert.Len(outputs, 1)
-			assert.Equal(tt.expected, string(outputs[0].Description))
+			module, loadErr := loadModule(filepath.Join("testdata", tt.path))
+			if loadErr != nil {
+				t.Fatal(loadErr)
+			}
+
+			outputs, loadOutErr := loadOutputs(module, config)
+			if loadOutErr != nil {
+				t.Fatal(loadOutErr)
+			}
+
+			a.Len(outputs, 1)
+			a.Equal(tt.expected, string(outputs[0].Description))
 		})
 	}
 }
 
-// WHY: Validates that output values are correctly loaded from a JSON file and displayed. If broken,
-// --output-values would silently produce empty value columns.
+// Validates that output values are correctly loaded from a JSON file and
+// displayed. If broken, --output-values would silently produce empty value
+// columns.
 func TestLoadOutputsValues(t *testing.T) {
 	type expected struct {
 		outputs int
@@ -870,32 +911,37 @@ func TestLoadOutputsValues(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert := assert.New(t)
+			a := assertpkg.New(t)
 
 			config := print.NewConfig()
 
 			config.OutputValues.Enabled = true
 			config.OutputValues.From = filepath.Join("testdata", tt.path, tt.outputPath)
 
-			module, _ := loadModule(filepath.Join("testdata", tt.path))
+			module, loadErr := loadModule(filepath.Join("testdata", tt.path))
+			if loadErr != nil {
+				t.Fatal(loadErr)
+			}
+
 			outputs, err := loadOutputs(module, config)
 
 			if tt.wantErr {
-				assert.Error(err)
+				require.Error(t, err)
 			} else {
-				assert.NoError(err)
-				assert.Len(outputs, tt.expected.outputs)
+				require.NoError(t, err)
+				a.Len(outputs, tt.expected.outputs)
 
 				for _, v := range outputs {
-					assert.True(v.ShowValue)
+					a.True(v.ShowValue)
 				}
 			}
 		})
 	}
 }
 
-// WHY: Verifies provider extraction including version constraints and lock file support. Wrong versions
-// in docs mislead users about actual provider requirements.
+// Verifies provider extraction including version constraints and lock file
+// support. Wrong versions in docs mislead users about actual provider
+// requirements.
 func TestLoadProviders(t *testing.T) {
 	type expected struct {
 		providers []string
@@ -935,36 +981,41 @@ func TestLoadProviders(t *testing.T) {
 			name: "load module providers from path",
 			path: "no-providers",
 			expected: expected{
-				providers: []string{},
+				providers: nil,
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert := assert.New(t)
+			a := assertpkg.New(t)
 
 			config := print.NewConfig()
 
 			config.ModuleRoot = filepath.Join("testdata", tt.path)
 			config.Settings.LockFile = tt.lockfile
 
-			module, _ := loadModule(filepath.Join("testdata", tt.path))
+			module, loadErr := loadModule(filepath.Join("testdata", tt.path))
+			if loadErr != nil {
+				t.Fatal(loadErr)
+			}
+
 			providers := loadProviders(module, config)
 
-			actual := []string{}
+			var actual []string
 
 			for _, p := range providers {
 				actual = append(actual, p.FullName()+"-"+string(p.Version))
 			}
 
-			sort.Strings(actual)
+			slices.Sort(actual)
 
-			assert.Equal(tt.expected.providers, actual)
+			a.Equal(tt.expected.providers, actual)
 		})
 	}
 }
 
-// WHY: Ensures terraform/opentofu version constraints and provider requirements are correctly parsed.
+// Ensures terraform/opentofu version constraints and provider requirements are
+// correctly parsed.
 func TestLoadRequirements(t *testing.T) {
 	type expected struct {
 		requirements []string
@@ -986,27 +1037,32 @@ func TestLoadRequirements(t *testing.T) {
 			name: "load module requirements from path",
 			path: "no-requirements",
 			expected: expected{
-				requirements: []string{},
+				requirements: nil,
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert := assert.New(t)
+			a := assertpkg.New(t)
 
-			module, _ := loadModule(filepath.Join("testdata", tt.path))
+			module, loadErr := loadModule(filepath.Join("testdata", tt.path))
+			if loadErr != nil {
+				t.Fatal(loadErr)
+			}
+
 			requirements := loadRequirements(module)
 
-			assert.Len(requirements, len(tt.expected.requirements))
+			a.Len(requirements, len(tt.expected.requirements))
 
 			for i, r := range tt.expected.requirements {
-				assert.Equal(r, fmt.Sprintf("%s %s", requirements[i].Name, requirements[i].Version))
+				a.Equal(r, fmt.Sprintf("%s %s", requirements[i].Name, requirements[i].Version))
 			}
 		})
 	}
 }
 
-// WHY: Confirms resources (managed and data) are correctly identified from HCL configuration.
+// Confirms resources (managed and data) are correctly identified from HCL
+// configuration.
 func TestLoadResources(t *testing.T) {
 	type expected struct {
 		resources []string
@@ -1021,29 +1077,38 @@ func TestLoadResources(t *testing.T) {
 			name: "load module resources from path",
 			path: "full-example",
 			expected: expected{
-				resources: []string{"tls_private_key.baz", "aws_caller_identity.current", "null_resource.foo"},
+				resources: []string{
+					"tls_private_key.baz",
+					"aws_caller_identity.current",
+					"null_resource.foo",
+				},
 			},
 		},
 		{
 			name: "load module resources from path",
 			path: "no-resources",
 			expected: expected{
-				resources: []string{},
+				resources: nil,
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert := assert.New(t)
+			a := assertpkg.New(t)
 
 			config := print.NewConfig()
-			module, _ := loadModule(filepath.Join("testdata", tt.path))
+
+			module, loadErr := loadModule(filepath.Join("testdata", tt.path))
+			if loadErr != nil {
+				t.Fatal(loadErr)
+			}
+
 			resources := loadResources(module, config)
 
-			assert.Len(resources, len(tt.expected.resources))
+			a.Len(resources, len(tt.expected.resources))
 
 			for _, r := range resources {
-				assert.True(
+				a.True(
 					slices.Contains(tt.expected.resources, fmt.Sprintf("%s_%s.%s", r.ProviderName, r.Type, r.Name)),
 				)
 			}
@@ -1051,7 +1116,8 @@ func TestLoadResources(t *testing.T) {
 	}
 }
 
-// WHY: Validates detection of provider-defined functions (provider::aws::arn_parse syntax).
+// Validates detection of provider-defined functions (provider::aws::arn_parse
+// syntax).
 func TestLoadProviderFunctions(t *testing.T) {
 	type expected struct {
 		providerFunctions []string
@@ -1073,32 +1139,37 @@ func TestLoadProviderFunctions(t *testing.T) {
 			name: "load module provider functions from path",
 			path: "no-resources",
 			expected: expected{
-				providerFunctions: []string{},
+				providerFunctions: nil,
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert := assert.New(t)
+			a := assertpkg.New(t)
 
 			config := print.NewConfig()
 
 			config.ModuleRoot = filepath.Join("testdata", tt.path)
 
-			module, _ := loadModule(filepath.Join("testdata", tt.path))
+			module, loadErr := loadModule(filepath.Join("testdata", tt.path))
+			if loadErr != nil {
+				t.Fatal(loadErr)
+			}
+
 			providerFunctions := loadProviderFunctions(module, config)
 
-			assert.Len(providerFunctions, len(tt.expected.providerFunctions))
+			a.Len(providerFunctions, len(tt.expected.providerFunctions))
 
 			for _, pf := range providerFunctions {
-				assert.True(slices.Contains(tt.expected.providerFunctions, pf.Spec()))
+				a.True(slices.Contains(tt.expected.providerFunctions, pf.Spec()))
 			}
 		})
 	}
 }
 
-// WHY: Provider ordering must be deterministic across runs. Non-deterministic ordering causes spurious
-// diffs when regenerating docs, even when no actual changes were made to the Terraform module.
+// Provider ordering must be deterministic across runs. Non-deterministic
+// ordering causes spurious diffs when regenerating docs, even when no actual
+// changes were made to the Terraform module.
 func TestLoadProvidersDeterministic(t *testing.T) {
 	tests := []struct {
 		name        string
@@ -1133,11 +1204,11 @@ func TestLoadProvidersDeterministic(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert := assert.New(t)
+			a := assertpkg.New(t)
 
 			config := print.NewConfig()
 			module, err := loadModule(filepath.Join("testdata", tt.path))
-			assert.NoError(err)
+			require.NoError(t, err)
 
 			for i := range 100 {
 				pp := loadProviders(module, config)
@@ -1148,13 +1219,14 @@ func TestLoadProvidersDeterministic(t *testing.T) {
 					actual[j] = p.FullName()
 				}
 
-				assert.Equal(tt.expected, actual, "iteration %d", i)
+				a.Equal(tt.expected, actual, "iteration %d", i)
 			}
 		})
 	}
 }
 
-// WHY: Resource ordering must be deterministic. Same rationale as provider determinism—prevents noisy diffs.
+// Resource ordering must be deterministic. Same rationale as provider
+// determinism—prevents noisy diffs.
 func TestLoadResourcesDeterministic(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -1169,11 +1241,11 @@ func TestLoadResourcesDeterministic(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert := assert.New(t)
+			a := assertpkg.New(t)
 
 			config := print.NewConfig()
 			module, err := loadModule(filepath.Join("testdata", tt.path))
-			assert.NoError(err)
+			require.NoError(t, err)
 
 			for i := range 100 {
 				rr := loadResources(module, config)
@@ -1183,14 +1255,15 @@ func TestLoadResourcesDeterministic(t *testing.T) {
 					actual[j] = r.Spec()
 				}
 
-				assert.Equal(tt.expected, actual, "iteration %d", i)
+				a.Equal(tt.expected, actual, "iteration %d", i)
 			}
 		})
 	}
 }
 
-// WHY: Verifies comment extraction from .tf files at specific line numbers. These comments become
-// variable/output descriptions when HCL description attributes are missing.
+// Verifies comment extraction from .tf files at specific line numbers. These
+// comments become variable/output descriptions when HCL description attributes
+// are missing.
 func TestLoadComments(t *testing.T) {
 	tests := []struct {
 		name       string
@@ -1237,15 +1310,16 @@ func TestLoadComments(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert := assert.New(t)
+			a := assertpkg.New(t)
 			actual := loadComments(filepath.Join("testdata", tt.path, tt.fileName), tt.lineNumber)
-			assert.Equal(tt.expected, actual)
+			a.Equal(tt.expected, actual)
 		})
 	}
 }
 
-// WHY: Validates that the ReadComments setting controls whether preceding comments are used as
-// descriptions. Users who rely on inline comments for docs need this to work correctly.
+// Validates that the ReadComments setting controls whether preceding comments
+// are used as descriptions. Users who rely on inline comments for docs need
+// this to work correctly.
 func TestReadComments(t *testing.T) {
 	tests := []struct {
 		name         string
@@ -1271,7 +1345,7 @@ func TestReadComments(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert := assert.New(t)
+			a := assertpkg.New(t)
 
 			config := print.NewConfig()
 
@@ -1279,21 +1353,26 @@ func TestReadComments(t *testing.T) {
 
 			module, err := loadModule(filepath.Join("testdata", tt.path))
 
-			assert.NoError(err)
+			require.NoError(t, err)
 
 			inputs, _, _ := loadInputs(module, config)
-			assert.Len(inputs, 1)
-			assert.Equal(tt.expected, string(inputs[0].Description))
+			a.Len(inputs, 1)
+			a.Equal(tt.expected, string(inputs[0].Description))
 
-			outputs, _ := loadOutputs(module, config)
-			assert.Len(outputs, 1)
-			assert.Equal(tt.expected, string(outputs[0].Description))
+			outputs, loadOutErr := loadOutputs(module, config)
+			if loadOutErr != nil {
+				t.Fatal(loadOutErr)
+			}
+
+			a.Len(outputs, 1)
+			a.Equal(tt.expected, string(outputs[0].Description))
 		})
 	}
 }
 
-// WHY: Comprehensive test of sorting logic across all item types with different sort modes.
-// Ensures sort-by-name, sort-by-required, and sort-by-type all produce the expected orderings.
+// Comprehensive test of sorting logic across all item types with different sort
+// modes. Ensures sort-by-name, sort-by-required, and sort-by-type all produce
+// the expected orderings.
 func TestSortItems(t *testing.T) {
 	type expected struct {
 		inputs    []string
@@ -1391,7 +1470,7 @@ func TestSortItems(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert := assert.New(t)
+			a := assertpkg.New(t)
 			path := filepath.Join("testdata", tt.path)
 
 			config := print.NewConfig()
@@ -1400,47 +1479,52 @@ func TestSortItems(t *testing.T) {
 			config.Sort.Enabled = tt.sortenabled
 			config.Sort.By = tt.sorttype
 
-			tfmodule, _ := loadModule(path)
+			tfmodule, loadErr := loadModule(path)
+			if loadErr != nil {
+				t.Fatal(loadErr)
+			}
+
 			module, err := loadModuleItems(tfmodule, config)
 
-			assert.NoError(err)
+			require.NoError(t, err)
 			sortItems(module, config)
 
 			for i, v := range module.Inputs {
-				assert.Equal(tt.expected.inputs[i], v.Name)
+				a.Equal(tt.expected.inputs[i], v.Name)
 			}
 
 			for i, v := range module.RequiredInputs {
-				assert.Equal(tt.expected.required[i], v.Name)
+				a.Equal(tt.expected.required[i], v.Name)
 			}
 
 			for i, v := range module.OptionalInputs {
-				assert.Equal(tt.expected.optional[i], v.Name)
+				a.Equal(tt.expected.optional[i], v.Name)
 			}
 
 			for i, v := range module.Outputs {
-				assert.Equal(tt.expected.outputs[i], v.Name)
+				a.Equal(tt.expected.outputs[i], v.Name)
 			}
 
 			for i, v := range module.Providers {
-				assert.Equal(tt.expected.providers[i], v.Name)
+				a.Equal(tt.expected.providers[i], v.Name)
 			}
 		})
 	}
 }
 
-// WHY: Ensures OpenTofu for_each provider blocks are correctly parsed. This is a compatibility check
-// for OpenTofu-specific HCL syntax that differs from standard Terraform.
+// Ensures OpenTofu for_each provider blocks are correctly parsed. This is a
+// compatibility check for OpenTofu-specific HCL syntax that differs from
+// standard Terraform.
 func TestLoadOpenTofuProviders(t *testing.T) {
-	assert := assert.New(t)
+	a := assertpkg.New(t)
 
 	config := print.NewConfig()
 
 	config.ModuleRoot = filepath.Join("testdata", "opentofu-for-each")
 
 	module, err := LoadWithOptions(config)
-	assert.NoError(err)
-	assert.True(module.HasProviders())
+	require.NoError(t, err)
+	a.True(module.HasProviders())
 
 	found := false
 
@@ -1451,9 +1535,9 @@ func TestLoadOpenTofuProviders(t *testing.T) {
 		}
 	}
 
-	assert.True(found, "aws.main provider should be found")
+	a.True(found, "aws.main provider should be found")
 
-	assert.True(module.HasResources())
-	assert.Len(module.Resources, 1)
-	assert.Equal("aws", module.Resources[0].ProviderName)
+	a.True(module.HasResources())
+	a.Len(module.Resources, 1)
+	a.Equal("aws", module.Resources[0].ProviderName)
 }

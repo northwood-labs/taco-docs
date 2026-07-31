@@ -12,14 +12,15 @@ package terraform
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	assertpkg "github.com/go-openapi/testify/assert"
 
 	"github.com/northwood-labs/taco-docs/internal/types"
 )
 
-// WHY: Verifies that input values are correctly rendered as strings (including nil, bool, string, number,
-// list, map) and that HasDefault/Required flags are computed correctly. Wrong rendering here means
-// garbled default values in all output formats.
+// Verifies that input values are correctly rendered as strings (including nil,
+// bool, string, number, list, map) and that HasDefault/Required flags are
+// computed correctly. Wrong rendering here means garbled default values in all
+// output formats.
 func TestInputValue(t *testing.T) {
 	inputName := "input"
 	inputType := types.String("type")
@@ -204,7 +205,7 @@ func TestInputValue(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert := assert.New(t)
+			assert := assertpkg.New(t)
 
 			assert.Equal(tt.expectValue, tt.input.GetValue())
 			assert.Equal(tt.expectDefault, tt.input.HasDefault())
@@ -212,8 +213,9 @@ func TestInputValue(t *testing.T) {
 	}
 }
 
-// WHY: Verifies that inputs can be sorted by name, by required status, and by position in file.
-// Incorrect sort means documentation order doesn't match user expectations or file structure.
+// Verifies that inputs can be sorted by name, by required status, and by
+// position in file. Incorrect sort means documentation order doesn't match user
+// expectations or file structure.
 func TestInputsSorted(t *testing.T) {
 	inputs := sampleInputs()
 
@@ -236,7 +238,7 @@ func TestInputsSorted(t *testing.T) {
 	}
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			assert := assert.New(t)
+			assert := assertpkg.New(t)
 
 			tt.sortType(inputs)
 

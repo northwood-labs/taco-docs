@@ -15,10 +15,11 @@ import (
 
 // Requirement represents a requirement for Terraform module.
 //
-// WHY: This minimal struct captures only name, registry source, and version constraint—the three
-// pieces needed to render the "Requirements" documentation section. It covers both the Terraform
-// core version constraint and each required provider, unifying them into a single list so
-// formatters can iterate once without distinguishing the two categories.
+// This minimal struct captures only name, registry source, and version
+// constraint—the three pieces needed to render the "Requirements" documentation
+// section. It covers both the Terraform core version constraint and each
+// required provider, unifying them into a single list so formatters can iterate
+// once without distinguishing the two categories.
 type Requirement struct {
 	Name    string       `json:"name"    toml:"name"    xml:"name"    yaml:"name"`
 	Source  types.String `json:"source"  toml:"source"  xml:"source"  yaml:"source"`

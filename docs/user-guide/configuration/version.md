@@ -15,7 +15,7 @@ Terraform. A version constraint is a string literal containing one or more condi
 which are separated by commas.
 
 Each condition consists of an operator and a version number. A version number is
-a series of numbers separated by dots (e.g. `0.13.0`). Note that version number
+a series of numbers separated by dots (e.g., `0.13.0`). Note that version number
 should not have leading `v` in it.
 
 Valid operators are as follow:

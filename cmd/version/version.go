@@ -7,7 +7,8 @@
 // You may obtain a copy of the License at the LICENSE file in
 // the root directory of this source tree.
 
-package version
+// Package version provides the version command for the CLI.
+package version // lint:allow_naming_conflict_stdlib
 
 import (
 	"fmt"
@@ -29,7 +30,7 @@ func NewCommand() *cobra.Command {
 		Args:  cobra.NoArgs,
 		Use:   "version",
 		Short: "Print the version number of terraform-docs",
-		Run: func(cmd *cobra.Command, args []string) {
+		Run: func(_ *cobra.Command, _ []string) {
 			fmt.Printf("terraform-docs version %s\n", version.Full())
 
 			// Attempt to list installed plugins so users see a complete picture

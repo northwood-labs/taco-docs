@@ -7,7 +7,9 @@
 // You may obtain a copy of the License at the LICENSE file in
 // the root directory of this source tree.
 
-package plugin
+// Package plugin provides discovery and lifecycle management for
+// external taco-docs formatter plugins.
+package plugin // lint:allow_naming_conflict_stdlib
 
 import (
 	goplugin "github.com/hashicorp/go-plugin"
@@ -22,9 +24,9 @@ import (
 const namePrefix = "tfdocs-format-"
 
 // homePluginsRoot and localPluginsRoot define the default search paths for
-// plugin binaries. The local path (./.tfdocs.d/plugins) takes priority over
-// the home path (~/.tfdocs.d/plugins), allowing project-specific plugins to
-// shadow globally installed ones.
+// plugin binaries. The local path (./.tfdocs.d/plugins) takes priority over the
+// home path (~/.tfdocs.d/plugins), allowing project-specific plugins to shadow
+// globally installed ones.
 var (
 	homePluginsRoot  = "~/.tfdocs.d/plugins"
 	localPluginsRoot = "./.tfdocs.d/plugins"
@@ -43,7 +45,7 @@ type List struct {
 // All returns every registered plugin client. This is used by the version
 // command to enumerate installed plugins for display.
 func (l *List) All() []*pluginsdk.Client {
-	all := make([]*pluginsdk.Client, 0)
+	var all []*pluginsdk.Client
 	for _, f := range l.formatters {
 		all = append(all, f)
 	}
@@ -51,18 +53,17 @@ func (l *List) All() []*pluginsdk.Client {
 	return all
 }
 
-// Get retrieves a plugin by its formatter name. The boolean return follows
-// Go map-access convention to let callers distinguish "not found" from a
-// nil value.
+// Get retrieves a plugin by its formatter name. The boolean return follows Go
+// map-access convention to let callers distinguish "not found" from a nil
+// value.
 func (l *List) Get(name string) (*pluginsdk.Client, bool) {
 	client, ok := l.formatters[name]
 	return client, ok
 }
 
 // Clean terminates all plugin subprocesses. This should be called during
-// shutdown to avoid leaving orphan processes — go-plugin uses os/exec
-// under the hood and processes won't terminate automatically when the
-// parent exits.
+// shutdown to avoid leaving orphan processes — go-plugin uses os/exec under the
+// hood and processes won't terminate automatically when the parent exits.
 func (l *List) Clean() {
 	for _, client := range l.clients {
 		client.Kill()

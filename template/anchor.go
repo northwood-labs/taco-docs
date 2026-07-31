@@ -7,24 +7,27 @@
 // You may obtain a copy of the License at the LICENSE file in
 // the root directory of this source tree.
 
-package template
+package template // lint:allow_naming_conflict_stdlib
 
 import (
 	"fmt"
 )
 
 // CreateAnchorMarkdown generates both an <a> anchor tag and a clickable link so
-// that inputs/outputs can be cross-referenced from elsewhere in a document.
-// The dual approach (anchor + link) ensures the item is both a jump target and
+// that inputs/outputs can be cross-referenced from elsewhere in a document. The
+// dual approach (anchor + link) ensures the item is both a jump target and
 // itself clickable for navigation.
-func CreateAnchorMarkdown(prefix, value string, anchor, escape bool) string {
+func CreateAnchorMarkdown( // lint:allow_control_coupling_antipattern
+	prefix, value string,
+	anchor, escape bool,
+) string { // lint:allow_param
 	sanitizedName := SanitizeName(value, escape)
 
 	if anchor {
 		anchorName := fmt.Sprintf("%s_%s", prefix, value)
 		sanitizedAnchorName := SanitizeName(anchorName, escape)
 		// the <a> link is purposely not sanitized as this breaks markdown formatting.
-		return fmt.Sprintf("<a name=\"%s\"></a> [%s](#%s)", anchorName, sanitizedName, sanitizedAnchorName)
+		return fmt.Sprintf("<a name=%q></a> [%s](#%s)", anchorName, sanitizedName, sanitizedAnchorName)
 	}
 
 	return sanitizedName
@@ -33,7 +36,10 @@ func CreateAnchorMarkdown(prefix, value string, anchor, escape bool) string {
 // CreateAnchorAsciidoc is the AsciiDoc equivalent using [[id]] and <<id,label>>
 // syntax. AsciiDoc uses different anchor/xref conventions than Markdown, so a
 // separate function keeps format-specific concerns isolated.
-func CreateAnchorAsciidoc(prefix, value string, anchor, escape bool) string {
+func CreateAnchorAsciidoc( // lint:allow_control_coupling_antipattern
+	prefix, value string,
+	anchor, escape bool,
+) string { // lint:allow_param
 	sanitizedName := SanitizeName(value, escape)
 
 	if anchor {

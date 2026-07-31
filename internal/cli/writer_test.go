@@ -15,13 +15,13 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	assertpkg "github.com/go-openapi/testify/assert"
 
 	"github.com/northwood-labs/taco-docs/internal/testutil"
 	"github.com/northwood-labs/taco-docs/print"
 )
 
-// WHY: Verifies path resolution for output files (relative vs absolute). If broken, generated docs
+// Verifies path resolution for output files (relative vs absolute). If broken, generated docs
 // would be written to the wrong location, silently overwriting unintended files.
 func TestFileWriterFullPath(t *testing.T) {
 	tests := map[string]struct {
@@ -42,7 +42,7 @@ func TestFileWriterFullPath(t *testing.T) {
 	}
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			assert := assert.New(t)
+			assert := assertpkg.New(t)
 
 			writer := &fileWriter{
 				file: tt.file,
@@ -55,7 +55,7 @@ func TestFileWriterFullPath(t *testing.T) {
 	}
 }
 
-// WHY: Validates inject/replace modes, template handling, and error detection (missing comments, out-of-date checks).
+// Validates inject/replace modes, template handling, and error detection (missing comments, out-of-date checks).
 // A bug here could corrupt existing README files or silently skip content injection.
 func TestFileWriter(t *testing.T) {
 	content := "Lorem ipsum dolor sit amet, consectetur adipiscing elit"
@@ -260,7 +260,7 @@ func TestFileWriter(t *testing.T) {
 	}
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			assert := assert.New(t)
+			assert := assertpkg.New(t)
 
 			writer := &fileWriter{
 				file: tt.file,

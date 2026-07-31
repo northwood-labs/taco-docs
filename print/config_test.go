@@ -15,11 +15,12 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	assertpkg "github.com/go-openapi/testify/assert"
 )
 
-// WHY: Validates mutual exclusivity and valid section names for --show/--hide flags. Without this,
-// users could pass conflicting options and get undefined behavior or silent misconfiguration.
+// Validates mutual exclusivity and valid section names for --show/--hide flags.
+// Without this, users could pass conflicting options and get undefined behavior
+// or silent misconfiguration.
 func TestConfigSections(t *testing.T) {
 	tests := map[string]struct {
 		errMsg   string
@@ -29,14 +30,14 @@ func TestConfigSections(t *testing.T) {
 		"OnlyShows": {
 			sections: sections{
 				Show: []string{sectionHeader, sectionInputs},
-				Hide: []string{},
+				Hide: nil,
 			},
 			wantErr: false,
 			errMsg:  "",
 		},
 		"OnlyHide": {
 			sections: sections{
-				Show: []string{},
+				Show: nil,
 				Hide: []string{sectionHeader, sectionInputs},
 			},
 			wantErr: false,
@@ -53,14 +54,14 @@ func TestConfigSections(t *testing.T) {
 		"UnknownShow": {
 			sections: sections{
 				Show: []string{"foo"},
-				Hide: []string{},
+				Hide: nil,
 			},
 			wantErr: true,
 			errMsg:  "'foo' is not a valid section",
 		},
 		"UnknownHide": {
 			sections: sections{
-				Show: []string{},
+				Show: nil,
 				Hide: []string{"foo"},
 			},
 			wantErr: true,
@@ -69,7 +70,7 @@ func TestConfigSections(t *testing.T) {
 	}
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			assert := assert.New(t)
+			assert := assertpkg.New(t)
 
 			err := tt.sections.validate()
 
@@ -83,8 +84,9 @@ func TestConfigSections(t *testing.T) {
 	}
 }
 
-// WHY: Verifies section visibility logic (show/hide/all combinations). Incorrect visibility means
-// sections silently appear or disappear from output without user intent.
+// Verifies section visibility logic (show/hide/all combinations). Incorrect
+// visibility means sections silently appear or disappear from output without
+// user intent.
 func TestConfigVisibility(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -99,7 +101,7 @@ func TestConfigVisibility(t *testing.T) {
 		{
 			sections: sections{
 				Show: []string{"header"},
-				Hide: []string{},
+				Hide: nil,
 			},
 			name:     "header",
 			expected: true,
@@ -107,14 +109,14 @@ func TestConfigVisibility(t *testing.T) {
 		{
 			sections: sections{
 				Show: []string{"all"},
-				Hide: []string{},
+				Hide: nil,
 			},
 			name:     "header",
 			expected: true,
 		},
 		{
 			sections: sections{
-				Show: []string{},
+				Show: nil,
 				Hide: []string{"inputs"},
 			},
 			name:     "header",
@@ -123,7 +125,7 @@ func TestConfigVisibility(t *testing.T) {
 
 		{
 			sections: sections{
-				Show: []string{},
+				Show: nil,
 				Hide: []string{"header"},
 			},
 			name:     "header",
@@ -131,7 +133,7 @@ func TestConfigVisibility(t *testing.T) {
 		},
 		{
 			sections: sections{
-				Show: []string{},
+				Show: nil,
 				Hide: []string{"all"},
 			},
 			name:     "header",
@@ -140,7 +142,7 @@ func TestConfigVisibility(t *testing.T) {
 		{
 			sections: sections{
 				Show: []string{"inputs"},
-				Hide: []string{},
+				Hide: nil,
 			},
 			name:     "header",
 			expected: false,
@@ -148,7 +150,7 @@ func TestConfigVisibility(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run("section visibility", func(t *testing.T) {
-			assert := assert.New(t)
+			assert := assertpkg.New(t)
 
 			visible := tt.sections.visibility(tt.name)
 			assert.Equal(tt.expected, visible)
@@ -156,8 +158,9 @@ func TestConfigVisibility(t *testing.T) {
 	}
 }
 
-// WHY: Validates --output-mode and --output-template options including inject template structure
-// (begin/end comments, {{ .Content }} presence). Malformed templates would silently corrupt output files.
+// Validates --output-mode and --output-template options including inject
+// template structure (begin/end comments, {{ .Content }} presence). Malformed
+// templates would silently corrupt output files.
 func TestConfigOutput(t *testing.T) {
 	tests := map[string]struct {
 		errMsg  string
@@ -253,7 +256,8 @@ func TestConfigOutput(t *testing.T) {
 				Template: fmt.Sprintf("%s\n%s", OutputBeginComment, OutputEndComment),
 			},
 			wantErr: true,
-			errMsg:  "value of '--output-template' doesn't have '{{ .Content }}' (note that spaces inside '{{ }}' are mandatory)",
+			errMsg: "value of '--output-template' doesn't have '{{ .Content }}' " +
+				"(note that spaces inside '{{ }}' are mandatory)",
 		},
 		"TemplateNotThreeLines": {
 			output: output{
@@ -262,7 +266,8 @@ func TestConfigOutput(t *testing.T) {
 				Template: fmt.Sprintf("%s%s%s", OutputBeginComment, OutputContent, OutputEndComment),
 			},
 			wantErr: true,
-			errMsg:  "value of '--output-template' should contain at least 3 lines (begin comment, {{ .Content }}, and end comment)",
+			errMsg: "value of '--output-template' should contain at least 3 lines " +
+				"(begin comment, {{ .Content }}, and end comment)",
 		},
 		"TemplateBeginCommentMissing": {
 			output: output{
@@ -285,7 +290,7 @@ func TestConfigOutput(t *testing.T) {
 	}
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			assert := assert.New(t)
+			assert := assertpkg.New(t)
 
 			err := tt.output.validate()
 
@@ -299,8 +304,9 @@ func TestConfigOutput(t *testing.T) {
 	}
 }
 
-// WHY: Verifies that all supported Markdown comment formats (HTML, []: #, [//]: #, etc.) are
-// recognized as inline comments. These markers drive inject-mode begin/end detection.
+// Verifies that all supported Markdown comment formats (HTML, []: #, [//]: #,
+// etc.) are recognized as inline comments. These markers drive inject-mode
+// begin/end detection.
 func TestIsInlineComment(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -471,7 +477,7 @@ func TestIsInlineComment(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert := assert.New(t)
+			assert := assertpkg.New(t)
 
 			actual := isInlineComment(tt.line)
 			assert.Equal(tt.expected, actual)
@@ -479,7 +485,8 @@ func TestIsInlineComment(t *testing.T) {
 	}
 }
 
-// WHY: Validates sort type options (name, required, type). Invalid sort type must error, not silently default.
+// Validates sort type options (name, required, type). Invalid sort type must
+// error, not silently default.
 func TestConfigSort(t *testing.T) {
 	tests := map[string]struct {
 		errMsg  string
@@ -518,7 +525,7 @@ func TestConfigSort(t *testing.T) {
 	}
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			assert := assert.New(t)
+			assert := assertpkg.New(t)
 
 			err := tt.sort.validate()
 
@@ -532,8 +539,8 @@ func TestConfigSort(t *testing.T) {
 	}
 }
 
-// WHY: Validates --output-values and --output-values-from options. A missing "from" path when enabled
-// must error early rather than failing mid-generation.
+// Validates --output-values and --output-values-from options. A missing "from"
+// path when enabled must error early rather than failing mid-generation.
 func TestConfigOutputvalues(t *testing.T) {
 	tests := map[string]struct {
 		errMsg       string
@@ -566,7 +573,7 @@ func TestConfigOutputvalues(t *testing.T) {
 	}
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			assert := assert.New(t)
+			assert := assertpkg.New(t)
 
 			err := tt.outputvalues.validate()
 
@@ -580,8 +587,9 @@ func TestConfigOutputvalues(t *testing.T) {
 	}
 }
 
-// WHY: Guards the complete Config.Validate() logic—ensures all required fields and cross-field
-// constraints are checked before execution begins. Early validation prevents confusing runtime errors.
+// Guards the complete Config.Validate() logic—ensures all required fields and
+// cross-field constraints are checked before execution begins. Early validation
+// prevents confusing runtime errors.
 func TestConfigValidate(t *testing.T) {
 	tests := map[string]struct {
 		config  func(c *Config)
@@ -589,7 +597,7 @@ func TestConfigValidate(t *testing.T) {
 		wantErr bool
 	}{
 		"OK": {
-			config:  func(c *Config) {},
+			config:  func(_ *Config) {},
 			wantErr: false,
 			errMsg:  "",
 		},
@@ -635,7 +643,7 @@ func TestConfigValidate(t *testing.T) {
 	}
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			assert := assert.New(t)
+			assert := assertpkg.New(t)
 
 			config := DefaultConfig()
 
@@ -654,8 +662,9 @@ func TestConfigValidate(t *testing.T) {
 	}
 }
 
-// WHY: Ensures config file discovery and parsing works. Users rely on .terraform-docs.yml being
-// automatically found and loaded from the module directory.
+// Ensures config file discovery and parsing works. Users rely on
+// .terraform-docs.yml being automatically found and loaded from the module
+// directory.
 func TestReadConfig(t *testing.T) {
 	dir := t.TempDir()
 
@@ -687,7 +696,7 @@ func TestReadConfig(t *testing.T) {
 
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			assert := assert.New(t)
+			assert := assertpkg.New(t)
 
 			_, err := ReadConfig(tt.rootDir, tt.filename)
 

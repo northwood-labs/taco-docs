@@ -7,10 +7,11 @@
 // You may obtain a copy of the License at the LICENSE file in
 // the root directory of this source tree.
 
-package format
+package format // lint:allow_naming_conflict_stdlib lint:no_dupe
 
 import (
 	"embed"
+	"fmt"
 	gotemplate "text/template"
 
 	"github.com/northwood-labs/taco-docs/print"
@@ -23,11 +24,11 @@ var asciidocsDocumentFS embed.FS
 
 // asciidocDocument represents AsciiDoc Document format.
 //
-// WHY: The document (subsection) layout in AsciiDoc is needed for modules
-// with verbose descriptions or complex types that don't fit in table cells.
-// It's the AsciiDoc counterpart of markdownDocument, targeting Antora sites
-// and PDF generation via asciidoctor-pdf where full-width sections are
-// standard practice.
+// The document (subsection) layout in AsciiDoc is needed for modules with
+// verbose descriptions or complex types that don't fit in table cells. It's the
+// AsciiDoc counterpart of markdownDocument, targeting Antora sites and PDF
+// generation via asciidoctor-pdf where full-width sections are standard
+// practice.
 type asciidocDocument struct {
 	*generator
 
@@ -35,18 +36,27 @@ type asciidocDocument struct {
 	template *template.Template
 }
 
+func init() { // lint:allow_init
+	register(map[string]initializerFn{
+		"asciidoc document": asInitializer(NewAsciidocDocument),
+		"asciidoc doc":      asInitializer(NewAsciidocDocument),
+		"adoc document":     asInitializer(NewAsciidocDocument),
+		"adoc doc":          asInitializer(NewAsciidocDocument),
+	})
+}
+
 // NewAsciidocDocument returns new instance of Asciidoc Document.
-func NewAsciidocDocument(config *print.Config) *asciidocDocument {
+func NewAsciidocDocument(config *print.Config) *asciidocDocument { // lint:allow_unexported_return
 	items := readTemplateItems(asciidocsDocumentFS, "asciidoc_document")
 
-	// WHY: Same rationale as asciidocTable—disable Markdown-style escaping
-	// to avoid corrupting AsciiDoc syntax.
+	// Same rationale as asciidocTable—disable Markdown-style escaping to avoid
+	// corrupting AsciiDoc syntax.
 	config.Settings.Escape = false
 
 	tt := template.New(config, items...)
 	tt.CustomFunc(gotemplate.FuncMap{
-		// WHY: Multi-line values use AsciiDoc source blocks ([source,hcl])
-		// for proper syntax highlighting in Asciidoctor renderers.
+		// Multi-line values use AsciiDoc source blocks ([source,hcl]) for
+		// proper syntax highlighting in Asciidoctor renderers.
 		"type": func(t string) string {
 			result, extraline := PrintFencedAsciidocCodeBlock(t, "hcl")
 			if !extraline {
@@ -84,7 +94,7 @@ func (d *asciidocDocument) Generate(module *terraform.Module) error {
 	err := d.forEach(func(name string) (string, error) {
 		rendered, err := d.template.Render(name, module)
 		if err != nil {
-			return "", err
+			return "", fmt.Errorf("rendering template %q: %w", name, err)
 		}
 
 		return sanitize(rendered), nil
@@ -92,14 +102,9 @@ func (d *asciidocDocument) Generate(module *terraform.Module) error {
 
 	d.funcs(withModule(module))
 
-	return err
-}
+	if err != nil {
+		return fmt.Errorf("generating asciidoc document: %w", err)
+	}
 
-func init() {
-	register(map[string]initializerFn{
-		"asciidoc document": NewAsciidocDocument,
-		"asciidoc doc":      NewAsciidocDocument,
-		"adoc document":     NewAsciidocDocument,
-		"adoc doc":          NewAsciidocDocument,
-	})
+	return nil
 }

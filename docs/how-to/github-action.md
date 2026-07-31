@@ -8,7 +8,7 @@ weight: 209
 toc: false
 ---
 
-To use Terraform-docs GitHub Action, configure a YAML workflow file (e.g.
+To use Terraform-docs GitHub Action, configure a YAML workflow file (e.g.,
 `.github/workflows/documentation.yml`) with the following:
 
 ```yaml

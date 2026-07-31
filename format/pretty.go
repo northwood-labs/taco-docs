@@ -7,10 +7,10 @@
 // You may obtain a copy of the License at the LICENSE file in
 // the root directory of this source tree.
 
-package format
+package format // lint:allow_naming_conflict_stdlib lint:no_dupe
 
 import (
-	_ "embed" //nolint
+	_ "embed"
 	"fmt"
 	"regexp"
 	gotemplate "text/template"
@@ -25,10 +25,10 @@ var prettyTpl []byte
 
 // pretty represents colorized pretty format.
 //
-// WHY: During local development, authors need a quick visual overview
-// of a module's interface without opening rendered Markdown. Colorized
-// terminal output makes types, defaults, and descriptions easy to scan
-// at a glance—this is the "human preview" format.
+// During local development, authors need a quick visual overview of a module's
+// interface without opening rendered Markdown. Colorized terminal output makes
+// types, defaults, and descriptions easy to scan at a glance—this is the "human
+// preview" format.
 type pretty struct {
 	*generator
 
@@ -36,17 +36,23 @@ type pretty struct {
 	template *template.Template
 }
 
+func init() { // lint:allow_init
+	register(map[string]initializerFn{
+		"pretty": asInitializer(NewPretty),
+	})
+}
+
 // NewPretty returns new instance of Pretty.
-func NewPretty(config *print.Config) *pretty {
+func NewPretty(config *print.Config) *pretty { // lint:allow_unexported_return
 	tt := template.New(config, &template.Item{
 		Name:      "pretty",
 		Text:      string(prettyTpl),
 		TrimSpace: true,
 	})
 	tt.CustomFunc(gotemplate.FuncMap{
-		// WHY: colorize wraps text in ANSI escape codes only when
-		// color is enabled, so the same template works for both TTY
-		// and piped/redirected output without conditional template logic.
+		// colorize wraps text in ANSI escape codes only when color is enabled,
+		// so the same template works for both TTY and piped/redirected output
+		// without conditional template logic.
 		"colorize": func(c, s string) string {
 			r := "\033[0m"
 
@@ -68,23 +74,17 @@ func NewPretty(config *print.Config) *pretty {
 
 // Generate a Terraform module document.
 //
-// WHY: Unlike file-based formatters, pretty output goes directly to
-// stdout so trailing newlines must be stripped to avoid blank lines
-// after the last entry when printed in a terminal.
+// Unlike file-based formatters, pretty output goes directly to stdout so
+// trailing newlines must be stripped to avoid blank lines after the last entry
+// when printed in a terminal.
 func (p *pretty) Generate(module *terraform.Module) error {
 	rendered, err := p.template.Render("pretty", module)
 	if err != nil {
-		return err
+		return fmt.Errorf("rendering pretty template: %w", err)
 	}
 
 	p.funcs(withContent(regexp.MustCompile(`(\r?\n)*$`).ReplaceAllString(rendered, "")))
 	p.funcs(withModule(module))
 
 	return nil
-}
-
-func init() {
-	register(map[string]initializerFn{
-		"pretty": NewPretty,
-	})
 }

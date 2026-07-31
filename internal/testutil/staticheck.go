@@ -10,5 +10,7 @@
 package testutil
 
 import (
-	_ "honnef.co/go/tools/staticcheck" //nolint
+	// staticcheck is imported for its side-effect of registering analyzers used
+	// by the test toolchain.
+	_ "honnef.co/go/tools/staticcheck"
 )

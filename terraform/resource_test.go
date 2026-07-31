@@ -12,14 +12,15 @@ package terraform
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	assertpkg "github.com/go-openapi/testify/assert"
 
 	"github.com/northwood-labs/taco-docs/internal/types"
 )
 
-// WHY: Verifies Resource.Spec() produces "provider_type.name" format used across all output formatters.
+// Verifies Resource.Spec() produces "provider_type.name" format used across all
+// output formatters.
 func TestResourceSpec(t *testing.T) {
-	assert := assert.New(t)
+	assert := assertpkg.New(t)
 	resource := Resource{
 		Type:           "private_key",
 		Name:           "baz",
@@ -31,7 +32,8 @@ func TestResourceSpec(t *testing.T) {
 	assert.Equal("tls_private_key.baz", resource.Spec())
 }
 
-// WHY: Verifies resource mode (managed/data/invalid) is correctly mapped to human-readable strings.
+// Verifies resource mode (managed/data/invalid) is correctly mapped to
+// human-readable strings.
 func TestResourceMode(t *testing.T) {
 	tests := map[string]struct {
 		expectValue string
@@ -70,15 +72,15 @@ func TestResourceMode(t *testing.T) {
 	}
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			assert := assert.New(t)
+			assert := assertpkg.New(t)
 
 			assert.Equal(tt.expectValue, tt.resource.GetMode())
 		})
 	}
 }
 
-// WHY: Validates Terraform Registry URL construction from provider source. Non-standard sources must
-// return empty URL rather than a broken link.
+// Validates Terraform Registry URL construction from provider source.
+// Non-standard sources must return empty URL rather than a broken link.
 func TestResourceURL(t *testing.T) {
 	tests := map[string]struct {
 		expectValue string
@@ -107,16 +109,17 @@ func TestResourceURL(t *testing.T) {
 	}
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			assert := assert.New(t)
+			assert := assertpkg.New(t)
 
 			assert.Equal(tt.expectValue, tt.resource.URL())
 		})
 	}
 }
 
-// WHY: Ensures resources sort by type (provider_type.name) with correct mode grouping (managed before data).
+// Ensures resources sort by type (provider_type.name) with correct mode
+// grouping (managed before data).
 func TestResourcesSortedByType(t *testing.T) {
-	assert := assert.New(t)
+	assert := assertpkg.New(t)
 	resources := sampleResources()
 
 	sortResourcesByType(resources)
@@ -146,9 +149,10 @@ func TestResourcesSortedByType(t *testing.T) {
 	assert.Equal(expected, actual)
 }
 
-// WHY: Same as above but verifies mode is correctly appended in the sort output for display purposes.
+// Same as above but verifies mode is correctly appended in the sort output for
+// display purposes.
 func TestResourcesSortedByTypeAndMode(t *testing.T) {
-	assert := assert.New(t)
+	assert := assertpkg.New(t)
 	resources := sampleResources()
 
 	sortResourcesByType(resources)
@@ -179,6 +183,7 @@ func TestResourcesSortedByTypeAndMode(t *testing.T) {
 			mode = " (r)"
 		case "data":
 			mode = " (d)"
+		default:
 		}
 
 		actual[k] = i.Spec() + mode
@@ -187,8 +192,9 @@ func TestResourcesSortedByTypeAndMode(t *testing.T) {
 	assert.Equal(expected, actual)
 }
 
-// WHY: Validates version constraint parsing from provider blocks to determine Registry URL version.
-// Only exact versions should be used; ranges/pessimistic constraints should resolve to "latest".
+// Validates version constraint parsing from provider blocks to determine
+// Registry URL version. Only exact versions should be used; ranges/pessimistic
+// constraints should resolve to "latest".
 func TestResourceVersion(t *testing.T) {
 	tests := map[string]struct {
 		expected   string
@@ -237,7 +243,7 @@ func TestResourceVersion(t *testing.T) {
 	}
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			assert := assert.New(t)
+			assert := assertpkg.New(t)
 
 			assert.Equal(tt.expected, resourceVersion(tt.constraint))
 		})

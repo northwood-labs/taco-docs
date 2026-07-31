@@ -20,12 +20,13 @@ import (
 
 // NewCommand registers the "asciidoc" subcommand and its children ("document"
 // and "table"). AsciiDoc output is provided for teams whose documentation
-// ecosystems are built on AsciiDoc toolchains (e.g., Antora, Asciidoctor) rather
-// than Markdown. Like Markdown, it supports both table and document sub-formats.
+// ecosystems are built on AsciiDoc toolchains (e.g., Antora, Asciidoctor)
+// rather than Markdown. Like Markdown, it supports both table and document
+// sub-formats.
 //
 // The flags mirror the Markdown command because AsciiDoc has the same rendering
-// concerns (anchors, column visibility, section depth), but the template
-// syntax differs.
+// concerns (anchors, column visibility, section depth), but the template syntax
+// differs.
 func NewCommand(runtime *cli.Runtime, config *print.Config) *cobra.Command {
 	cmd := &cobra.Command{
 		Args:        cobra.ExactArgs(1),
@@ -37,7 +38,8 @@ func NewCommand(runtime *cli.Runtime, config *print.Config) *cobra.Command {
 		RunE:        runtime.RunEFunc,
 	}
 
-	// flags — same rationale as the Markdown counterparts; see cmd/markdown for details.
+	// flags — same rationale as the Markdown counterparts; see cmd/markdown
+	// for details.
 	cmd.PersistentFlags().BoolVar(&config.Settings.Anchor, "anchor", true, "create anchor links")
 	cmd.PersistentFlags().BoolVar(&config.Settings.Default, "default", true, "show Default column or section")
 	cmd.PersistentFlags().

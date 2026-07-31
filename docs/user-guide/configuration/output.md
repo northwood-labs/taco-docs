@@ -140,7 +140,7 @@ output:
     {{ .Content }}
 ```
 
-The following can be used where HTML comments are not supported (e.g. Bitbucket
+The following can be used where HTML comments are not supported (e.g., Bitbucket
 Cloud):
 
 {{< alert type="warning" >}}

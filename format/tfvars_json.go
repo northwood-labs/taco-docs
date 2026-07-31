@@ -7,11 +7,12 @@
 // You may obtain a copy of the License at the LICENSE file in
 // the root directory of this source tree.
 
-package format
+package format // lint:allow_naming_conflict_stdlib lint:no_dupe
 
 import (
 	"bytes"
 	jsonsdk "encoding/json"
+	"fmt"
 	"strings"
 
 	"github.com/iancoleman/orderedmap"
@@ -22,7 +23,7 @@ import (
 
 // tfvarsJSON represents Terraform tfvars JSON format.
 //
-// WHY: CI pipelines and automation tools (Terragrunt, Atlantis, custom scripts)
+// CI pipelines and automation tools (Terragrunt, Atlantis, custom scripts)
 // often generate variable values programmatically. A JSON .tfvars.json file is
 // easier to produce and parse from code than HCL, making this the preferred
 // format for machine-generated variable definitions.
@@ -32,11 +33,17 @@ type tfvarsJSON struct {
 	config *print.Config
 }
 
+func init() { // lint:allow_init
+	register(map[string]initializerFn{
+		"tfvars json": asInitializer(NewTfvarsJSON),
+	})
+}
+
 // NewTfvarsJSON returns new instance of TfvarsJSON.
 //
-// WHY: canRender is false because the output is a flat JSON object of
+// canRender is false because the output is a flat JSON object of
 // variable-name-to-default-value pairs—there are no sections to reorder.
-func NewTfvarsJSON(config *print.Config) *tfvarsJSON {
+func NewTfvarsJSON(config *print.Config) *tfvarsJSON { // lint:allow_unexported_return
 	return &tfvarsJSON{
 		generator: newGenerator(config, false),
 		config:    config,
@@ -45,16 +52,16 @@ func NewTfvarsJSON(config *print.Config) *tfvarsJSON {
 
 // Generate a Terraform module as Terraform tfvars JSON.
 //
-// WHY: An ordered map preserves the declaration order of inputs from the
-// module source. This makes diffs stable and the output predictable—users
-// won't see spurious reorderings on regeneration. SetEscapeHTML(false)
-// prevents Go's encoder from mangling URLs or HTML in default values.
+// An ordered map preserves the declaration order of inputs from the module
+// source. This makes diffs stable and the output predictable—users won't see
+// spurious reorderings on regeneration. SetEscapeHTML(false) prevents Go's
+// encoder from mangling URLs or HTML in default values.
 func (j *tfvarsJSON) Generate(module *terraform.Module) error {
-	copy := orderedmap.New()
-	copy.SetEscapeHTML(false)
+	sections := orderedmap.New()
+	sections.SetEscapeHTML(false)
 
 	for _, i := range module.Inputs {
-		copy.Set(i.Name, i.Default)
+		sections.Set(i.Name, i.Default)
 	}
 
 	buffer := new(bytes.Buffer)
@@ -62,17 +69,11 @@ func (j *tfvarsJSON) Generate(module *terraform.Module) error {
 	encoder.SetIndent("", "  ")
 	encoder.SetEscapeHTML(false)
 
-	if err := encoder.Encode(copy); err != nil {
-		return err
+	if err := encoder.Encode(sections); err != nil {
+		return fmt.Errorf("encoding tfvars as JSON: %w", err)
 	}
 
 	j.funcs(withContent(strings.TrimSuffix(buffer.String(), "\n")))
 
 	return nil
-}
-
-func init() {
-	register(map[string]initializerFn{
-		"tfvars json": NewTfvarsJSON,
-	})
 }

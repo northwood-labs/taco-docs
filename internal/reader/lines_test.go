@@ -13,14 +13,15 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	assertpkg "github.com/go-openapi/testify/assert"
 )
 
-const textEmpty = ``
+const (
+	textEmpty = ``
 
-const textOneLine = `Lorem ipsum dolor sit amet`
+	textOneLine = `Lorem ipsum dolor sit amet`
 
-const textWithLeadingComment = `
+	textWithLeadingComment = `
 /**
  * Morbi vitae nulla in dui lobortis
  * consectetur. Integer nec tempus
@@ -51,7 +52,7 @@ nulla pariatur.
 officia deserunt mollit anim id est laborum
 `
 
-const textWithoutLeadingComment = `
+	textWithoutLeadingComment = `
 Lorem ipsum dolor sit amet,
 consectetur adipiscing elit,
 
@@ -71,9 +72,11 @@ nulla pariatur.
 # non proident, sunt in culpa qui
 officia deserunt mollit anim id est laborum
 `
+)
 
-// WHY: Validates comment extraction from files and text by line number. This is the core of how
-// descriptions are read from preceding comments in .tf files for inputs/outputs without description attrs.
+// Validates comment extraction from files and text by line number. This is the
+// core of how descriptions are read from preceding comments in .tf files for
+// inputs/outputs without description attrs.
 func TestReadLinesFromFile(t *testing.T) {
 	tests := []struct {
 		name       string
@@ -86,8 +89,10 @@ func TestReadLinesFromFile(t *testing.T) {
 			name:       "extract lines from file",
 			fileName:   "testdata/sample.txt",
 			lineNumber: -1,
-			expected:   "Morbi vitae nulla in dui lobortis consectetur. Integer nec tempus felis. Ut quis suscipit risus. Donec lobortis consequat nunc, in efficitur mi maximus ac. Sed id felis posuere, aliquam purus eget, faucibus augue.",
-			wantError:  false,
+			expected: "Morbi vitae nulla in dui lobortis consectetur. Integer nec tempus felis. Ut quis suscipit " +
+				"risus. Donec lobortis consequat nunc, in efficitur mi maximus ac. Sed id felis posuere, aliquam " +
+				"purus eget, faucibus augue.", // lint:no_const
+			wantError: false,
 		},
 		{
 			name:       "extract lines from file",
@@ -100,8 +105,10 @@ func TestReadLinesFromFile(t *testing.T) {
 			name:       "extract lines from file",
 			fileName:   "testdata/no-traling-line.txt",
 			lineNumber: -1,
-			expected:   "Morbi vitae nulla in dui lobortis consectetur. Integer nec tempus felis. Ut quis suscipit risus. Donec lobortis consequat nunc, in efficitur mi maximus ac. Sed id felis posuere, aliquam purus eget, faucibus augue.",
-			wantError:  false,
+			expected: "Morbi vitae nulla in dui lobortis consectetur. Integer nec tempus felis. Ut quis suscipit " +
+				"risus. Donec lobortis consequat nunc, in efficitur mi maximus ac. Sed id felis posuere, aliquam " +
+				"purus eget, faucibus augue.", // lint:no_const
+			wantError: false,
 		},
 		{
 			name:       "extract lines from file",
@@ -120,7 +127,7 @@ func TestReadLinesFromFile(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert := assert.New(t)
+			assert := assertpkg.New(t)
 			lines := Lines{
 				FileName: tt.fileName,
 				LineNum:  tt.lineNumber,
@@ -160,8 +167,8 @@ func TestReadLinesFromFile(t *testing.T) {
 	}
 }
 
-// WHY: Same as file-based extraction but from in-memory text. Tests edge cases like empty content,
-// out-of-range line numbers, and text without leading comments.
+// Same as file-based extraction but from in-memory text. Tests edge cases like
+// empty content, out-of-range line numbers, and text without leading comments.
 func TestReadLinesFromText(t *testing.T) {
 	tests := []struct {
 		name        string
@@ -175,9 +182,11 @@ func TestReadLinesFromText(t *testing.T) {
 			name:        "extract lines from text",
 			textContent: textWithLeadingComment,
 			lineNumber:  -1,
-			expected:    "Morbi vitae nulla in dui lobortis consectetur. Integer nec tempus felis. Ut quis suscipit risus. Donec lobortis consequat nunc, in efficitur mi maximus ac. Sed id felis posuere, aliquam purus eget, faucibus augue.",
-			wantError:   false,
-			errorText:   "",
+			expected: "Morbi vitae nulla in dui lobortis consectetur. Integer nec tempus felis. Ut quis suscipit " +
+				"risus. Donec lobortis consequat nunc, in efficitur mi maximus ac. Sed id felis posuere, aliquam " +
+				"purus eget, faucibus augue.", // lint:no_const
+			wantError: false,
+			errorText: "",
 		},
 		{
 			name:        "extract lines from text",
@@ -254,7 +263,7 @@ func TestReadLinesFromText(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert := assert.New(t)
+			assert := assertpkg.New(t)
 			lines := Lines{
 				LineNum: tt.lineNumber,
 				Condition: func(line string) bool {
@@ -283,7 +292,7 @@ func TestReadLinesFromText(t *testing.T) {
 			}
 			r := strings.NewReader(strings.TrimSpace(tt.textContent))
 
-			comment, err := lines.extract(r)
+			comment, err := lines.extractLines(r)
 			if tt.wantError {
 				assert.Error(err)
 				assert.Equal(tt.errorText, err.Error())

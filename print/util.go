@@ -9,33 +9,34 @@
 
 package print
 
-// Simple collection helpers that avoid importing a full generic library for
-// trivial operations. These exist because Go (pre-generics) required hand-written
-// utility functions for basic slice operations on concrete types.
-
+// Package slices contains simple collection helpers that avoid importing a full
+// generic library for trivial operations. These exist because Go (pre-generics)
+// required hand-written utility functions for basic slice operations on
+// concrete types.
 import "slices"
 
 func contains(list []string, name string) bool {
 	return slices.Contains(list, name)
 }
 
-// nolint
 func index(list []string, name string) int {
 	for i, v := range list {
 		if v == name {
 			return i
 		}
 	}
+
 	return -1
 }
 
-// nolint
 func remove(list []string, name string) []string {
 	index := index(list, name)
 	if index < 0 {
 		return list
 	}
+
 	list[index] = list[len(list)-1]
 	list[len(list)-1] = ""
+
 	return list[:len(list)-1]
 }

@@ -7,10 +7,11 @@
 // You may obtain a copy of the License at the LICENSE file in
 // the root directory of this source tree.
 
-package format
+package format // lint:allow_naming_conflict_stdlib lint:no_dupe
 
 import (
 	"embed"
+	"fmt"
 	gotemplate "text/template"
 
 	"github.com/northwood-labs/taco-docs/print"
@@ -23,9 +24,9 @@ var asciidocTableFS embed.FS
 
 // asciidocTable represents AsciiDoc Table format.
 //
-// WHY: Teams using Asciidoctor or Antora for their documentation sites
-// need native AsciiDoc output rather than embedded Markdown. This is the
-// compact tabular equivalent of markdownTable for the AsciiDoc ecosystem.
+// Teams using Asciidoctor or Antora for their documentation sites need native
+// AsciiDoc output rather than embedded Markdown. This is the compact tabular
+// equivalent of markdownTable for the AsciiDoc ecosystem.
 type asciidocTable struct {
 	*generator
 
@@ -33,13 +34,26 @@ type asciidocTable struct {
 	template *template.Template
 }
 
+// Multiple short aliases registered so users can type "adoc" or "asciidoc"
+// interchangeably, matching common community shorthand.
+func init() { // lint:allow_init
+	register(map[string]initializerFn{
+		"asciidoc":       asInitializer(NewAsciidocTable),
+		"asciidoc table": asInitializer(NewAsciidocTable),
+		"asciidoc tbl":   asInitializer(NewAsciidocTable),
+		"adoc":           asInitializer(NewAsciidocTable),
+		"adoc table":     asInitializer(NewAsciidocTable),
+		"adoc tbl":       asInitializer(NewAsciidocTable),
+	})
+}
+
 // NewAsciidocTable returns new instance of Asciidoc Table.
-func NewAsciidocTable(config *print.Config) *asciidocTable {
+func NewAsciidocTable(config *print.Config) *asciidocTable { // lint:allow_unexported_return
 	items := readTemplateItems(asciidocTableFS, "asciidoc_table")
 
-	// WHY: AsciiDoc has its own escaping rules (e.g. | inside table cells).
-	// Disabling the generic markdown escape prevents double-escaping that
-	// would corrupt the AsciiDoc output.
+	// AsciiDoc has its own escaping rules (e.g., | inside table cells).
+	// Disabling the generic markdown escape prevents double-escaping that would
+	// corrupt the AsciiDoc output.
 	config.Settings.Escape = false
 
 	tt := template.New(config, items...)
@@ -70,7 +84,7 @@ func (t *asciidocTable) Generate(module *terraform.Module) error {
 	err := t.forEach(func(name string) (string, error) {
 		rendered, err := t.template.Render(name, module)
 		if err != nil {
-			return "", err
+			return "", fmt.Errorf("rendering template %q: %w", name, err)
 		}
 
 		return sanitize(rendered), nil
@@ -78,18 +92,9 @@ func (t *asciidocTable) Generate(module *terraform.Module) error {
 
 	t.funcs(withModule(module))
 
-	return err
-}
+	if err != nil {
+		return fmt.Errorf("generating asciidoc table: %w", err)
+	}
 
-// WHY: Multiple short aliases registered so users can type "adoc" or
-// "asciidoc" interchangeably, matching common community shorthand.
-func init() {
-	register(map[string]initializerFn{
-		"asciidoc":       NewAsciidocTable,
-		"asciidoc table": NewAsciidocTable,
-		"asciidoc tbl":   NewAsciidocTable,
-		"adoc":           NewAsciidocTable,
-		"adoc table":     NewAsciidocTable,
-		"adoc tbl":       NewAsciidocTable,
-	})
+	return nil
 }

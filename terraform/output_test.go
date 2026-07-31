@@ -15,13 +15,14 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	assertpkg "github.com/go-openapi/testify/assert"
 
 	"github.com/northwood-labs/taco-docs/internal/types"
 )
 
-// WHY: Verifies output value rendering and HasDefault across all value types (nil, bool, string,
-// list, map, sensitive). Incorrect rendering means wrong values in every output format.
+// Verifies output value rendering and HasDefault across all value types (nil,
+// bool, string, list, map, sensitive). Incorrect rendering means wrong values
+// in every output format.
 func TestOutputValue(t *testing.T) {
 	outputs := sampleOutputs()
 
@@ -106,7 +107,7 @@ func TestOutputValue(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert := assert.New(t)
+			assert := assertpkg.New(t)
 
 			assert.Equal(tt.expectValue, tt.output.GetValue())
 			assert.Equal(tt.expectDefault, tt.output.HasDefault())
@@ -114,11 +115,12 @@ func TestOutputValue(t *testing.T) {
 	}
 }
 
-// WHY: Ensures outputs serialize correctly to JSON, including sensitive values and ShowValue flag behavior.
+// Ensures outputs serialize correctly to JSON, including sensitive values and
+// ShowValue flag behavior.
 func TestOutputMarshalJSON(t *testing.T) {
 	outputs := sampleOutputs()
 
-	tests := []struct {
+	tests := []struct { // lint:no_dupe
 		name     string
 		expected string
 		output   Output
@@ -154,14 +156,16 @@ func TestOutputMarshalJSON(t *testing.T) {
 			expected: "{\"name\":\"output\",\"description\":\"description\"}\n",
 		},
 		{
-			name:     "output marshal JSON",
-			output:   outputs[6],
-			expected: "{\"name\":\"output\",\"description\":\"description\",\"value\":\"<sensitive>\",\"sensitive\":true}\n",
+			name:   "output marshal JSON",
+			output: outputs[6],
+			expected: "{\"name\":\"output\",\"description\":\"description\",\"value\":\"<sensitive>\"," +
+				"\"sensitive\":true}\n",
 		},
 		{
-			name:     "output marshal JSON",
-			output:   outputs[7],
-			expected: "{\"name\":\"output\",\"description\":\"description\",\"value\":[\"a\",\"b\",\"c\"],\"sensitive\":false}\n",
+			name:   "output marshal JSON",
+			output: outputs[7],
+			expected: "{\"name\":\"output\",\"description\":\"description\",\"value\":[\"a\",\"b\",\"c\"]," +
+				"\"sensitive\":false}\n",
 		},
 		{
 			name:     "output marshal JSON",
@@ -169,9 +173,10 @@ func TestOutputMarshalJSON(t *testing.T) {
 			expected: "{\"name\":\"output\",\"description\":\"description\",\"value\":[],\"sensitive\":false}\n",
 		},
 		{
-			name:     "output marshal JSON",
-			output:   outputs[9],
-			expected: "{\"name\":\"output\",\"description\":\"description\",\"value\":{\"a\":1,\"b\":2,\"c\":3},\"sensitive\":false}\n",
+			name:   "output marshal JSON",
+			output: outputs[9],
+			expected: "{\"name\":\"output\",\"description\":\"description\",\"value\":{\"a\":1,\"b\":2,\"c\":3}," +
+				"\"sensitive\":false}\n",
 		},
 		{
 			name:     "output marshal JSON",
@@ -184,9 +189,10 @@ func TestOutputMarshalJSON(t *testing.T) {
 			expected: "{\"name\":\"output\",\"description\":\"description\",\"value\":null,\"sensitive\":false}\n",
 		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert := assert.New(t)
+			assert := assertpkg.New(t)
 			actual, err := tt.output.MarshalJSON()
 
 			assert.NoError(err)
@@ -195,19 +201,20 @@ func TestOutputMarshalJSON(t *testing.T) {
 	}
 }
 
-// WHY: Ensures outputs serialize correctly to XML with proper element structure.
+// Ensures outputs serialize correctly to XML with proper element structure.
 func TestOutputMarshalXML(t *testing.T) {
 	outputs := sampleOutputs()
 
-	tests := []struct {
+	tests := []struct { // lint:no_dupe
 		name     string
 		expected string
 		output   Output
 	}{
 		{
-			name:     "output marshal XML",
-			output:   outputs[0],
-			expected: "<output><name>output</name><description>description</description><value xsi:nil=\"true\"></value><sensitive>false</sensitive></output>",
+			name:   "output marshal XML",
+			output: outputs[0],
+			expected: "<output><name>output</name><description>description</description><value xsi:nil=\"true\">" +
+				"</value><sensitive>false</sensitive></output>",
 		},
 		{
 			name:     "output marshal XML",
@@ -215,19 +222,22 @@ func TestOutputMarshalXML(t *testing.T) {
 			expected: "<output><name>output</name><description>description</description></output>",
 		},
 		{
-			name:     "output marshal XML",
-			output:   outputs[2],
-			expected: "<output><name>output</name><description>description</description><value>false</value><sensitive>false</sensitive></output>",
+			name:   "output marshal XML",
+			output: outputs[2],
+			expected: "<output><name>output</name><description>description</description><value>false</value>" +
+				"<sensitive>false</sensitive></output>",
 		},
 		{
-			name:     "output marshal XML",
-			output:   outputs[3],
-			expected: "<output><name>output</name><description>description</description><value></value><sensitive>false</sensitive></output>",
+			name:   "output marshal XML",
+			output: outputs[3],
+			expected: "<output><name>output</name><description>description</description><value></value>" +
+				"<sensitive>false</sensitive></output>", // lint:no_const
 		},
 		{
-			name:     "output marshal XML",
-			output:   outputs[4],
-			expected: "<output><name>output</name><description>description</description><value>foo</value><sensitive>false</sensitive></output>",
+			name:   "output marshal XML",
+			output: outputs[4],
+			expected: "<output><name>output</name><description>description</description><value>foo</value>" +
+				"<sensitive>false</sensitive></output>",
 		},
 		{
 			name:     "output marshal XML",
@@ -235,39 +245,45 @@ func TestOutputMarshalXML(t *testing.T) {
 			expected: "<output><name>output</name><description>description</description></output>",
 		},
 		{
-			name:     "output marshal XML",
-			output:   outputs[6],
-			expected: "<output><name>output</name><description>description</description><value>&lt;sensitive&gt;</value><sensitive>true</sensitive></output>",
+			name:   "output marshal XML",
+			output: outputs[6],
+			expected: "<output><name>output</name><description>description</description>" +
+				"<value>&lt;sensitive&gt;</value><sensitive>true</sensitive></output>",
 		},
 		{
-			name:     "output marshal XML",
-			output:   outputs[7],
-			expected: "<output><name>output</name><description>description</description><value><item>a</item><item>b</item><item>c</item></value><sensitive>false</sensitive></output>",
+			name:   "output marshal XML",
+			output: outputs[7],
+			expected: "<output><name>output</name><description>description</description><value><item>a</item>" +
+				"<item>b</item><item>c</item></value><sensitive>false</sensitive></output>",
 		},
 		{
-			name:     "output marshal XML",
-			output:   outputs[8],
-			expected: "<output><name>output</name><description>description</description><value></value><sensitive>false</sensitive></output>",
+			name:   "output marshal XML",
+			output: outputs[8],
+			expected: "<output><name>output</name><description>description</description>" +
+				"<value></value><sensitive>false</sensitive></output>",
 		},
 		{
-			name:     "output marshal XML",
-			output:   outputs[9],
-			expected: "<output><name>output</name><description>description</description><value><a>1</a><b>2</b><c>3</c></value><sensitive>false</sensitive></output>",
+			name:   "output marshal XML",
+			output: outputs[9],
+			expected: "<output><name>output</name><description>description</description>" +
+				"<value><a>1</a><b>2</b><c>3</c></value><sensitive>false</sensitive></output>",
 		},
 		{
-			name:     "output marshal XML",
-			output:   outputs[10],
-			expected: "<output><name>output</name><description>description</description><value></value><sensitive>false</sensitive></output>",
+			name:   "output marshal XML",
+			output: outputs[10],
+			expected: "<output><name>output</name><description>description</description>" +
+				"<value></value><sensitive>false</sensitive></output>",
 		},
 		{
-			name:     "output marshal XML",
-			output:   outputs[11],
-			expected: "<output><name>output</name><description>description</description><value xsi:nil=\"true\"></value><sensitive>false</sensitive></output>",
+			name:   "output marshal XML",
+			output: outputs[11],
+			expected: "<output><name>output</name><description>description</description>" +
+				"<value xsi:nil=\"true\"></value><sensitive>false</sensitive></output>",
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert := assert.New(t)
+			assert := assertpkg.New(t)
 
 			var b bytes.Buffer
 
@@ -286,11 +302,12 @@ func TestOutputMarshalXML(t *testing.T) {
 	}
 }
 
-// WHY: Verifies YAML marshaling returns the correct struct type based on ShowValue flag.
+// Verifies YAML marshaling returns the correct struct type based on ShowValue
+// flag.
 func TestOutputMarshalYAML(t *testing.T) {
 	outputs := sampleOutputs()
 
-	tests := []struct {
+	tests := []struct { // lint:no_dupe
 		name     string
 		expected string
 		output   Output
@@ -358,7 +375,7 @@ func TestOutputMarshalYAML(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert := assert.New(t)
+			assert := assertpkg.New(t)
 			actual, err := tt.output.MarshalYAML()
 
 			assert.NoError(err)
@@ -470,7 +487,8 @@ func sampleOutputs() []Output {
 	}
 }
 
-// WHY: Ensures outputs can be sorted by name and by position for deterministic doc generation.
+// Ensures outputs can be sorted by name and by position for deterministic doc
+// generation.
 func TestOutputsSort(t *testing.T) {
 	outputs := sampleOutputsForSort()
 
@@ -489,7 +507,7 @@ func TestOutputsSort(t *testing.T) {
 	}
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			assert := assert.New(t)
+			assert := assertpkg.New(t)
 
 			tt.sortType(outputs)
 

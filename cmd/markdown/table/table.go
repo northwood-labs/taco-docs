@@ -16,12 +16,12 @@ import (
 	"github.com/northwood-labs/taco-docs/print"
 )
 
-// NewCommand registers the "markdown table" subcommand. The table format is
-// the most popular Markdown output because it presents inputs and outputs in
-// a compact, scannable grid. It renders well on GitHub/GitLab and allows
-// reviewers to quickly compare names, types, defaults, and descriptions
-// side by side — which is exactly what teams need during code review.
-func NewCommand(runtime *cli.Runtime, config *print.Config) *cobra.Command {
+// NewCommand registers the "markdown table" subcommand. The table format is the
+// most popular Markdown output because it presents inputs and outputs in a
+// compact, scannable grid. It renders well on GitHub/GitLab and allows
+// reviewers to quickly compare names, types, defaults, and descriptions side by
+// side — which is exactly what teams need during code review.
+func NewCommand(runtime *cli.Runtime, _ *print.Config) *cobra.Command {
 	cmd := &cobra.Command{
 		Args:        cobra.ExactArgs(1),
 		Use:         "table [PATH]",

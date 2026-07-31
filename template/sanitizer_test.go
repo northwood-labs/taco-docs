@@ -7,18 +7,19 @@
 // You may obtain a copy of the License at the LICENSE file in
 // the root directory of this source tree.
 
-package template
+package template // lint:allow_naming_conflict_stdlib
 
 import (
 	"os"
 	"path/filepath"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	assertpkg "github.com/go-openapi/testify/assert"
 )
 
-// WHY: Ensures underscores in variable/resource names are properly escaped for Markdown rendering.
-// Unescaped underscores would render as italic text in Markdown viewers, mangling names.
+// Ensures underscores in variable/resource names are properly escaped for
+// Markdown rendering. Unescaped underscores would render as italic text in
+// Markdown viewers, mangling names.
 func TestSanitizeName(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -95,7 +96,7 @@ func TestSanitizeName(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert := assert.New(t)
+			assert := assertpkg.New(t)
 
 			actual := SanitizeName(tt.input, tt.escape)
 
@@ -104,9 +105,10 @@ func TestSanitizeName(t *testing.T) {
 	}
 }
 
-// WHY: Verifies multi-line section descriptions are sanitized (escaped chars, preserved code blocks).
-// Broken sanitization would corrupt module descriptions in document-style output.
-func TestSanitizeSection(t *testing.T) {
+// Verifies multi-line section descriptions are sanitized (escaped chars,
+// preserved code blocks). Broken sanitization would corrupt module descriptions
+// in document-style output.
+func TestSanitizeSection(t *testing.T) { // lint:no_dupe
 	tests := []struct {
 		name     string
 		filename string
@@ -130,7 +132,7 @@ func TestSanitizeSection(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert := assert.New(t)
+			assert := assertpkg.New(t)
 
 			bytes, err := os.ReadFile(filepath.Join("testdata", "section", tt.filename+".golden"))
 			assert.NoError(err)
@@ -145,7 +147,8 @@ func TestSanitizeSection(t *testing.T) {
 	}
 }
 
-// WHY: Ensures full document output is sanitized while preserving code blocks intact.
+// Ensures full document output is sanitized while preserving code blocks
+// intact.
 func TestSanitizeDocument(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -175,7 +178,7 @@ func TestSanitizeDocument(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert := assert.New(t)
+			assert := assertpkg.New(t)
 
 			bytes, err := os.ReadFile(filepath.Join("testdata", "document", tt.filename+".golden"))
 			assert.NoError(err)
@@ -195,8 +198,9 @@ func TestSanitizeDocument(t *testing.T) {
 	}
 }
 
-// WHY: Validates Markdown table cell sanitization—pipes, newlines, and special chars must be handled
-// differently inside table cells or the table structure breaks in rendered Markdown.
+// Validates Markdown table cell sanitization—pipes, newlines, and special chars
+// must be handled differently inside table cells or the table structure breaks
+// in rendered Markdown.
 func TestSanitizeMarkdownTable(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -243,7 +247,7 @@ func TestSanitizeMarkdownTable(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert := assert.New(t)
+			assert := assertpkg.New(t)
 
 			bytes, err := os.ReadFile(filepath.Join("testdata", "table", tt.filename+".golden"))
 			assert.NoError(err)
@@ -258,8 +262,9 @@ func TestSanitizeMarkdownTable(t *testing.T) {
 	}
 }
 
-// WHY: Parallel to Markdown table sanitization but for AsciiDoc format, which has different escaping rules.
-func TestSanitizeAsciidocTable(t *testing.T) {
+// Parallel to Markdown table sanitization but for AsciiDoc format, which has
+// different escaping rules.
+func TestSanitizeAsciidocTable(t *testing.T) { // lint:no_dupe
 	tests := []struct {
 		name     string
 		filename string
@@ -283,7 +288,7 @@ func TestSanitizeAsciidocTable(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert := assert.New(t)
+			assert := assertpkg.New(t)
 
 			bytes, err := os.ReadFile(filepath.Join("testdata", "table", tt.filename+".golden"))
 			assert.NoError(err)
@@ -298,8 +303,9 @@ func TestSanitizeAsciidocTable(t *testing.T) {
 	}
 }
 
-// WHY: Verifies multi-line text conversion for both table and non-table contexts (newlines vs <br/> tags).
-// Wrong handling means descriptions are either unreadable in tables or have stray HTML outside tables.
+// Verifies multi-line text conversion for both table and non-table contexts
+// (newlines vs <br/> tags). Wrong handling means descriptions are either
+// unreadable in tables or have stray HTML outside tables.
 func TestConvertMultiLineText(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -313,113 +319,131 @@ func TestConvertMultiLineText(t *testing.T) {
 			filename: "newline-single",
 			isTable:  false,
 			showHTML: true,
-			expected: "Lorem ipsum dolor sit amet,\n\nconsectetur adipiscing elit,\n\nsed do eiusmod tempor incididunt\n\nut labore et dolore magna aliqua.",
+			expected: "Lorem ipsum dolor sit amet,\n\nconsectetur adipiscing elit,\n\n" +
+				"sed do eiusmod tempor incididunt\n\nut labore et dolore magna aliqua.",
 		},
 		{
 			name:     "convert multi-line newline-single",
 			filename: "newline-single",
 			isTable:  true,
 			showHTML: true,
-			expected: "Lorem ipsum dolor sit amet,<br/><br/>consectetur adipiscing elit,<br/><br/>sed do eiusmod tempor incididunt<br/><br/>ut labore et dolore magna aliqua.",
+			expected: "Lorem ipsum dolor sit amet,<br/><br/>consectetur adipiscing elit,<br/><br/>" +
+				"sed do eiusmod tempor incididunt<br/><br/>ut labore et dolore magna aliqua.",
 		},
 		{
 			name:     "convert multi-line newline-single",
 			filename: "newline-single",
 			isTable:  true,
 			showHTML: false,
-			expected: "Lorem ipsum dolor sit amet,  consectetur adipiscing elit,  sed do eiusmod tempor incididunt  ut labore et dolore magna aliqua.",
+			expected: "Lorem ipsum dolor sit amet,  consectetur adipiscing elit,  sed do eiusmod tempor incididunt" +
+				"  ut labore et dolore magna aliqua.",
 		},
 		{
 			name:     "convert multi-line newline-double",
 			filename: "newline-double",
 			isTable:  false,
 			showHTML: true,
-			expected: "Lorem ipsum dolor sit amet,\n\n\nconsectetur adipiscing elit,\n\n\nsed do eiusmod tempor incididunt\n\n\nut labore et dolore magna aliqua.",
+			expected: "Lorem ipsum dolor sit amet,\n\n\nconsectetur adipiscing elit,\n\n\n" +
+				"sed do eiusmod tempor incididunt\n\n\nut labore et dolore magna aliqua.",
 		},
 		{
 			name:     "convert multi-line newline-double",
 			filename: "newline-double",
 			isTable:  true,
 			showHTML: true,
-			expected: "Lorem ipsum dolor sit amet,<br/><br/><br/>consectetur adipiscing elit,<br/><br/><br/>sed do eiusmod tempor incididunt<br/><br/><br/>ut labore et dolore magna aliqua.",
+			expected: "Lorem ipsum dolor sit amet,<br/><br/><br/>consectetur adipiscing elit,<br/><br/><br/>" +
+				"sed do eiusmod tempor incididunt<br/><br/><br/>ut labore et dolore magna aliqua.",
 		},
 		{
 			name:     "convert multi-line newline-double",
 			filename: "newline-double",
 			isTable:  true,
 			showHTML: false,
-			expected: "Lorem ipsum dolor sit amet,   consectetur adipiscing elit,   sed do eiusmod tempor incididunt   ut labore et dolore magna aliqua.",
+			expected: "Lorem ipsum dolor sit amet,   consectetur adipiscing elit,   " +
+				"sed do eiusmod tempor incididunt   ut labore et dolore magna aliqua.",
 		},
 		{
 			name:     "convert multi-line paragraph",
 			filename: "paragraph",
 			isTable:  false,
 			showHTML: true,
-			expected: "Lorem ipsum dolor sit amet,  \nconsectetur adipiscing elit,  \nsed do eiusmod tempor incididunt  \nut labore et dolore magna aliqua.",
+			expected: "Lorem ipsum dolor sit amet,  \nconsectetur adipiscing elit,  \n" +
+				"sed do eiusmod tempor incididunt  \nut labore et dolore magna aliqua.",
 		},
 		{
 			name:     "convert multi-line paragraph",
 			filename: "paragraph",
 			isTable:  true,
 			showHTML: true,
-			expected: "Lorem ipsum dolor sit amet,<br/>consectetur adipiscing elit,<br/>sed do eiusmod tempor incididunt<br/>ut labore et dolore magna aliqua.",
+			expected: "Lorem ipsum dolor sit amet,<br/>consectetur adipiscing elit,<br/>" +
+				"sed do eiusmod tempor incididunt<br/>ut labore et dolore magna aliqua.",
 		},
 		{
 			name:     "convert multi-line paragraph",
 			filename: "paragraph",
 			isTable:  true,
 			showHTML: false,
-			expected: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
+			expected: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, " +
+				"sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
 		},
 		{
 			name:     "convert multi-line list",
 			filename: "list",
 			isTable:  false,
 			showHTML: true,
-			expected: "- Lorem ipsum dolor sit amet,\n  * Lorem ipsum dolor sit amet,\n  * consectetur adipiscing elit,\n- consectetur adipiscing elit,\n- sed do eiusmod tempor incididunt\n- ut labore et dolore magna aliqua.",
+			expected: "- Lorem ipsum dolor sit amet,\n  * Lorem ipsum dolor sit amet,\n" +
+				"  * consectetur adipiscing elit,\n- consectetur adipiscing elit,\n" +
+				"- sed do eiusmod tempor incididunt\n- ut labore et dolore magna aliqua.",
 		},
 		{
 			name:     "convert multi-line list",
 			filename: "list",
 			isTable:  true,
 			showHTML: true,
-			expected: "- Lorem ipsum dolor sit amet,<br/>  * Lorem ipsum dolor sit amet,<br/>  * consectetur adipiscing elit,<br/>- consectetur adipiscing elit,<br/>- sed do eiusmod tempor incididunt<br/>- ut labore et dolore magna aliqua.",
+			expected: "- Lorem ipsum dolor sit amet,<br/>  * Lorem ipsum dolor sit amet,<br/>" +
+				"  * consectetur adipiscing elit,<br/>- consectetur adipiscing elit,<br/>" +
+				"- sed do eiusmod tempor incididunt<br/>- ut labore et dolore magna aliqua.",
 		},
 		{
 			name:     "convert multi-line list",
 			filename: "list",
 			isTable:  true,
 			showHTML: false,
-			expected: "- Lorem ipsum dolor sit amet,   * Lorem ipsum dolor sit amet,   * consectetur adipiscing elit, - consectetur adipiscing elit, - sed do eiusmod tempor incididunt - ut labore et dolore magna aliqua.",
+			expected: "- Lorem ipsum dolor sit amet,   * Lorem ipsum dolor sit amet,   " +
+				"* consectetur adipiscing elit, - consectetur adipiscing elit, " +
+				"- sed do eiusmod tempor incididunt - ut labore et dolore magna aliqua.",
 		},
 		{
 			name:     "convert multi-line indentations",
 			filename: "indentations",
 			isTable:  false,
 			showHTML: true,
-			expected: "This is a multiline test which works\n\nKey  \n  Foo1: blah  \n  Foo2: blah\n\nKey2  \nFoo1: bar1  \nFoo2: bar2",
+			expected: "This is a multiline test which works\n\nKey  \n  Foo1: blah  \n  Foo2: blah\n\n" +
+				"Key2  \nFoo1: bar1  \nFoo2: bar2",
 		},
 		{
 			name:     "convert multi-line indentations",
 			filename: "indentations",
 			isTable:  true,
 			showHTML: true,
-			expected: "This is a multiline test which works<br/><br/>Key<br/>  Foo1: blah<br/>  Foo2: blah<br/><br/>Key2<br/>Foo1: bar1<br/>Foo2: bar2",
+			expected: "This is a multiline test which works<br/><br/>Key<br/>  Foo1: blah<br/>  Foo2: blah<br/><br/>" +
+				"Key2<br/>Foo1: bar1<br/>Foo2: bar2",
 		},
 		{
 			name:     "convert multi-line indentations",
 			filename: "indentations",
 			isTable:  true,
 			showHTML: false,
-			expected: "This is a multiline test which works  Key   Foo1: blah   Foo2: blah  Key2 Foo1: bar1 Foo2: bar2",
+			expected: "This is a multiline test which works  " +
+				"Key   Foo1: blah   Foo2: blah  Key2 Foo1: bar1 Foo2: bar2",
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert := assert.New(t)
+			assert := assertpkg.New(t)
 
 			path := filepath.Join("testdata", "multiline", tt.filename+".golden")
-			bytes, err := os.ReadFile(path)
+			bytes, err := os.ReadFile(path) // lint:allow_dynamic_filename
 			assert.NoError(err)
 
 			actual := ConvertMultiLineText(string(bytes), tt.isTable, false, tt.showHTML)
@@ -428,8 +452,9 @@ func TestConvertMultiLineText(t *testing.T) {
 	}
 }
 
-// WHY: Ensures pipe and underscore characters are correctly escaped while preserving content inside
-// backtick-delimited code spans. Without this, table cells break or code examples get garbled.
+// Ensures pipe and underscore characters are correctly escaped while preserving
+// content inside backtick-delimited code spans. Without this, table cells break
+// or code examples get garbled.
 func TestEscapeCharacters(t *testing.T) {
 	tests := []struct {
 		name        string
@@ -457,7 +482,8 @@ func TestEscapeCharacters(t *testing.T) {
 			input:       "lorem ||| ipsum |||dolor|||consectetur||| `adipi ||| scing |||elit|||sit|||`",
 			escapePipe:  true,
 			escapeChars: false,
-			expected:    "lorem \\|\\|\\| ipsum \\|\\|\\|dolor\\|\\|\\|consectetur\\|\\|\\| `adipi ||| scing |||elit|||sit|||`",
+			expected: "lorem \\|\\|\\| ipsum \\|\\|\\|dolor\\|\\|\\|consectetur\\|\\|\\| `adipi ||| " +
+				"scing |||elit|||sit|||`",
 		},
 		{
 			name:        "do not escape pipe",
@@ -488,18 +514,22 @@ func TestEscapeCharacters(t *testing.T) {
 			expected:    "lorem \\_ ipsum _dolor\\_consectetur_ incid\\_idunt `adipi _ scing _elit_sit_`",
 		},
 		{
-			name:        "escape underscore",
-			input:       "lorem __ ipsum __dolor__consectetur__ incid__idunt `adipi __ scing __elit__sit__`",
+			name: "escape underscore",
+			input: "lorem __ ipsum __dolor__consectetur__ incid__idunt " +
+				"`adipi __ scing __elit__sit__`", // lint:no_const
 			escapePipe:  false,
 			escapeChars: true,
-			expected:    "lorem \\_\\_ ipsum __dolor\\_\\_consectetur__ incid\\_\\_idunt `adipi __ scing __elit__sit__`",
+			expected: "lorem \\_\\_ ipsum __dolor\\_\\_consectetur__ incid\\_\\_idunt " +
+				"`adipi __ scing __elit__sit__`",
 		},
 		{
-			name:        "escape underscore",
-			input:       "lorem ___ ipsum ___dolor___consectetur___ incid___idunt `adipi ___ scing ___elit___sit___`",
+			name: "escape underscore",
+			input: "lorem ___ ipsum ___dolor___consectetur___ incid___idunt " +
+				"`adipi ___ scing ___elit___sit___`", // lint:no_const
 			escapePipe:  false,
 			escapeChars: true,
-			expected:    "lorem \\_\\_\\_ ipsum ___dolor\\_\\_\\_consectetur___ incid\\_\\_\\_idunt `adipi ___ scing ___elit___sit___`",
+			expected: "lorem \\_\\_\\_ ipsum ___dolor\\_\\_\\_consectetur___ incid\\_\\_\\_idunt " +
+				"`adipi ___ scing ___elit___sit___`",
 		},
 		{
 			name:        "do not escape underscore",
@@ -537,11 +567,13 @@ func TestEscapeCharacters(t *testing.T) {
 			expected:    "** lorem ** ipsum **dolor**consectetur** `adipi ** scing **elit**sit**`",
 		},
 		{
-			name:        "escape asterisk",
-			input:       "*** lorem *** ipsum ***dolor***consectetur*** `adipi *** scing ***elit***sit***`",
+			name: "escape asterisk",
+			input: "*** lorem *** ipsum ***dolor***consectetur*** " +
+				"`adipi *** scing ***elit***sit***`", // lint:no_const
 			escapePipe:  false,
 			escapeChars: true,
-			expected:    "*** lorem *** ipsum ***dolor***consectetur*** `adipi *** scing ***elit***sit***`",
+			expected: "*** lorem *** ipsum ***dolor***consectetur*** " +
+				"`adipi *** scing ***elit***sit***`", // lint:no_const
 		},
 		{
 			name:        "escape asterisk",
@@ -581,7 +613,7 @@ func TestEscapeCharacters(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert := assert.New(t)
+			assert := assertpkg.New(t)
 
 			actual := EscapeCharacters(tt.input, tt.escapeChars, tt.escapePipe)
 
@@ -590,8 +622,8 @@ func TestEscapeCharacters(t *testing.T) {
 	}
 }
 
-// WHY: Validates that escaped underscores inside URLs are normalized back. Without this, links in
-// generated docs would contain backslashes and be unclickable.
+// Validates that escaped underscores inside URLs are normalized back. Without
+// this, links in generated docs would contain backslashes and be unclickable.
 func TestNormalizeURLs(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -638,7 +670,7 @@ func TestNormalizeURLs(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert := assert.New(t)
+			assert := assertpkg.New(t)
 
 			actual := NormalizeURLs(tt.input, tt.escape)
 

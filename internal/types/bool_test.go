@@ -7,16 +7,17 @@
 // You may obtain a copy of the License at the LICENSE file in
 // the root directory of this source tree.
 
-package types
+package types // lint:allow_bad_package_name
 
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	assertpkg "github.com/go-openapi/testify/assert"
 )
 
-// WHY: Validates Bool type detection and HasDefault behavior. Booleans must be recognized whether
-// the HCL type annotation is present or empty, so generated docs show "true"/"false" correctly.
+// Validates Bool type detection and HasDefault behavior. Booleans must be
+// recognized whether the HCL type annotation is present or empty, so generated
+// docs show "true"/"false" correctly.
 func TestBool(t *testing.T) {
 	values := List{true, false}
 	testPrimitive(t, []testprimitive{
@@ -43,7 +44,8 @@ func TestBool(t *testing.T) {
 	})
 }
 
-// WHY: Booleans are scalar—Length must always be 0 to distinguish from collection types.
+// Booleans are scalar—Length must always be 0 to distinguish from collection
+// types.
 func TestBoolLength(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -63,13 +65,14 @@ func TestBoolLength(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert := assert.New(t)
+			assert := assertpkg.New(t)
 			assert.Equal(tt.expected, Bool(tt.value).Length())
 		})
 	}
 }
 
-// WHY: Confirms the underlying Go value is accessible for serialization to JSON/XML/YAML.
+// Confirms the underlying Go value is accessible for serialization to
+// JSON/XML/YAML.
 func TestBoolUnderlying(t *testing.T) {
 	tests := []struct {
 		name  string
@@ -86,7 +89,7 @@ func TestBoolUnderlying(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert := assert.New(t)
+			assert := assertpkg.New(t)
 			assert.Equal(tt.value, Bool(tt.value).underlying())
 		})
 	}

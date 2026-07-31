@@ -17,10 +17,11 @@ import (
 )
 
 // NewCommand registers the "asciidoc table" subcommand. The table format
-// arranges inputs and outputs in AsciiDoc table syntax for compact presentation.
-// This is the preferred AsciiDoc format when brevity matters and descriptions
-// are short enough to fit in table cells without degrading readability.
-func NewCommand(runtime *cli.Runtime, config *print.Config) *cobra.Command {
+// arranges inputs and outputs in AsciiDoc table syntax for compact
+// presentation. This is the preferred AsciiDoc format when brevity matters and
+// descriptions are short enough to fit in table cells without degrading
+// readability.
+func NewCommand(runtime *cli.Runtime, _ *print.Config) *cobra.Command {
 	cmd := &cobra.Command{
 		Args:        cobra.ExactArgs(1),
 		Use:         "table [PATH]",

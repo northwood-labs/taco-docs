@@ -7,20 +7,21 @@
 // You may obtain a copy of the License at the LICENSE file in
 // the root directory of this source tree.
 
-package format
+package format // lint:allow_naming_conflict_stdlib lint:no_dupe
 
 import (
 	jsonsdk "encoding/json"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	assertpkg "github.com/go-openapi/testify/assert"
 
 	"github.com/northwood-labs/taco-docs/internal/testutil"
 	"github.com/northwood-labs/taco-docs/print"
 )
 
-// WHY: Verifies sorting produces stable, deterministic output for all module items (inputs, outputs, providers, etc.).
-// Without this, diffs on regeneration would be noisy and unpredictable depending on filesystem order.
+// Verifies sorting produces stable, deterministic output for all module items
+// (inputs, outputs, providers, etc.). Without this, diffs on regeneration would
+// be noisy and unpredictable depending on filesystem order.
 func TestCommonSort(t *testing.T) {
 	tests := map[string]struct {
 		config print.Config
@@ -49,7 +50,7 @@ func TestCommonSort(t *testing.T) {
 	}
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			assert := assert.New(t)
+			assert := assertpkg.New(t)
 
 			module, err := testutil.GetModule(&tt.config)
 			assert.NoError(err)
@@ -98,9 +99,10 @@ func TestCommonSort(t *testing.T) {
 	}
 }
 
-// WHY: Ensures the header content is correctly loaded from various file formats (.adoc, .md, .tf, .txt).
-// If broken, users would get empty or wrong headers in generated docs regardless of source format.
-func TestCommonHeaderFrom(t *testing.T) {
+// Ensures the header content is correctly loaded from various file formats
+// (.adoc, .md, .tf, .txt). If broken, users would get empty or wrong headers in
+// generated docs regardless of source format.
+func TestCommonHeaderFrom(t *testing.T) { // lint:no_dupe
 	tests := map[string]struct {
 		config print.Config
 	}{
@@ -131,7 +133,7 @@ func TestCommonHeaderFrom(t *testing.T) {
 	}
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			assert := assert.New(t)
+			assert := assertpkg.New(t)
 
 			expected, err := testutil.GetExpected("common", "header-"+name)
 			assert.NoError(err)
@@ -144,9 +146,10 @@ func TestCommonHeaderFrom(t *testing.T) {
 	}
 }
 
-// WHY: Ensures the footer content is correctly loaded from various file formats.
-// Mirrors header loading but for footers; a regression here means incomplete generated documentation.
-func TestCommonFooterFrom(t *testing.T) {
+// Ensures the footer content is correctly loaded from various file formats.
+// Mirrors header loading but for footers; a regression here means incomplete
+// generated documentation.
+func TestCommonFooterFrom(t *testing.T) { // lint:no_dupe
 	tests := map[string]struct {
 		config print.Config
 	}{
@@ -177,7 +180,7 @@ func TestCommonFooterFrom(t *testing.T) {
 	}
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			assert := assert.New(t)
+			assert := assertpkg.New(t)
 
 			expected, err := testutil.GetExpected("common", "footer-"+name)
 			assert.NoError(err)

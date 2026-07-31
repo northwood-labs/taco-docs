@@ -17,27 +17,6 @@ import (
 	"github.com/northwood-labs/taco-docs/cmd/completion/zsh"
 )
 
-// NewCommand registers the "completion" subcommand group. Shell completions
-// dramatically improve the developer experience for CLI tools by enabling
-// tab-completion of subcommands and flags. This avoids the need to constantly
-// reference --help or documentation. Each shell has its own completion syntax,
-// so separate subcommands handle bash, zsh, and fish respectively.
-func NewCommand() *cobra.Command {
-	cmd := &cobra.Command{
-		Args:  cobra.NoArgs,
-		Use:   "completion SHELL",
-		Short: "Generate shell completion code for the specified shell (bash, zsh, fish)",
-		Long:  longDescription,
-	}
-
-	// subcommands.
-	cmd.AddCommand(bash.NewCommand())
-	cmd.AddCommand(zsh.NewCommand())
-	cmd.AddCommand(fish.NewCommand())
-
-	return cmd
-}
-
 const longDescription = `Outputs terraform-docs shell completion for the given shell (bash, zsh, fish)
 This depends on the bash-completion binary.  Example installation instructions:
 # for bash users
@@ -64,3 +43,24 @@ This depends on the bash-completion binary.  Example installation instructions:
 Additionally, you may want to output the completion to a file and source in your .bashrc
 Note for zsh users: [1] zsh completions are only supported in versions of zsh >= 5.2
 `
+
+// NewCommand registers the "completion" subcommand group. Shell completions
+// dramatically improve the developer experience for CLI tools by enabling
+// tab-completion of subcommands and flags. This avoids the need to constantly
+// reference --help or documentation. Each shell has its own completion syntax,
+// so separate subcommands handle bash, zsh, and fish respectively.
+func NewCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Args:  cobra.NoArgs,
+		Use:   "completion SHELL",
+		Short: "Generate shell completion code for the specified shell (bash, zsh, fish)",
+		Long:  longDescription,
+	}
+
+	// subcommands.
+	cmd.AddCommand(bash.NewCommand())
+	cmd.AddCommand(zsh.NewCommand())
+	cmd.AddCommand(fish.NewCommand())
+
+	return cmd
+}

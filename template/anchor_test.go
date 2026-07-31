@@ -7,17 +7,18 @@
 // You may obtain a copy of the License at the LICENSE file in
 // the root directory of this source tree.
 
-package template
+package template // lint:allow_naming_conflict_stdlib
 
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	assertpkg "github.com/go-openapi/testify/assert"
 )
 
-// WHY: Validates Markdown anchor generation with/without escape and anchor flags. Broken anchors
-// mean in-page links don't work in rendered docs, breaking navigation for large modules.
-func TestAnchorMarkdown(t *testing.T) {
+// Validates Markdown anchor generation with/without escape and anchor flags.
+// Broken anchors mean in-page links don't work in rendered docs, breaking
+// navigation for large modules.
+func TestAnchorMarkdown(t *testing.T) { // lint:no_dupe
 	tests := []struct {
 		typeSection string
 		name        string
@@ -30,14 +31,16 @@ func TestAnchorMarkdown(t *testing.T) {
 			name:        "banana_anchor_escape",
 			anchor:      true,
 			escape:      true,
-			expected:    "<a name=\"module_banana_anchor_escape\"></a> [banana\\_anchor\\_escape](#module\\_banana\\_anchor\\_escape)",
+			expected: "<a name=\"module_banana_anchor_escape\"></a>" +
+				" [banana\\_anchor\\_escape](#module\\_banana\\_anchor\\_escape)",
 		},
 		{
 			typeSection: "module",
 			name:        "banana_anchor_noescape",
 			anchor:      true,
 			escape:      false,
-			expected:    "<a name=\"module_banana_anchor_noescape\"></a> [banana_anchor_noescape](#module_banana_anchor_noescape)",
+			expected: "<a name=\"module_banana_anchor_noescape\"></a>" +
+				" [banana_anchor_noescape](#module_banana_anchor_noescape)",
 		},
 		{
 			typeSection: "module",
@@ -56,7 +59,7 @@ func TestAnchorMarkdown(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert := assert.New(t)
+			assert := assertpkg.New(t)
 
 			actual := CreateAnchorMarkdown(tt.typeSection, tt.name, tt.anchor, tt.escape)
 
@@ -65,8 +68,8 @@ func TestAnchorMarkdown(t *testing.T) {
 	}
 }
 
-// WHY: Same as Markdown anchors but for AsciiDoc's [[id]] <<id,label>> syntax.
-func TestAnchorAsciidoc(t *testing.T) {
+// Same as Markdown anchors but for AsciiDoc's [[id]] <<id,label>> syntax.
+func TestAnchorAsciidoc(t *testing.T) { // lint:no_dupe
 	tests := []struct {
 		typeSection string
 		name        string
@@ -79,14 +82,16 @@ func TestAnchorAsciidoc(t *testing.T) {
 			name:        "banana_anchor_escape",
 			anchor:      true,
 			escape:      true,
-			expected:    "[[module\\_banana\\_anchor\\_escape]] <<module\\_banana\\_anchor\\_escape,banana\\_anchor\\_escape>>",
+			expected: "[[module\\_banana\\_anchor\\_escape]] " +
+				"<<module\\_banana\\_anchor\\_escape,banana\\_anchor\\_escape>>",
 		},
 		{
 			typeSection: "module",
 			name:        "banana_anchor_noescape",
 			anchor:      true,
 			escape:      false,
-			expected:    "[[module_banana_anchor_noescape]] <<module_banana_anchor_noescape,banana_anchor_noescape>>",
+			expected: "[[module_banana_anchor_noescape]] " +
+				"<<module_banana_anchor_noescape,banana_anchor_noescape>>",
 		},
 		{
 			typeSection: "module",
@@ -105,7 +110,7 @@ func TestAnchorAsciidoc(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert := assert.New(t)
+			assert := assertpkg.New(t)
 
 			actual := CreateAnchorAsciidoc(tt.typeSection, tt.name, tt.anchor, tt.escape)
 

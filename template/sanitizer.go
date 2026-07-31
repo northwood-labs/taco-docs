@@ -7,7 +7,7 @@
 // You may obtain a copy of the License at the LICENSE file in
 // the root directory of this source tree.
 
-package template
+package template // lint:allow_naming_conflict_stdlib
 
 import (
 	"bytes"
@@ -19,9 +19,11 @@ import (
 	"mvdan.cc/xurls/v2"
 )
 
+type segmentCallbackFn func(string, bool, bool) string
+
 // SanitizeName escapes underscore character which have special meaning in
 // Markdown.
-func SanitizeName(name string, escape bool) string {
+func SanitizeName(name string, escape bool) string { // lint:allow_param lint:allow_control_coupling_antipattern
 	if escape {
 		// Escape underscore.
 		name = strings.ReplaceAll(name, "_", "\\_")
@@ -33,11 +35,12 @@ func SanitizeName(name string, escape bool) string {
 // SanitizeSection converts passed 'string' to suitable Markdown or AsciiDoc
 // representation for a document. (including line-break, illegal characters,
 // code blocks etc). This is used for header and footer content where users
-// control the source text and line-endings must be preserved exactly as written.
+// control the source text and line-endings must be preserved exactly as
+// written.
 //
 // IMPORTANT: SanitizeSection will never change the line-endings and preserve
 // them as they are provided by the users.
-func SanitizeSection(s string, escape, html bool) string {
+func SanitizeSection(s string, escape, html bool) string { // lint:allow_param
 	if s == "" {
 		return "n/a"
 	}
@@ -45,14 +48,14 @@ func SanitizeSection(s string, escape, html bool) string {
 	result := processSegments(
 		s,
 		"```",
-		func(segment string, first, last bool) string {
+		func(segment string, _, _ bool) string {
 			segment = EscapeCharacters(segment, escape, false)
 			segment = ConvertMultiLineText(segment, false, true, html)
 			segment = NormalizeURLs(segment, escape)
 
 			return segment
 		},
-		func(segment string, first, last bool) string {
+		func(segment string, _, _ bool) string {
 			lastbreak := ""
 			if !strings.HasSuffix(segment, "\n") {
 				lastbreak = "\n"
@@ -63,7 +66,7 @@ func SanitizeSection(s string, escape, html bool) string {
 			lastindent := ""
 
 			lines := strings.Split(segment, "\n")
-			if len(strings.TrimSpace(lines[len(lines)-1])) == 0 {
+			if strings.TrimSpace(lines[len(lines)-1]) == "" {
 				lastbreak = ""
 			}
 
@@ -77,10 +80,10 @@ func SanitizeSection(s string, escape, html bool) string {
 }
 
 // SanitizeDocument converts passed 'string' to suitable Markdown or AsciiDoc
-// representation for a document (including line-break, illegal characters,
-// code blocks etc). Unlike SanitizeSection, this applies Markdown line-break
+// representation for a document (including line-break, illegal characters, code
+// blocks etc). Unlike SanitizeSection, this applies Markdown line-break
 // conversion to produce proper multi-line paragraph rendering.
-func SanitizeDocument(s string, escape, html bool) string {
+func SanitizeDocument(s string, escape, html bool) string { // lint:allow_param
 	if s == "" {
 		return "n/a"
 	}
@@ -88,14 +91,14 @@ func SanitizeDocument(s string, escape, html bool) string {
 	result := processSegments(
 		s,
 		"```",
-		func(segment string, first, last bool) string {
+		func(segment string, _, _ bool) string {
 			segment = EscapeCharacters(segment, escape, false)
 			segment = ConvertMultiLineText(segment, false, false, html)
 			segment = NormalizeURLs(segment, escape)
 
 			return segment
 		},
-		func(segment string, first, last bool) string {
+		func(segment string, _, _ bool) string {
 			lastbreak := ""
 			if !strings.HasSuffix(segment, "\n") {
 				lastbreak = "\n"
@@ -114,7 +117,10 @@ func SanitizeDocument(s string, escape, html bool) string {
 // representation for a table cell. Table cells can't contain literal newlines
 // (they'd break the table structure), so line breaks are converted to <br/> or
 // spaces depending on HTML mode.
-func SanitizeMarkdownTable(s string, escape, html bool) string {
+func SanitizeMarkdownTable( // lint:allow_control_coupling_antipattern
+	s string,
+	escape, html bool,
+) string { // lint:allow_param
 	if s == "" {
 		return "n/a"
 	}
@@ -122,7 +128,7 @@ func SanitizeMarkdownTable(s string, escape, html bool) string {
 	result := processSegments(
 		s,
 		"```",
-		func(segment string, first, last bool) string {
+		func(segment string, _, _ bool) string {
 			segment = EscapeCharacters(segment, escape, true)
 			segment = ConvertMultiLineText(segment, true, false, html)
 			segment = NormalizeURLs(segment, escape)
@@ -166,7 +172,7 @@ func SanitizeMarkdownTable(s string, escape, html bool) string {
 // SanitizeAsciidocTable converts passed 'string' to suitable AsciiDoc
 // representation for a table cell. AsciiDoc tables use different code block
 // syntax ([source]/----) and don't need HTML line-break conversion.
-func SanitizeAsciidocTable(s string, escape, html bool) string {
+func SanitizeAsciidocTable(s string, escape, _ bool) string { // lint:allow_param
 	if s == "" {
 		return "n/a"
 	}
@@ -174,13 +180,13 @@ func SanitizeAsciidocTable(s string, escape, html bool) string {
 	result := processSegments(
 		s,
 		"```",
-		func(segment string, first, last bool) string {
+		func(segment string, _, _ bool) string {
 			segment = EscapeCharacters(segment, escape, true)
 			segment = NormalizeURLs(segment, escape)
 
 			return segment
 		},
-		func(segment string, first, last bool) string {
+		func(segment string, _, _ bool) string {
 			segment = strings.TrimSpace(segment)
 			segment = fmt.Sprintf("[source]\n----\n%s\n----", segment)
 
@@ -192,19 +198,23 @@ func SanitizeAsciidocTable(s string, escape, html bool) string {
 }
 
 // ConvertMultiLineText translates natural line breaks into Markdown-compatible
-// line breaks (double-space or <br/>) depending on whether we're in a table cell.
-// Markdown requires trailing double-spaces for soft line breaks within a paragraph;
-// tables need explicit <br/> tags since whitespace is collapsed in cells.
-func ConvertMultiLineText(s string, isTable, isHeader, showHTML bool) string {
+// line breaks (double-space or <br/>) depending on whether we're in a table
+// cell. Markdown requires trailing double-spaces for soft line breaks within a
+// paragraph; tables need explicit <br/> tags since whitespace is collapsed in
+// cells.
+func ConvertMultiLineText( // lint:allow_control_coupling_antipattern
+	s string,
+	isTable, isHeader, showHTML bool,
+) string { // lint:allow_param
 	if isTable {
 		s = strings.TrimSpace(s)
 	}
 
-	// Convert line-break on a non-empty line followed by another line
-	// starting with "alphanumeric" word into space-space-newline
-	// which is a know convention of Markdown for multi-lines paragprah.
-	// This doesn't apply on a markdown list for example, because all the
-	// consecutive lines start with hyphen which is a special character.
+	// Convert line-break on a non-empty line followed by another line starting
+	// with "alphanumeric" word into space-space-newline which is a know
+	// convention of Markdown for multi-lines paragprah. This doesn't apply on a
+	// markdown list for example, because all the consecutive lines start with
+	// hyphen which is a special character.
 	if !isHeader {
 		s = regexp.MustCompile(`(\S*)(\r?\n)(\s*)(\w+)`).ReplaceAllString(s, "$1  $2$3$4")
 		s = strings.ReplaceAll(s, "    \n", "  \n")
@@ -216,7 +226,8 @@ func ConvertMultiLineText(s string, isTable, isHeader, showHTML bool) string {
 		return s
 	}
 
-	// representation of line break. <br/> if showHTML is true, <space> if false.
+	// representation of line break. <br/> if showHTML is true, <space> if
+	// false.
 	linebreak := " "
 
 	if showHTML {
@@ -234,10 +245,11 @@ func ConvertMultiLineText(s string, isTable, isHeader, showHTML bool) string {
 // Line breaks are replaced with single space.
 func ConvertOneLineCodeBlock(s string) string {
 	split := strings.Split(s, "\n")
-	result := []string{}
+
+	var result []string
 
 	for _, segment := range split {
-		if len(strings.TrimSpace(segment)) == 0 {
+		if strings.TrimSpace(segment) == "" {
 			continue
 		}
 
@@ -253,16 +265,19 @@ func ConvertOneLineCodeBlock(s string) string {
 // in variable names becoming italics) while being careful not to escape inside
 // inline code spans. The processSegments split on backticks ensures code spans
 // are left untouched.
-func EscapeCharacters(s string, escape, escapePipe bool) string {
+func EscapeCharacters( // lint:allow_control_coupling_antipattern
+	s string,
+	escape, escapePipe bool,
+) string { // lint:allow_param
 	// Escape pipe (only for 'markdown table' or 'asciidoc table').
 	if escapePipe {
 		s = processSegments(
 			s,
 			"`",
-			func(segment string, first, last bool) string {
+			func(segment string, _, _ bool) string {
 				return strings.ReplaceAll(segment, "|", "\\|")
 			},
-			func(segment string, first, last bool) string {
+			func(segment string, _, _ bool) string {
 				return fmt.Sprintf("`%s`", segment)
 			},
 		)
@@ -272,7 +287,7 @@ func EscapeCharacters(s string, escape, escapePipe bool) string {
 		s = processSegments(
 			s,
 			"`",
-			func(segment string, first, last bool) string {
+			func(segment string, _, _ bool) string {
 				return executePerLine(segment, func(line string) string {
 					escape := func(char string) {
 						c := strings.ReplaceAll(char, "*", "\\*")
@@ -286,8 +301,9 @@ func EscapeCharacters(s string, escape, escapePipe bool) string {
 								index:   []int{2},
 							},
 							{
-								pattern: `(\s+)(` + c + `+)([^\t\n\f\r ` + c + `])(.*)([^\t\n\f\r ` + c + `])(` + c + `+)(\s+)`,
-								index:   []int{6, 2},
+								pattern: `(\s+)(` + c + `+)([^\t\n\f\r ` + c + `])(.*)([^\t\n\f\r ` + c + `])(` +
+									c + `+)(\s+)`,
+								index: []int{6, 2},
 							},
 						}
 						for i := range cases {
@@ -315,7 +331,7 @@ func EscapeCharacters(s string, escape, escapePipe bool) string {
 					return line
 				})
 			},
-			func(segment string, first, last bool) string {
+			func(segment string, _, _ bool) string {
 				segment = fmt.Sprintf("`%s`", segment)
 				return segment
 			},
@@ -329,7 +345,7 @@ func EscapeCharacters(s string, escape, escapePipe bool) string {
 // underscores would break links. This runs after EscapeCharacters because URLs
 // are identified by pattern matching and selectively un-escaped—it's simpler
 // than trying to detect URLs before escaping.
-func NormalizeURLs(s string, escape bool) string {
+func NormalizeURLs(s string, escape bool) string { // lint:allow_param lint:allow_control_coupling_antipattern
 	if escape {
 		if urls := xurls.Strict().FindAllString(s, -1); len(urls) > 0 {
 			for _, url := range urls {
@@ -343,8 +359,6 @@ func NormalizeURLs(s string, escape bool) string {
 	return s
 }
 
-type segmentCallbackFn func(string, bool, bool) string
-
 // processSegments is the core strategy for treating code blocks differently
 // from prose. Code blocks must not be escaped or sanitized because they contain
 // literal characters (underscores, pipes, etc.) that would be mangled by
@@ -357,12 +371,12 @@ func processSegments(s, prefix string, normalFn, codeFn segmentCallbackFn) strin
 	buffer := bytes.NewBufferString("")
 
 	for i, segment := range segments {
-		if len(segment) == 0 {
+		if segment == "" {
 			continue
 		}
 
-		first := i == 0 || len(strings.TrimSpace(segments[i-1])) == 0
-		last := i == len(segments)-1 || len(strings.TrimSpace(segments[i+1])) == 0
+		first := i == 0 || strings.TrimSpace(segments[i-1]) == ""
+		last := i == len(segments)-1 || strings.TrimSpace(segments[i+1]) == ""
 
 		if !nextIsInCodeBlock {
 			segment = normalFn(segment, first, last)

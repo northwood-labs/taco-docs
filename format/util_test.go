@@ -7,16 +7,17 @@
 // You may obtain a copy of the License at the LICENSE file in
 // the root directory of this source tree.
 
-package format
+package format // lint:allow_naming_conflict_stdlib lint:no_dupe
 
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	assertpkg "github.com/go-openapi/testify/assert"
 )
 
-// WHY: Validates output sanitization—trailing spaces, consecutive blank lines, and bare links are
-// cleaned up. Without this, generated Markdown would have noisy whitespace diffs.
+// Validates output sanitization—trailing spaces, consecutive blank lines, and
+// bare links are cleaned up. Without this, generated Markdown would have noisy
+// whitespace diffs.
 func TestSanitizeMarkdown(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -86,7 +87,7 @@ func TestSanitizeMarkdown(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert := assert.New(t)
+			assert := assertpkg.New(t)
 			actual := sanitize(tt.markdown)
 
 			assert.Equal(tt.expected, actual)
@@ -94,8 +95,9 @@ func TestSanitizeMarkdown(t *testing.T) {
 	}
 }
 
-// WHY: Ensures bare URLs in descriptions are wrapped in angle brackets for proper Markdown rendering,
-// and that already-wrapped or markdown-linked URLs are left untouched.
+// Ensures bare URLs in descriptions are wrapped in angle brackets for proper
+// Markdown rendering, and that already-wrapped or markdown-linked URLs are left
+// untouched.
 func TestSanitizeBareLinks(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -130,7 +132,7 @@ func TestSanitizeBareLinks(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert := assert.New(t)
+			assert := assertpkg.New(t)
 
 			actual := SanitizeBareLinks(tt.input)
 
@@ -139,8 +141,9 @@ func TestSanitizeBareLinks(t *testing.T) {
 	}
 }
 
-// WHY: Validates fenced code block rendering—single-line values get inline backticks, multi-line
-// values get triple-fence blocks. Controls how default values are displayed in docs.
+// Validates fenced code block rendering—single-line values get inline
+// backticks, multi-line values get triple-fence blocks. Controls how default
+// values are displayed in docs.
 func TestFenceCodeBlock(t *testing.T) {
 	tests := []struct {
 		name      string
@@ -194,7 +197,7 @@ func TestFenceCodeBlock(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert := assert.New(t)
+			assert := assertpkg.New(t)
 			actual, extraline := PrintFencedCodeBlock(tt.code, tt.language)
 
 			assert.Equal(tt.expected, actual)

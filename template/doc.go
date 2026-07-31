@@ -49,4 +49,4 @@
 //
 //	    return tt.Render("main", module)
 //	}
-package template
+package template // lint:allow_naming_conflict_stdlib

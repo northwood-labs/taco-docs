@@ -7,21 +7,22 @@
 // You may obtain a copy of the License at the LICENSE file in
 // the root directory of this source tree.
 
-package format
+package format // lint:allow_naming_conflict_stdlib lint:no_dupe
 
 import (
 	"os"
 	"path/filepath"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	assertpkg "github.com/go-openapi/testify/assert"
 
 	"github.com/northwood-labs/taco-docs/print"
 	"github.com/northwood-labs/taco-docs/terraform"
 )
 
-// WHY: Tests the generator's template execution logic, including custom templates with section references,
-// file includes, and unknown section handling. Ensures the --content flag works correctly.
+// Tests the generator's template execution logic, including custom templates
+// with section references, file includes, and unknown section handling. Ensures
+// the --content flag works correctly.
 func TestExecuteTemplate(t *testing.T) {
 	header := "this is the header"
 	footer := "this is the footer"
@@ -106,7 +107,7 @@ func TestExecuteTemplate(t *testing.T) {
 	}
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			assert := assert.New(t)
+			assert := assertpkg.New(t)
 
 			config := print.DefaultConfig()
 
@@ -128,7 +129,8 @@ func TestExecuteTemplate(t *testing.T) {
 	}
 }
 
-// WHY: Ensures the withX generator functions correctly set their respective fields on the generator.
+// Ensures the withX generator functions correctly set their respective fields
+// on the generator.
 func TestGeneratorFunc(t *testing.T) {
 	text := "foo"
 
@@ -175,7 +177,7 @@ func TestGeneratorFunc(t *testing.T) {
 	}
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			assert := assert.New(t)
+			assert := assertpkg.New(t)
 
 			config := print.DefaultConfig()
 
@@ -188,10 +190,11 @@ func TestGeneratorFunc(t *testing.T) {
 	}
 }
 
-// WHY: Tests withModule generator function to verify module data is correctly loaded from disk.
+// Tests withModule generator function to verify module data is correctly loaded
+// from disk.
 func TestGeneratorFuncModule(t *testing.T) {
 	t.Run("withModule", func(t *testing.T) {
-		assert := assert.New(t)
+		assert := assertpkg.New(t)
 
 		config := print.DefaultConfig()
 
@@ -204,7 +207,7 @@ func TestGeneratorFuncModule(t *testing.T) {
 		generator := newGenerator(config, true, withModule(module))
 
 		path := filepath.Join("..", "terraform", "testdata", "expected", "full-example-mainTf-Header.golden")
-		data, err := os.ReadFile(path)
+		data, err := os.ReadFile(path) // lint:allow_dynamic_filename
 
 		assert.NoError(err)
 
@@ -217,15 +220,19 @@ func TestGeneratorFuncModule(t *testing.T) {
 	})
 }
 
-// WHY: Validates forEach correctly populates all named sections. This is the callback mechanism
-// used by formatters to generate each section independently.
+// Validates forEach correctly populates all named sections. This is the
+// callback mechanism used by formatters to generate each section independently.
 func TestForEach(t *testing.T) {
 	config := print.DefaultConfig()
 
 	generator := newGenerator(config, false)
-	generator.forEach(func(name string) (string, error) {
+
+	err := generator.forEach(func(name string) (string, error) {
 		return name, nil
 	})
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	tests := map[string]struct {
 		actual string
@@ -242,7 +249,7 @@ func TestForEach(t *testing.T) {
 	}
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			assert := assert.New(t)
+			assert := assertpkg.New(t)
 			assert.Equal(name, tt.actual)
 		})
 	}

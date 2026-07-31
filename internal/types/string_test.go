@@ -7,17 +7,17 @@
 // You may obtain a copy of the License at the LICENSE file in
 // the root directory of this source tree.
 
-package types
+package types // lint:allow_bad_package_name
 
 import (
 	"bytes"
 	"encoding/xml"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	assertpkg "github.com/go-openapi/testify/assert"
 )
 
-// WHY: Validates String type detection and HasDefault behavior.
+// Validates String type detection and HasDefault behavior.
 func TestString(t *testing.T) {
 	values := List{"foo", "42", "false", "true"}
 	testPrimitive(t, []testprimitive{
@@ -44,7 +44,7 @@ func TestString(t *testing.T) {
 	})
 }
 
-// WHY: String.Length() returns character count for display decisions.
+// String.Length() returns character count for display decisions.
 func TestStringLength(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -79,13 +79,13 @@ func TestStringLength(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert := assert.New(t)
+			assert := assertpkg.New(t)
 			assert.Equal(tt.expected, String(tt.value).Length())
 		})
 	}
 }
 
-// WHY: Confirms the underlying string value is accessible for serialization.
+// Confirms the underlying string value is accessible for serialization.
 func TestStringUnderlying(t *testing.T) {
 	tests := []struct {
 		name  string
@@ -110,13 +110,14 @@ func TestStringUnderlying(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert := assert.New(t)
+			assert := assertpkg.New(t)
 			assert.Equal(tt.value, String(tt.value).underlying())
 		})
 	}
 }
 
-// WHY: Ensures strings are properly quoted/escaped in JSON, including edge cases like regex and empty strings.
+// Ensures strings are properly quoted/escaped in JSON, including edge cases
+// like regex and empty strings.
 func TestStringMarshalJSON(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -151,7 +152,7 @@ func TestStringMarshalJSON(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert := assert.New(t)
+			assert := assertpkg.New(t)
 			actual, err := String(tt.value).MarshalJSON()
 
 			assert.NoError(err)
@@ -160,7 +161,8 @@ func TestStringMarshalJSON(t *testing.T) {
 	}
 }
 
-// WHY: Ensures special XML characters (<, >, &, quotes) are properly escaped, and empty renders as xsi:nil.
+// Ensures special XML characters (<, >, &, quotes) are properly escaped, and
+// empty renders as xsi:nil.
 func TestStringMarshalXML(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -185,7 +187,7 @@ func TestStringMarshalXML(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert := assert.New(t)
+			assert := assertpkg.New(t)
 
 			var b bytes.Buffer
 
@@ -203,7 +205,8 @@ func TestStringMarshalXML(t *testing.T) {
 	}
 }
 
-// WHY: Ensures empty strings marshal to nil in YAML (omitted in output) rather than empty quoted strings.
+// Ensures empty strings marshal to nil in YAML (omitted in output) rather than
+// empty quoted strings.
 func TestStringMarshalYAML(t *testing.T) {
 	tests := []struct {
 		expected any
@@ -228,7 +231,7 @@ func TestStringMarshalYAML(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert := assert.New(t)
+			assert := assertpkg.New(t)
 			actual, err := String(tt.value).MarshalYAML()
 
 			assert.NoError(err)

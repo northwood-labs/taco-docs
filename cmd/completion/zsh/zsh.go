@@ -27,7 +27,7 @@ func NewCommand() *cobra.Command {
 		Args:  cobra.NoArgs,
 		Use:   "zsh",
 		Short: "Generate shell completion for zsh",
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, _ []string) error {
 			return cmd.Parent().Parent().GenZshCompletion(os.Stdout)
 		},
 	}

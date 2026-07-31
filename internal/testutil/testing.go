@@ -10,6 +10,7 @@
 package testutil
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -22,7 +23,7 @@ import (
 func GetModule(config *print.Config) (*terraform.Module, error) {
 	path, err := getExampleFolder(config.ModuleRoot)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("getting example folder: %w", err)
 	}
 
 	config.ModuleRoot = path
@@ -33,7 +34,7 @@ func GetModule(config *print.Config) (*terraform.Module, error) {
 
 	tfmodule, err := terraform.LoadWithOptions(config)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("loading terraform module: %w", err)
 	}
 
 	return tfmodule, nil
@@ -45,14 +46,17 @@ func GetExpected(format, name string) (string, error) {
 
 	bytes, err := os.ReadFile(filepath.Clean(path))
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("reading golden file %q: %w", path, err)
 	}
 
 	return string(bytes), nil
 }
 
 func getExampleFolder(folder string) (string, error) {
-	_, b, _, _ := runtime.Caller(0)
+	_, b, _, ok := runtime.Caller(0)
+	if !ok {
+		return "", ErrCallerFilePath
+	}
 
 	var path string
 	if folder != "" {
@@ -62,7 +66,7 @@ func getExampleFolder(folder string) (string, error) {
 	}
 
 	if _, err := os.Stat(path); os.IsNotExist(err) {
-		return "", err
+		return "", fmt.Errorf("example folder not found: %w", err)
 	}
 
 	return path, nil

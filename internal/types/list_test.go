@@ -7,7 +7,7 @@
 // You may obtain a copy of the License at the LICENSE file in
 // the root directory of this source tree.
 
-package types
+package types // lint:allow_bad_package_name
 
 import (
 	"bytes"
@@ -15,10 +15,11 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	assertpkg "github.com/go-openapi/testify/assert"
 )
 
-// WHY: Validates list type detection from various element types (strings, bools, numbers).
+// Validates list type detection from various element types (strings, bools,
+// numbers).
 func TestList(t *testing.T) {
 	values := []List{
 		{"foo", "bar", "baz"},
@@ -52,7 +53,7 @@ func TestList(t *testing.T) {
 	for _, tt := range tests {
 		for _, tv := range tt.values {
 			t.Run(tt.name, func(t *testing.T) {
-				assert := assert.New(t)
+				assert := assertpkg.New(t)
 
 				actualValue := ValueOf(tv.Underlying())
 				actualType := TypeOf(tt.types, tv.Underlying())
@@ -65,7 +66,8 @@ func TestList(t *testing.T) {
 	}
 }
 
-// WHY: Ensures List.Length() returns element count, used to decide between inline vs block rendering.
+// Ensures List.Length() returns element count, used to decide between inline vs
+// block rendering.
 func TestListLength(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -100,13 +102,13 @@ func TestListLength(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert := assert.New(t)
+			assert := assertpkg.New(t)
 			assert.Equal(tt.expected, List(tt.value).Length())
 		})
 	}
 }
 
-// WHY: Confirms the underlying []interface{} value is accessible for serialization.
+// Confirms the underlying []interface{} value is accessible for serialization.
 func TestListUnderlying(t *testing.T) {
 	tests := []struct {
 		name  string
@@ -131,14 +133,14 @@ func TestListUnderlying(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert := assert.New(t)
+			assert := assertpkg.New(t)
 			assert.Equal(tt.value, List(tt.value).Underlying())
 		})
 	}
 }
 
-// WHY: Ensures lists serialize to XML with <item> wrapper elements. Broken serialization means
-// invalid XML in the xml output format.
+// Ensures lists serialize to XML with <item> wrapper elements. Broken
+// serialization means invalid XML in the xml output format.
 func TestListMarshalXML(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -178,7 +180,7 @@ func TestListMarshalXML(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert := assert.New(t)
+			assert := assertpkg.New(t)
 
 			var b bytes.Buffer
 

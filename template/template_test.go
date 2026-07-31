@@ -7,7 +7,7 @@
 // You may obtain a copy of the License at the LICENSE file in
 // the root directory of this source tree.
 
-package template
+package template // lint:allow_naming_conflict_stdlib
 
 import (
 	"fmt"
@@ -17,15 +17,366 @@ import (
 	"testing"
 	gotemplate "text/template"
 
-	"github.com/stretchr/testify/assert"
+	assertpkg "github.com/go-openapi/testify/assert"
 
 	"github.com/northwood-labs/taco-docs/internal/types"
 	"github.com/northwood-labs/taco-docs/print"
 	"github.com/northwood-labs/taco-docs/terraform"
 )
 
-// WHY: Verifies template rendering with custom functions and module data. This tests the core
-// template engine that powers the --content flag for custom output formatting.
+// builtinFuncTests contains all table-driven test data for TestBuiltinFunc.
+var builtinFuncTests = []builtinFuncTestCase{ // lint:no_dupe
+	// default.
+	{
+		name:     "template builtin functions default",
+		funcName: "default",
+		funcArgs: []string{`"a"`, `"b"`},
+		escape:   true,
+		expected: "b",
+	},
+	{
+		name:     "template builtin functions default",
+		funcName: "default",
+		funcArgs: []string{`"a"`, `""`},
+		escape:   true,
+		expected: "a",
+	},
+	{
+		name:     "template builtin functions default",
+		funcName: "default",
+		funcArgs: []string{`""`, `"b"`},
+		escape:   true,
+		expected: "b",
+	},
+	{
+		name:     "template builtin functions default",
+		funcName: "default",
+		funcArgs: []string{`""`, `""`},
+		escape:   true,
+		expected: "",
+	},
+
+	// tostring.
+	{
+		name:     "template builtin functions tostring",
+		funcName: "tostring",
+		funcArgs: []string{`"foo"`},
+		escape:   true,
+		expected: "foo",
+	},
+	{
+		name:     "template builtin functions tostring",
+		funcName: "tostring",
+		funcArgs: []string{`""`},
+		escape:   true,
+		expected: "",
+	},
+
+	// trim.
+	{
+		name:     "template builtin functions trim",
+		funcName: "trim",
+		funcArgs: []string{`" "`, `"   foo   "`},
+		escape:   true,
+		expected: "foo",
+	},
+	{
+		name:     "template builtin functions trim",
+		funcName: "trim",
+		funcArgs: []string{`" "`, `"foo"`},
+		escape:   true,
+		expected: "foo",
+	},
+	{
+		name:     "template builtin functions trim",
+		funcName: "trim",
+		funcArgs: []string{`""`, `"foo"`},
+		escape:   true,
+		expected: "foo",
+	},
+	{
+		name:     "template builtin functions trim",
+		funcName: "trim",
+		funcArgs: []string{`" "`, `""`},
+		escape:   true,
+		expected: "",
+	},
+
+	// trimLeft.
+	{
+		name:     "template builtin functions trimLeft",
+		funcName: "trimLeft",
+		funcArgs: []string{`" "`, `"   foo   "`},
+		escape:   true,
+		expected: "foo   ",
+	},
+	{
+		name:     "template builtin functions trimLeft",
+		funcName: "trimLeft",
+		funcArgs: []string{`" "`, `"foo"`},
+		escape:   true,
+		expected: "foo",
+	},
+	{
+		name:     "template builtin functions trimLeft",
+		funcName: "trimLeft",
+		funcArgs: []string{`""`, `"foo"`},
+		escape:   true,
+		expected: "foo",
+	},
+	{
+		name:     "template builtin functions trimLeft",
+		funcName: "trimLeft",
+		funcArgs: []string{`" "`, `""`},
+		escape:   true,
+		expected: "",
+	},
+
+	// trimRight.
+	{
+		name:     "template builtin functions trimRight",
+		funcName: "trimRight",
+		funcArgs: []string{`" "`, `"   foo   "`},
+		escape:   true,
+		expected: "   foo",
+	},
+	{
+		name:     "template builtin functions trimRight",
+		funcName: "trimRight",
+		funcArgs: []string{`" "`, `"foo"`},
+		escape:   true,
+		expected: "foo",
+	},
+	{
+		name:     "template builtin functions trimRight",
+		funcName: "trimRight",
+		funcArgs: []string{`""`, `"foo"`},
+		escape:   true,
+		expected: "foo",
+	},
+	{
+		name:     "template builtin functions trimRight",
+		funcName: "trimRight",
+		funcArgs: []string{`" "`, `""`},
+		escape:   true,
+		expected: "",
+	},
+
+	// trimPrefix.
+	{
+		name:     "template builtin functions trimPrefix",
+		funcName: "trimPrefix",
+		funcArgs: []string{`" "`, `"   foo   "`},
+		escape:   true,
+		expected: "  foo   ",
+	},
+	{
+		name:     "template builtin functions trimPrefix",
+		funcName: "trimPrefix",
+		funcArgs: []string{`" "`, `"foo"`},
+		escape:   true,
+		expected: "foo",
+	},
+	{
+		name:     "template builtin functions trimPrefix",
+		funcName: "trimPrefix",
+		funcArgs: []string{`""`, `"foo"`},
+		escape:   true,
+		expected: "foo",
+	},
+	{
+		name:     "template builtin functions trimPrefix",
+		funcName: "trimPrefix",
+		funcArgs: []string{`" "`, `""`},
+		escape:   true,
+		expected: "",
+	},
+
+	// trimSuffix.
+	{
+		name:     "template builtin functions trimSuffix",
+		funcName: "trimSuffix",
+		funcArgs: []string{`" "`, `"   foo   "`},
+		escape:   true,
+		expected: "   foo  ",
+	},
+	{
+		name:     "template builtin functions trimSuffix",
+		funcName: "trimSuffix",
+		funcArgs: []string{`" "`, `"foo"`},
+		escape:   true,
+		expected: "foo",
+	},
+	{
+		name:     "template builtin functions trimSuffix",
+		funcName: "trimSuffix",
+		funcArgs: []string{`""`, `"foo"`},
+		escape:   true,
+		expected: "foo",
+	},
+	{
+		name:     "template builtin functions trimSuffix",
+		funcName: "trimSuffix",
+		funcArgs: []string{`" "`, `""`},
+		escape:   true,
+		expected: "",
+	},
+
+	// indent.
+	{
+		name:     "template builtin functions indent",
+		funcName: "indent",
+		funcArgs: []string{`0`, `"#"`},
+		escape:   true,
+		expected: "##",
+	},
+	{
+		name:     "template builtin functions indent",
+		funcName: "indent",
+		funcArgs: []string{`1`, `"#"`},
+		escape:   true,
+		expected: "###",
+	},
+	{
+		name:     "template builtin functions indent",
+		funcName: "indent",
+		funcArgs: []string{`2`, `"#"`},
+		escape:   true,
+		expected: "####",
+	},
+	{
+		name:     "template builtin functions indent",
+		funcName: "indent",
+		funcArgs: []string{`3`, `"#"`},
+		escape:   true,
+		expected: "#####",
+	},
+
+	// name.
+	{
+		name:     "template builtin functions name",
+		funcName: "name",
+		funcArgs: []string{`"foo"`},
+		escape:   true,
+		expected: "foo",
+	},
+	{
+		name:     "template builtin functions name",
+		funcName: "name",
+		funcArgs: []string{`"foo_bar"`},
+		escape:   true,
+		expected: "foo\\_bar",
+	},
+	{
+		name:     "template builtin functions name",
+		funcName: "name",
+		funcArgs: []string{`"foo_bar"`},
+		escape:   false,
+		expected: "foo_bar",
+	},
+	{
+		name:     "template builtin functions name",
+		funcName: "name",
+		funcArgs: []string{`""`},
+		escape:   true,
+		expected: "",
+	},
+
+	// sanitizeSection.
+	{
+		name:     "template builtin functions sanitizeSection",
+		funcName: "sanitizeSection",
+		funcArgs: []string{
+			"\"Example of 'foo_bar' module in `foo_bar.tf`.\n\n" +
+				"| Foo | Bar |\n| --- | --- |\n| foo | bar |\"",
+		},
+		escape:   true,
+		expected: "Example of 'foo\\_bar' module in `foo_bar.tf`.\n\n| Foo | Bar |\n| --- | --- |\n| foo | bar |",
+	},
+	{
+		name:     "template builtin functions sanitizeSection",
+		funcName: "sanitizeSection",
+		funcArgs: []string{
+			"\"Example of 'foo_bar' module in `foo_bar.tf`.\n\n| Foo | Bar |\"",
+		},
+		escape:   false,
+		expected: "Example of 'foo_bar' module in `foo_bar.tf`.\n\n| Foo | Bar |",
+	},
+	{
+		name:     "template builtin functions sanitizeSection",
+		funcName: "sanitizeSection",
+		funcArgs: []string{`""`},
+		escape:   true,
+		expected: "n/a",
+	},
+
+	// sanitizeDoc.
+	{
+		name:     "template builtin functions sanitizeDoc",
+		funcName: "sanitizeDoc",
+		funcArgs: []string{
+			"\"Example of 'foo_bar' module in `foo_bar.tf`.\n\n| Foo | Bar |\"",
+		},
+		escape:   true,
+		expected: "Example of 'foo\\_bar' module in `foo_bar.tf`.\n\n| Foo | Bar |",
+	},
+	{
+		name:     "template builtin functions sanitizeDoc",
+		funcName: "sanitizeDoc",
+		funcArgs: []string{
+			"\"Example of 'foo_bar' module in `foo_bar.tf`.\n\n| Foo | Bar |\"",
+		},
+		escape:   false,
+		expected: "Example of 'foo_bar' module in `foo_bar.tf`.\n\n| Foo | Bar |",
+	},
+	{
+		name:     "template builtin functions sanitizeDoc",
+		funcName: "sanitizeDoc",
+		funcArgs: []string{`""`},
+		escape:   true,
+		expected: "n/a",
+	},
+
+	// sanitizeMarkdownTbl.
+	{
+		name:     "template builtin functions sanitizeMarkdownTbl",
+		funcName: "sanitizeMarkdownTbl",
+		funcArgs: []string{
+			"\"Example of 'foo_bar' module in `foo_bar.tf`.\n\n| Foo | Bar |\"",
+		},
+		escape:   true,
+		expected: "Example of 'foo\\_bar' module in `foo_bar.tf`.<br/><br/>\\| Foo \\| Bar \\|",
+	},
+	{
+		name:     "template builtin functions sanitizeMarkdownTbl",
+		funcName: "sanitizeMarkdownTbl",
+		funcArgs: []string{
+			"\"Example of 'foo_bar' module in `foo_bar.tf`.\n\n| Foo | Bar |\"",
+		},
+		escape:   false,
+		expected: "Example of 'foo_bar' module in `foo_bar.tf`.<br/><br/>\\| Foo \\| Bar \\|",
+	},
+	{
+		name:     "template builtin functions sanitizeMarkdownTbl",
+		funcName: "sanitizeMarkdownTbl",
+		funcArgs: []string{`""`},
+		escape:   true,
+		expected: "n/a",
+	},
+}
+
+// builtinFuncTestCase holds a single test case for TestBuiltinFunc.
+type builtinFuncTestCase struct {
+	name     string
+	funcName string
+	expected string
+	funcArgs []string
+	escape   bool
+}
+
+// Verifies template rendering with custom functions and module data. This tests
+// the core template engine that powers the --content flag for custom output
+// formatting.
 func TestTemplateRender(t *testing.T) {
 	sectionTpl := `
 	{{- with .Module.Header -}}
@@ -63,14 +414,14 @@ func TestTemplateRender(t *testing.T) {
 		},
 		{
 			name:     "template render with custom functions",
-			items:    []*Item{},
+			items:    nil,
 			expected: "",
 			wantErr:  true,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert := assert.New(t)
+			assert := assertpkg.New(t)
 			tpl := New(print.DefaultConfig(), tt.items...)
 			tpl.CustomFunc(customFuncs)
 
@@ -85,346 +436,13 @@ func TestTemplateRender(t *testing.T) {
 	}
 }
 
-// WHY: Validates all built-in template functions (default, trim, name, sanitize*, indent) work correctly.
-// These functions are available in user-facing content templates; broken behavior means corrupt output.
-func TestBuiltinFunc(t *testing.T) {
-	tests := []struct {
-		name     string
-		funcName string
-		expected string
-		funcArgs []string
-		escape   bool
-	}{
-		// default.
-		{
-			name:     "template builtin functions default",
-			funcName: "default",
-			funcArgs: []string{`"a"`, `"b"`},
-			escape:   true,
-			expected: "b",
-		},
-		{
-			name:     "template builtin functions default",
-			funcName: "default",
-			funcArgs: []string{`"a"`, `""`},
-			escape:   true,
-			expected: "a",
-		},
-		{
-			name:     "template builtin functions default",
-			funcName: "default",
-			funcArgs: []string{`""`, `"b"`},
-			escape:   true,
-			expected: "b",
-		},
-		{
-			name:     "template builtin functions default",
-			funcName: "default",
-			funcArgs: []string{`""`, `""`},
-			escape:   true,
-			expected: "",
-		},
-
-		// tostring.
-		{
-			name:     "template builtin functions tostring",
-			funcName: "tostring",
-			funcArgs: []string{`"foo"`},
-			escape:   true,
-			expected: "foo",
-		},
-		{
-			name:     "template builtin functions tostring",
-			funcName: "tostring",
-			funcArgs: []string{`""`},
-			escape:   true,
-			expected: "",
-		},
-
-		// trim.
-		{
-			name:     "template builtin functions trim",
-			funcName: "trim",
-			funcArgs: []string{`" "`, `"   foo   "`},
-			escape:   true,
-			expected: "foo",
-		},
-		{
-			name:     "template builtin functions trim",
-			funcName: "trim",
-			funcArgs: []string{`" "`, `"foo"`},
-			escape:   true,
-			expected: "foo",
-		},
-		{
-			name:     "template builtin functions trim",
-			funcName: "trim",
-			funcArgs: []string{`""`, `"foo"`},
-			escape:   true,
-			expected: "foo",
-		},
-		{
-			name:     "template builtin functions trim",
-			funcName: "trim",
-			funcArgs: []string{`" "`, `""`},
-			escape:   true,
-			expected: "",
-		},
-
-		// trimLeft.
-		{
-			name:     "template builtin functions trimLeft",
-			funcName: "trimLeft",
-			funcArgs: []string{`" "`, `"   foo   "`},
-			escape:   true,
-			expected: "foo   ",
-		},
-		{
-			name:     "template builtin functions trimLeft",
-			funcName: "trimLeft",
-			funcArgs: []string{`" "`, `"foo"`},
-			escape:   true,
-			expected: "foo",
-		},
-		{
-			name:     "template builtin functions trimLeft",
-			funcName: "trimLeft",
-			funcArgs: []string{`""`, `"foo"`},
-			escape:   true,
-			expected: "foo",
-		},
-		{
-			name:     "template builtin functions trimLeft",
-			funcName: "trimLeft",
-			funcArgs: []string{`" "`, `""`},
-			escape:   true,
-			expected: "",
-		},
-
-		// trimRight.
-		{
-			name:     "template builtin functions trimRight",
-			funcName: "trimRight",
-			funcArgs: []string{`" "`, `"   foo   "`},
-			escape:   true,
-			expected: "   foo",
-		},
-		{
-			name:     "template builtin functions trimRight",
-			funcName: "trimRight",
-			funcArgs: []string{`" "`, `"foo"`},
-			escape:   true,
-			expected: "foo",
-		},
-		{
-			name:     "template builtin functions trimRight",
-			funcName: "trimRight",
-			funcArgs: []string{`""`, `"foo"`},
-			escape:   true,
-			expected: "foo",
-		},
-		{
-			name:     "template builtin functions trimRight",
-			funcName: "trimRight",
-			funcArgs: []string{`" "`, `""`},
-			escape:   true,
-			expected: "",
-		},
-
-		// trimPrefix.
-		{
-			name:     "template builtin functions trimPrefix",
-			funcName: "trimPrefix",
-			funcArgs: []string{`" "`, `"   foo   "`},
-			escape:   true,
-			expected: "  foo   ",
-		},
-		{
-			name:     "template builtin functions trimPrefix",
-			funcName: "trimPrefix",
-			funcArgs: []string{`" "`, `"foo"`},
-			escape:   true,
-			expected: "foo",
-		},
-		{
-			name:     "template builtin functions trimPrefix",
-			funcName: "trimPrefix",
-			funcArgs: []string{`""`, `"foo"`},
-			escape:   true,
-			expected: "foo",
-		},
-		{
-			name:     "template builtin functions trimPrefix",
-			funcName: "trimPrefix",
-			funcArgs: []string{`" "`, `""`},
-			escape:   true,
-			expected: "",
-		},
-
-		// trimSuffix.
-		{
-			name:     "template builtin functions trimSuffix",
-			funcName: "trimSuffix",
-			funcArgs: []string{`" "`, `"   foo   "`},
-			escape:   true,
-			expected: "   foo  ",
-		},
-		{
-			name:     "template builtin functions trimSuffix",
-			funcName: "trimSuffix",
-			funcArgs: []string{`" "`, `"foo"`},
-			escape:   true,
-			expected: "foo",
-		},
-		{
-			name:     "template builtin functions trimSuffix",
-			funcName: "trimSuffix",
-			funcArgs: []string{`""`, `"foo"`},
-			escape:   true,
-			expected: "foo",
-		},
-		{
-			name:     "template builtin functions trimSuffix",
-			funcName: "trimSuffix",
-			funcArgs: []string{`" "`, `""`},
-			escape:   true,
-			expected: "",
-		},
-
-		// indent.
-		{
-			name:     "template builtin functions indent",
-			funcName: "indent",
-			funcArgs: []string{`0`, `"#"`},
-			escape:   true,
-			expected: "##",
-		},
-		{
-			name:     "template builtin functions indent",
-			funcName: "indent",
-			funcArgs: []string{`1`, `"#"`},
-			escape:   true,
-			expected: "###",
-		},
-		{
-			name:     "template builtin functions indent",
-			funcName: "indent",
-			funcArgs: []string{`2`, `"#"`},
-			escape:   true,
-			expected: "####",
-		},
-		{
-			name:     "template builtin functions indent",
-			funcName: "indent",
-			funcArgs: []string{`3`, `"#"`},
-			escape:   true,
-			expected: "#####",
-		},
-
-		// name.
-		{
-			name:     "template builtin functions name",
-			funcName: "name",
-			funcArgs: []string{`"foo"`},
-			escape:   true,
-			expected: "foo",
-		},
-		{
-			name:     "template builtin functions name",
-			funcName: "name",
-			funcArgs: []string{`"foo_bar"`},
-			escape:   true,
-			expected: "foo\\_bar",
-		},
-		{
-			name:     "template builtin functions name",
-			funcName: "name",
-			funcArgs: []string{`"foo_bar"`},
-			escape:   false,
-			expected: "foo_bar",
-		},
-		{
-			name:     "template builtin functions name",
-			funcName: "name",
-			funcArgs: []string{`""`},
-			escape:   true,
-			expected: "",
-		},
-
-		// sanitizeSection.
-		{
-			name:     "template builtin functions sanitizeSection",
-			funcName: "sanitizeSection",
-			funcArgs: []string{
-				"\"Example of 'foo_bar' module in `foo_bar.tf`.\n\n| Foo | Bar |\n| --- | --- |\n| foo | bar |\"",
-			},
-			escape:   true,
-			expected: "Example of 'foo\\_bar' module in `foo_bar.tf`.\n\n| Foo | Bar |\n| --- | --- |\n| foo | bar |",
-		},
-		{
-			name:     "template builtin functions sanitizeSection",
-			funcName: "sanitizeSection",
-			funcArgs: []string{"\"Example of 'foo_bar' module in `foo_bar.tf`.\n\n| Foo | Bar |\""},
-			escape:   false,
-			expected: "Example of 'foo_bar' module in `foo_bar.tf`.\n\n| Foo | Bar |",
-		},
-		{
-			name:     "template builtin functions sanitizeSection",
-			funcName: "sanitizeSection",
-			funcArgs: []string{`""`},
-			escape:   true,
-			expected: "n/a",
-		},
-
-		// sanitizeDoc.
-		{
-			name:     "template builtin functions sanitizeDoc",
-			funcName: "sanitizeDoc",
-			funcArgs: []string{"\"Example of 'foo_bar' module in `foo_bar.tf`.\n\n| Foo | Bar |\""},
-			escape:   true,
-			expected: "Example of 'foo\\_bar' module in `foo_bar.tf`.\n\n| Foo | Bar |",
-		},
-		{
-			name:     "template builtin functions sanitizeDoc",
-			funcName: "sanitizeDoc",
-			funcArgs: []string{"\"Example of 'foo_bar' module in `foo_bar.tf`.\n\n| Foo | Bar |\""},
-			escape:   false,
-			expected: "Example of 'foo_bar' module in `foo_bar.tf`.\n\n| Foo | Bar |",
-		},
-		{
-			name:     "template builtin functions sanitizeDoc",
-			funcName: "sanitizeDoc",
-			funcArgs: []string{`""`},
-			escape:   true,
-			expected: "n/a",
-		},
-
-		// sanitizeMarkdownTbl.
-		{
-			name:     "template builtin functions sanitizeMarkdownTbl",
-			funcName: "sanitizeMarkdownTbl",
-			funcArgs: []string{"\"Example of 'foo_bar' module in `foo_bar.tf`.\n\n| Foo | Bar |\""},
-			escape:   true,
-			expected: "Example of 'foo\\_bar' module in `foo_bar.tf`.<br/><br/>\\| Foo \\| Bar \\|",
-		},
-		{
-			name:     "template builtin functions sanitizeMarkdownTbl",
-			funcName: "sanitizeMarkdownTbl",
-			funcArgs: []string{"\"Example of 'foo_bar' module in `foo_bar.tf`.\n\n| Foo | Bar |\""},
-			escape:   false,
-			expected: "Example of 'foo_bar' module in `foo_bar.tf`.<br/><br/>\\| Foo \\| Bar \\|",
-		},
-		{
-			name:     "template builtin functions sanitizeMarkdownTbl",
-			funcName: "sanitizeMarkdownTbl",
-			funcArgs: []string{`""`},
-			escape:   true,
-			expected: "n/a",
-		},
-	}
-	for _, tt := range tests {
+// Validates all built-in template functions (default, trim, name, sanitize*,
+// indent) work correctly. These functions are available in user-facing content
+// templates; broken behavior means corrupt output.
+func TestBuiltinFunc(t *testing.T) { // lint:allow_complexity
+	for _, tt := range builtinFuncTests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert := assert.New(t)
+			assert := assertpkg.New(t)
 			config := print.DefaultConfig()
 
 			config.Settings.Escape = tt.escape
@@ -460,7 +478,10 @@ func TestBuiltinFunc(t *testing.T) {
 				} else {
 					argType = reflect.Int
 
-					num, _ := strconv.Atoi(tt.funcArgs[i])
+					num, numErr := strconv.Atoi(tt.funcArgs[i])
+					if numErr != nil {
+						t.Fatal(numErr)
+					}
 
 					argv[i] = reflect.ValueOf(num)
 				}
@@ -481,8 +502,9 @@ func TestBuiltinFunc(t *testing.T) {
 	}
 }
 
-// WHY: Verifies heading indentation calculation respects base level and extra depth. Incorrect
-// indentation means generated headings don't nest properly in the document hierarchy.
+// Verifies heading indentation calculation respects base level and extra depth.
+// Incorrect indentation means generated headings don't nest properly in the
+// document hierarchy.
 func TestGenerateIndentation(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -522,7 +544,7 @@ func TestGenerateIndentation(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert := assert.New(t)
+			assert := assertpkg.New(t)
 			actual := GenerateIndentation(tt.base, tt.extra, "#")
 
 			assert.Equal(tt.expected, actual)
@@ -530,8 +552,8 @@ func TestGenerateIndentation(t *testing.T) {
 	}
 }
 
-// WHY: Validates text normalization (leading whitespace trimming). Used to clean up template output
-// before writing to file.
+// Validates text normalization (leading whitespace trimming). Used to clean up
+// template output before writing to file.
 func TestNormalize(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -572,7 +594,7 @@ func TestNormalize(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert := assert.New(t)
+			assert := assertpkg.New(t)
 			actual := normalize(tt.text, tt.trim)
 
 			assert.Equal(tt.expected, actual)

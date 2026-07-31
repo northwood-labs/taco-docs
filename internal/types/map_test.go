@@ -7,7 +7,7 @@
 // You may obtain a copy of the License at the LICENSE file in
 // the root directory of this source tree.
 
-package types
+package types // lint:allow_bad_package_name
 
 import (
 	"bytes"
@@ -15,10 +15,11 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	assertpkg "github.com/go-openapi/testify/assert"
 )
 
-// WHY: Validates map type detection from various nested structures (flat maps, nested maps, mixed).
+// Validates map type detection from various nested structures (flat maps,
+// nested maps, mixed).
 func TestMap(t *testing.T) {
 	values := []Map{
 		{
@@ -66,7 +67,7 @@ func TestMap(t *testing.T) {
 	for _, tt := range tests {
 		for _, tv := range tt.values {
 			t.Run(tt.name, func(t *testing.T) {
-				assert := assert.New(t)
+				assert := assertpkg.New(t)
 
 				actualValue := ValueOf(tv.Underlying())
 				actualType := TypeOf(tt.types, tv.Underlying())
@@ -79,7 +80,7 @@ func TestMap(t *testing.T) {
 	}
 }
 
-// WHY: Map.Length() returns key count, used to decide rendering strategy.
+// Map.Length() returns key count, used to decide rendering strategy.
 func TestMapLength(t *testing.T) {
 	tests := []struct {
 		value    map[string]any
@@ -119,13 +120,13 @@ func TestMapLength(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert := assert.New(t)
+			assert := assertpkg.New(t)
 			assert.Equal(tt.expected, Map(tt.value).Length())
 		})
 	}
 }
 
-// WHY: Confirms the underlying map[string]interface{} value is accessible.
+// Confirms the underlying map[string]interface{} value is accessible.
 func TestMapUnderlying(t *testing.T) {
 	tests := []struct {
 		value map[string]any
@@ -161,13 +162,14 @@ func TestMapUnderlying(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert := assert.New(t)
+			assert := assertpkg.New(t)
 			assert.Equal(tt.value, Map(tt.value).Underlying())
 		})
 	}
 }
 
-// WHY: Ensures maps serialize to XML with key-named elements and proper nesting. Required for valid xml output.
+// Ensures maps serialize to XML with key-named elements and proper nesting.
+// Required for valid xml output.
 func TestMapMarshalXML(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -197,7 +199,8 @@ func TestMapMarshalXML(t *testing.T) {
 				}.Underlying(),
 				"buzz": List{"fizz", "buzz"}.Underlying(),
 			},
-			expected: "<test><bar><bar>bar</bar><foo>bar</foo></bar><buzz><item>fizz</item><item>buzz</item></buzz><foo><bar>foo</bar><foo>foo</foo></foo><name>hello</name></test>",
+			expected: "<test><bar><bar>bar</bar><foo>bar</foo></bar><buzz><item>fizz</item><item>buzz</item></buzz>" +
+				"<foo><bar>foo</bar><foo>foo</foo></foo><name>hello</name></test>",
 		},
 		{
 			name:     "map marshal XML",
@@ -207,7 +210,7 @@ func TestMapMarshalXML(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert := assert.New(t)
+			assert := assertpkg.New(t)
 
 			var b bytes.Buffer
 

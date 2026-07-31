@@ -21,12 +21,12 @@ import (
 // NewCommand registers the "tfvars" subcommand group. Unlike documentation
 // formatters, tfvars output is meant to be used directly as Terraform input —
 // it generates a terraform.tfvars file skeleton from a module's declared
-// variables. This helps users quickly scaffold the required variable values
-// for a module they're consuming, rather than manually reading docs and
-// creating the file by hand.
+// variables. This helps users quickly scaffold the required variable values for
+// a module they're consuming, rather than manually reading docs and creating
+// the file by hand.
 //
-// Note: this command has no PreRunE/RunE of its own because it requires an
-// explicit sub-format choice (HCL or JSON) — there is no meaningful default.
+// This command has no PreRunE/RunE of its own because it requires an explicit
+// sub-format choice (HCL or JSON) — there is no meaningful default.
 func NewCommand(runtime *cli.Runtime, config *print.Config) *cobra.Command {
 	cmd := &cobra.Command{
 		Args:        cobra.ExactArgs(1),

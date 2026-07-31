@@ -11,33 +11,39 @@ package terraform
 
 import (
 	"bytes"
+	"cmp"
 	"encoding/json"
-	"sort"
+	"slices"
 	"strings"
 
 	"github.com/northwood-labs/taco-docs/internal/types"
 	"github.com/northwood-labs/taco-docs/print"
 )
 
-// Input represents a Terraform input.
-//
-// WHY: Multiple sort strategies (name, required, type, position) exist because different
-// audiences organize documentation differently—alphabetical for quick lookup, by-required for
-// onboarding new users who need to know what they must supply, by-type for grouping related
-// variables, and by-position for matching the author's original source order.
-type Input struct {
-	Default     types.Value  `json:"default"     toml:"default"     xml:"default"     yaml:"default"`
-	Name        string       `json:"name"        toml:"name"        xml:"name"        yaml:"name"`
-	Type        types.String `json:"type"        toml:"type"        xml:"type"        yaml:"type"`
-	Description types.String `json:"description" toml:"description" xml:"description" yaml:"description"`
-	Position    Position     `json:"-"           toml:"-"           xml:"-"           yaml:"-"`
-	Required    bool         `json:"required"    toml:"required"    xml:"required"    yaml:"required"`
-	Sensitive   bool         `json:"sensitive"   toml:"sensitive"   xml:"sensitive"   yaml:"sensitive"`
-}
+type (
+	// Input represents a Terraform input.
+	//
+	// Multiple sort strategies (name, required, type, position) exist because
+	// different audiences organize documentation differently—alphabetical for
+	// quick lookup, by-required for onboarding new users who need to know what
+	// they must supply, by-type for grouping related variables, and by-position
+	// for matching the author's original source order.
+	Input struct {
+		Default     types.Value  `json:"default"     toml:"default"     xml:"default"     yaml:"default"`
+		Name        string       `json:"name"        toml:"name"        xml:"name"        yaml:"name"`
+		Type        types.String `json:"type"        toml:"type"        xml:"type"        yaml:"type"`
+		Description types.String `json:"description" toml:"description" xml:"description" yaml:"description"`
+		Position    Position     `json:"-"           toml:"-"           xml:"-"           yaml:"-"`
+		Required    bool         `json:"required"    toml:"required"    xml:"required"    yaml:"required"`
+		Sensitive   bool         `json:"sensitive"   toml:"sensitive"   xml:"sensitive"   yaml:"sensitive"`
+	}
 
-// GetValue returns JSON representation of the 'Default' value, which is an 'interface'.
-// If 'Default' is a primitive type, the primitive value of 'Default' will be returned
-// and not the JSON formatted of it.
+	inputs []*Input
+)
+
+// GetValue returns JSON representation of the 'Default' value, which is an
+// 'interface'. If 'Default' is a primitive type, the primitive value of
+// 'Default' will be returned and not the JSON formatted of it.
 func (i *Input) GetValue() string {
 	var buf bytes.Buffer
 
@@ -68,44 +74,46 @@ func (i *Input) HasDefault() bool {
 }
 
 func sortInputsByName(x []*Input) {
-	sort.Slice(x, func(i, j int) bool {
-		return x[i].Name < x[j].Name
+	slices.SortFunc(x, func(a, b *Input) int {
+		return strings.Compare(a.Name, b.Name)
 	})
 }
 
 func sortInputsByRequired(x []*Input) {
-	sort.Slice(x, func(i, j int) bool {
-		if x[i].HasDefault() == x[j].HasDefault() {
-			return x[i].Name < x[j].Name
+	slices.SortFunc(x, func(a, b *Input) int {
+		if a.HasDefault() == b.HasDefault() {
+			return strings.Compare(a.Name, b.Name)
 		}
 
-		return !x[i].HasDefault() && x[j].HasDefault()
+		if !a.HasDefault() && b.HasDefault() {
+			return -1
+		}
+
+		return 1
 	})
 }
 
 func sortInputsByPosition(x []*Input) {
-	sort.Slice(x, func(i, j int) bool {
-		if x[i].Position.Filename == x[j].Position.Filename {
-			return x[i].Position.Line < x[j].Position.Line
+	slices.SortFunc(x, func(a, b *Input) int {
+		if a.Position.Filename == b.Position.Filename {
+			return cmp.Compare(a.Position.Line, b.Position.Line)
 		}
 
-		return x[i].Position.Filename < x[j].Position.Filename
+		return strings.Compare(a.Position.Filename, b.Position.Filename)
 	})
 }
 
 func sortInputsByType(x []*Input) {
-	sort.Slice(x, func(i, j int) bool {
-		if x[i].Type == x[j].Type {
-			return x[i].Name < x[j].Name
+	slices.SortFunc(x, func(a, b *Input) int {
+		if a.Type == b.Type {
+			return strings.Compare(a.Name, b.Name)
 		}
 
-		return x[i].Type < x[j].Type
+		return strings.Compare(string(a.Type), string(b.Type))
 	})
 }
 
-type inputs []*Input
-
-func (ii inputs) sort(enabled bool, by string) {
+func (ii inputs) sort(enabled bool, by string) { // lint:allow_param lint:allow_control_coupling_antipattern
 	if !enabled {
 		sortInputsByPosition(ii)
 	} else {

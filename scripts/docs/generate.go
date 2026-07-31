@@ -7,6 +7,7 @@
 // You may obtain a copy of the License at the LICENSE file in
 // the root directory of this source tree.
 
+// Package main generates reference documentation for CLI commands.
 package main
 
 import (
@@ -34,29 +35,54 @@ import (
 
 var baseWeight = 950
 
+type (
+	reference struct {
+		InheritedOptions string
+		Usage            string
+		Description      string
+		Parent           string
+		Synopsis         string
+		UseLine          string
+		Options          string
+		Example          string
+		Command          string
+		Name             string
+		Subcommands      []command
+		Weight           int
+		HasChildren      bool
+		Runnable         bool
+	}
+
+	command struct {
+		Name     string
+		Link     string
+		Children []command
+	}
+)
+
 func main() {
 	if err := generate(cmd.NewCommand(), baseWeight, "terraform-docs"); err != nil {
 		log.Fatal(err)
 	}
 }
 
-func ignore(cmd *cobra.Command) bool {
+func ignore(command *cobra.Command) bool {
 	switch {
-	case !cmd.IsAvailableCommand():
+	case !command.IsAvailableCommand():
 		return true
-	case cmd.IsAdditionalHelpTopicCommand():
+	case command.IsAdditionalHelpTopicCommand():
 		return true
-	case cmd.Annotations["kind"] == "":
+	case command.Annotations["kind"] == "":
 		return true
-	case cmd.Annotations["kind"] != "formatter":
+	case command.Annotations["kind"] != "formatter":
 		return true
 	}
 
 	return false
 }
 
-func generate(cmd *cobra.Command, weight int, basename string) error {
-	for _, c := range cmd.Commands() {
+func generate(command *cobra.Command, weight int, basename string) error {
+	for _, c := range command.Commands() {
 		if ignore(c) {
 			continue
 		}
@@ -65,7 +91,7 @@ func generate(cmd *cobra.Command, weight int, basename string) error {
 
 		baseWeight++
 		if err := generate(c, baseWeight, b); err != nil {
-			return err
+			return fmt.Errorf("generating docs for %q: %w", b, err)
 		}
 	}
 
@@ -73,89 +99,68 @@ func generate(cmd *cobra.Command, weight int, basename string) error {
 
 	f, err := os.Create(filepath.Clean(filename))
 	if err != nil {
-		return err
+		return fmt.Errorf("creating file %q: %w", filename, err)
 	}
-	defer f.Close() //nolint:errcheck,gosec
+	defer f.Close() // lint:allow_defer_close
 
 	if _, err := f.WriteString(""); err != nil {
-		return err
+		return fmt.Errorf("writing to file %q: %w", filename, err)
 	}
 
-	if err := generateMarkdown(cmd, weight, f); err != nil {
-		return err
+	if err := generateMarkdown(command, weight, f); err != nil {
+		return fmt.Errorf("generating markdown for %q: %w", basename, err)
 	}
 
 	return nil
 }
 
-type reference struct {
-	InheritedOptions string
-	Usage            string
-	Description      string
-	Parent           string
-	Synopsis         string
-	UseLine          string
-	Options          string
-	Example          string
-	Command          string
-	Name             string
-	Subcommands      []command
-	Weight           int
-	HasChildren      bool
-	Runnable         bool
-}
+func generateMarkdown(command *cobra.Command, weight int, w io.Writer) error {
+	command.InitDefaultHelpCmd()
+	command.InitDefaultHelpFlag()
 
-type command struct {
-	Name     string
-	Link     string
-	Children []command
-}
+	commandPath := command.CommandPath()
+	name := strings.ReplaceAll(commandPath, "terraform-docs ", "")
 
-func generateMarkdown(cmd *cobra.Command, weight int, w io.Writer) error {
-	cmd.InitDefaultHelpCmd()
-	cmd.InitDefaultHelpFlag()
+	short := command.Short
+	long := command.Long
 
-	command := cmd.CommandPath()
-	name := strings.ReplaceAll(command, "terraform-docs ", "")
-
-	short := cmd.Short
-	long := cmd.Long
-
-	if len(long) == 0 {
+	if long == "" {
 		long = short
 	}
 
 	parent := "reference"
-	if cmd.Parent() != nil {
-		parent = cmd.Parent().Name()
+	if command.Parent() != nil {
+		parent = command.Parent().Name()
 	}
 
 	ref := &reference{
 		Name:        name,
-		Command:     command,
+		Command:     commandPath,
 		Description: short,
 		Parent:      parent,
 		Synopsis:    long,
-		Runnable:    cmd.Runnable(),
-		HasChildren: len(cmd.Commands()) > 0,
-		UseLine:     cmd.UseLine(),
+		Runnable:    command.Runnable(),
+		HasChildren: len(command.Commands()) > 0,
+		UseLine:     command.UseLine(),
 		Weight:      weight,
 	}
 
 	// Options.
-	if f := cmd.NonInheritedFlags(); f.HasAvailableFlags() {
+	if f := command.NonInheritedFlags(); f.HasAvailableFlags() {
 		ref.Options = f.FlagUsages()
 	}
 
 	// Inherited Options.
-	if f := cmd.InheritedFlags(); f.HasAvailableFlags() {
+	if f := command.InheritedFlags(); f.HasAvailableFlags() {
 		ref.InheritedOptions = f.FlagUsages()
 	}
 
 	if ref.HasChildren {
-		subcommands(ref, cmd.Commands())
+		subcommands(ref, command.Commands())
 	} else {
-		example(ref) //nolint:errcheck,gosec
+		if err := example(ref); err != nil {
+			return fmt.Errorf("generating example: %w", err)
+		}
 	}
 
 	file := "format.tmpl"
@@ -163,7 +168,11 @@ func generateMarkdown(cmd *cobra.Command, weight int, w io.Writer) error {
 
 	t := template.Must(template.New(file).ParseFiles(paths...))
 
-	return t.Execute(w, ref)
+	if err := t.Execute(w, ref); err != nil {
+		return fmt.Errorf("executing template: %w", err)
+	}
+
+	return nil
 }
 
 func example(ref *reference) error {
@@ -186,16 +195,16 @@ func example(ref *reference) error {
 
 	tfmodule, err := terraform.LoadWithOptions(config)
 	if err != nil {
-		log.Fatal(err)
+		return fmt.Errorf("loading terraform module: %w", err)
 	}
 
 	formatter, err := format.New(config)
 	if err != nil {
-		return err
+		return fmt.Errorf("creating formatter: %w", err)
 	}
 
 	if err := formatter.Generate(tfmodule); err != nil {
-		return err
+		return fmt.Errorf("generating example output: %w", err)
 	}
 
 	segments := strings.Split(formatter.Content(), "\n")
@@ -215,14 +224,14 @@ func example(ref *reference) error {
 }
 
 func subcommands(ref *reference, children []*cobra.Command) {
-	subs := []command{}
+	var subs []command
 
 	for _, child := range children {
 		if ignore(child) {
 			continue
 		}
 
-		subchild := []command{}
+		var subchild []command
 
 		for _, c := range child.Commands() {
 			if ignore(c) {

@@ -7,26 +7,20 @@
 // You may obtain a copy of the License at the LICENSE file in
 // the root directory of this source tree.
 
-// Licensed under the MIT license (the "License"); you may not
-// use this file except in compliance with the License.
-
-// You may obtain a copy of the License at the LICENSE file in
-// the root directory of this source tree.
-// */.
-
-package format
+package format // lint:allow_naming_conflict_stdlib lint:no_dupe
 
 import (
 	"reflect"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	assertpkg "github.com/go-openapi/testify/assert"
 
 	"github.com/northwood-labs/taco-docs/print"
 )
 
-// WHY: Validates format name resolution (aliases like "md", "adoc", "tbl" etc.) to concrete formatter
-// types. If broken, users would get "unknown format" errors for valid format names.
+// Validates format name resolution (aliases like "md", "adoc", "tbl" etc.) to
+// concrete formatter types. If broken, users would get "unknown format" errors
+// for valid format names.
 func TestFormatType(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -205,7 +199,7 @@ func TestFormatType(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert := assert.New(t)
+			assert := assertpkg.New(t)
 			config := print.DefaultConfig()
 
 			config.Formatter = tt.format

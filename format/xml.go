@@ -7,10 +7,11 @@
 // You may obtain a copy of the License at the LICENSE file in
 // the root directory of this source tree.
 
-package format
+package format // lint:allow_naming_conflict_stdlib lint:no_dupe
 
 import (
 	xmlsdk "encoding/xml"
+	"fmt"
 	"strings"
 
 	"github.com/northwood-labs/taco-docs/print"
@@ -19,21 +20,27 @@ import (
 
 // xml represents XML format.
 //
-// WHY: Enterprise and legacy systems (XSLT pipelines, SOAP services,
-// Java-based documentation generators) often require XML input. This
-// formatter bridges Terraform module metadata into those ecosystems
-// without requiring users to write custom converters.
+// Enterprise and legacy systems (XSLT pipelines, SOAP services, Java-based
+// documentation generators) often require XML input. This formatter bridges
+// Terraform module metadata into those ecosystems without requiring users to
+// write custom converters.
 type xml struct {
 	*generator
 
 	config *print.Config
 }
 
+func init() { // lint:allow_init
+	register(map[string]initializerFn{
+		"xml": asInitializer(NewXML),
+	})
+}
+
 // NewXML returns new instance of XML.
 //
-// WHY: canRender is false because XML's structure is dictated
-// by MarshalIndent; custom templates would break well-formedness.
-func NewXML(config *print.Config) *xml {
+// canRender is false because XML's structure is dictated by MarshalIndent;
+// custom templates would break well-formedness.
+func NewXML(config *print.Config) *xml { // lint:allow_unexported_return
 	return &xml{
 		generator: newGenerator(config, false),
 		config:    config,
@@ -42,20 +49,14 @@ func NewXML(config *print.Config) *xml {
 
 // Generate a Terraform module as xml.
 func (x *xml) Generate(module *terraform.Module) error {
-	copy := copySections(x.config, module)
+	sections := copySections(x.config, module)
 
-	out, err := xmlsdk.MarshalIndent(copy, "", "  ")
+	out, err := xmlsdk.MarshalIndent(sections, "", "  ")
 	if err != nil {
-		return err
+		return fmt.Errorf("encoding module as XML: %w", err)
 	}
 
 	x.funcs(withContent(strings.TrimSuffix(string(out), "\n")))
 
 	return nil
-}
-
-func init() {
-	register(map[string]initializerFn{
-		"xml": NewXML,
-	})
 }

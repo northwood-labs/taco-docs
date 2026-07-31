@@ -7,7 +7,7 @@
 // You may obtain a copy of the License at the LICENSE file in
 // the root directory of this source tree.
 
-package xml
+package xml // lint:allow_naming_conflict_stdlib
 
 import (
 	"github.com/spf13/cobra"
@@ -21,7 +21,7 @@ import (
 // exchange (e.g., XSLT transformations, SOAP integrations, or documentation
 // systems that consume XML). No format-specific flags are needed since XML
 // encoding is fully deterministic for the module data model.
-func NewCommand(runtime *cli.Runtime, config *print.Config) *cobra.Command {
+func NewCommand(runtime *cli.Runtime, _ *print.Config) *cobra.Command {
 	cmd := &cobra.Command{
 		Args:        cobra.ExactArgs(1),
 		Use:         "xml [PATH]",

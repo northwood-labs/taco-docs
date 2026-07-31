@@ -7,19 +7,20 @@
 // You may obtain a copy of the License at the LICENSE file in
 // the root directory of this source tree.
 
-package format
+package format // lint:allow_naming_conflict_stdlib lint:no_dupe
 
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	assertpkg "github.com/go-openapi/testify/assert"
 
 	"github.com/northwood-labs/taco-docs/internal/testutil"
 	"github.com/northwood-labs/taco-docs/print"
 )
 
-// WHY: Golden-file test ensuring AsciiDoc table output matches expected fixtures. Table format
-// has special cell escaping rules that differ from document format.
+// Golden-file test ensuring AsciiDoc table output matches expected fixtures.
+// Table format has special cell escaping rules that differ from document
+// format.
 func TestAsciidocTable(t *testing.T) {
 	tests := map[string]struct {
 		config print.Config
@@ -141,7 +142,7 @@ func TestAsciidocTable(t *testing.T) {
 	}
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			assert := assert.New(t)
+			assert := assertpkg.New(t)
 
 			expected, err := testutil.GetExpected("asciidoc", "table-"+name)
 			assert.NoError(err)

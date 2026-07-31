@@ -7,15 +7,16 @@
 // You may obtain a copy of the License at the LICENSE file in
 // the root directory of this source tree.
 
-package types
+package types // lint:allow_bad_package_name
 
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	assertpkg "github.com/go-openapi/testify/assert"
 )
 
-// WHY: Validates Number type detection across all Go numeric types (int, int8, float32, etc.).
+// Validates Number type detection across all Go numeric types (int, int8,
+// float32, etc.).
 func TestNumber(t *testing.T) {
 	values := List{
 		int(0),
@@ -50,7 +51,7 @@ func TestNumber(t *testing.T) {
 	})
 }
 
-// WHY: Numbers are scalar—Length must be 0.
+// Numbers are scalar—Length must be 0.
 func TestNumberLength(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -95,13 +96,13 @@ func TestNumberLength(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert := assert.New(t)
+			assert := assertpkg.New(t)
 			assert.Equal(tt.expected, Number(tt.value).Length())
 		})
 	}
 }
 
-// WHY: Confirms the underlying float64 value is accessible for serialization.
+// Confirms the underlying float64 value is accessible for serialization.
 func TestNumberUnderlying(t *testing.T) {
 	tests := []struct {
 		name  string
@@ -138,7 +139,7 @@ func TestNumberUnderlying(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert := assert.New(t)
+			assert := assertpkg.New(t)
 			assert.Equal(tt.value, Number(tt.value).underlying())
 		})
 	}

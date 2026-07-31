@@ -7,12 +7,13 @@
 // You may obtain a copy of the License at the LICENSE file in
 // the root directory of this source tree.
 
-// Package format provides different, out of the box supported, output format types.
+// Package format provides different, out of the box supported, output
+// format types.
 //
 // # Usage
 //
 // A specific format can be instantiated either with `format.New()` function or
-// directly calling its function (e.g. `NewMarkdownTable`, etc)
+// directly calling its function (e.g., `NewMarkdownTable`, etc)
 //
 //	config := print.DefaultConfig()
 //	config.Formatter = "markdown table"
@@ -32,8 +33,8 @@
 //	    return err
 //	}
 //
-// Note: if you don't intend to provide additional template for the generated
-// content, or the target format doesn't provide templating (e.g. json, yaml,
+// If you don't intend to provide additional template for the generated
+// content, or the target format doesn't provide templating (e.g., json, yaml,
 // xml, or toml) you can use `Content()` function instead of `Render)`. Note
 // that `Content()` returns all the sections combined with predefined order.
 //
@@ -41,15 +42,15 @@
 //
 // Supported formats are:
 //
-// • `NewAsciidocDocument`
-// • `NewAsciidocTable`
-// • `NewJSON`
-// • `NewMarkdownDocument`
-// • `NewMarkdownTable`
-// • `NewPretty`
-// • `NewTfvarsHCL`
-// • `NewTfvarsJSON`
-// • `NewTOML`
-// • `NewXML`
-// • `NewYAML`.
-package format
+// * `NewAsciidocDocument`
+// * `NewAsciidocTable`
+// * `NewJSON`
+// * `NewMarkdownDocument`
+// * `NewMarkdownTable`
+// * `NewPretty`
+// * `NewTfvarsHCL`
+// * `NewTfvarsJSON`
+// * `NewTOML`
+// * `NewXML`
+// * `NewYAML`.
+package format // lint:allow_naming_conflict_stdlib lint:no_dupe

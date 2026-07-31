@@ -7,15 +7,16 @@
 // You may obtain a copy of the License at the LICENSE file in
 // the root directory of this source tree.
 
-package types
+package types // lint:allow_bad_package_name
 
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	assertpkg "github.com/go-openapi/testify/assert"
 )
 
-// WHY: Validates that empty strings are detected and rendered as "" (quoted empty) in docs rather than null.
+// Validates that empty strings are detected and rendered as "" (quoted empty)
+// in docs rather than null.
 func TestEmpty(t *testing.T) {
 	values := List{""}
 	testPrimitive(t, []testprimitive{
@@ -42,7 +43,7 @@ func TestEmpty(t *testing.T) {
 	})
 }
 
-// WHY: Empty strings are scalar—Length must be 0.
+// Empty strings are scalar—Length must be 0.
 func TestEmptyLength(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -57,13 +58,13 @@ func TestEmptyLength(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert := assert.New(t)
+			assert := assertpkg.New(t)
 			assert.Equal(tt.expected, Empty(tt.value).Length())
 		})
 	}
 }
 
-// WHY: Confirms the underlying Go value for Empty type.
+// Confirms the underlying Go value for Empty type.
 func TestEmptyUnderlying(t *testing.T) {
 	tests := []struct {
 		name  string
@@ -76,13 +77,14 @@ func TestEmptyUnderlying(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert := assert.New(t)
+			assert := assertpkg.New(t)
 			assert.Equal(tt.value, Empty(tt.value).underlying())
 		})
 	}
 }
 
-// WHY: Ensures Empty marshals to "" in JSON output, not null or the underlying value.
+// Ensures Empty marshals to "" in JSON output, not null or the underlying
+// value.
 func TestEmptyMarshalJSON(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -102,7 +104,7 @@ func TestEmptyMarshalJSON(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert := assert.New(t)
+			assert := assertpkg.New(t)
 			actual, err := Empty(tt.value).MarshalJSON()
 
 			assert.NoError(err)

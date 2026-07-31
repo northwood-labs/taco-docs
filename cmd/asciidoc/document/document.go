@@ -20,7 +20,7 @@ import (
 // renders each input/output as a dedicated subsection rather than a table row.
 // This is better suited for modules with verbose descriptions or complex nested
 // default values that would overflow a table cell in AsciiDoc.
-func NewCommand(runtime *cli.Runtime, config *print.Config) *cobra.Command {
+func NewCommand(runtime *cli.Runtime, _ *print.Config) *cobra.Command {
 	cmd := &cobra.Command{
 		Args:        cobra.ExactArgs(1),
 		Use:         "document [PATH]",

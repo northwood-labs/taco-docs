@@ -21,7 +21,7 @@ import (
 // parse TOML configs). It provides the same structured module data as JSON and
 // YAML but in TOML syntax. No format-specific flags are required because TOML
 // encoding is unambiguous for the data types terraform-docs produces.
-func NewCommand(runtime *cli.Runtime, config *print.Config) *cobra.Command {
+func NewCommand(runtime *cli.Runtime, _ *print.Config) *cobra.Command {
 	cmd := &cobra.Command{
 		Args:        cobra.ExactArgs(1),
 		Use:         "toml [PATH]",

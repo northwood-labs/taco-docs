@@ -30,14 +30,14 @@ import (
 	"github.com/northwood-labs/taco-docs/print"
 )
 
-// Execute is the top-level entry point for the CLI, called by main.main().
-// It constructs the full command tree and delegates execution to cobra. Errors
-// are written to stderr so they remain visible even when stdout is redirected
-// to a file (a common use case for documentation generation).
+// Execute is the top-level entry point for the CLI, called by main.main(). It
+// constructs the full command tree and delegates execution to cobra. Errors are
+// written to stderr so they remain visible even when stdout is redirected to a
+// file (a common use case for documentation generation).
 func Execute() error {
 	if err := NewCommand().Execute(); err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %s\n", err.Error())
-		return err
+		return fmt.Errorf("executing command: %w", err)
 	}
 
 	return nil
@@ -46,8 +46,8 @@ func Execute() error {
 // NewCommand constructs the root cobra.Command with all persistent flags and
 // subcommands attached. The root command doubles as the default formatter
 // (resolved via config file) when invoked without an explicit subcommand. A
-// shared Config and Runtime are created here so that flag values flow through
-// a single source of truth — every subcommand shares the same config pointer,
+// shared Config and Runtime are created here so that flag values flow through a
+// single source of truth — every subcommand shares the same config pointer,
 // which means persistent flags set at the root level propagate to all children
 // without manual wiring.
 func NewCommand() *cobra.Command {
@@ -80,7 +80,7 @@ func NewCommand() *cobra.Command {
 		StringSliceVar(
 			&config.Recursive.Exclude,
 			"recursive-exclude",
-			[]string{},
+			nil,
 			"exclude directories from recursive update",
 		)
 
@@ -88,9 +88,9 @@ func NewCommand() *cobra.Command {
 	// editing the config file — useful for CI pipelines that need different
 	// outputs from the same module.
 	cmd.PersistentFlags().
-		StringSliceVar(&config.Sections.Show, "show", []string{}, "show section ["+print.AllSections+"]")
+		StringSliceVar(&config.Sections.Show, "show", nil, "show section ["+print.AllSections+"]")
 	cmd.PersistentFlags().
-		StringSliceVar(&config.Sections.Hide, "hide", []string{}, "hide section ["+print.AllSections+"]")
+		StringSliceVar(&config.Sections.Hide, "hide", nil, "hide section ["+print.AllSections+"]")
 
 	// Output flags control file-writing behavior, enabling in-place README
 	// updates (inject mode) or full file replacement (replace mode).
@@ -117,8 +117,8 @@ func NewCommand() *cobra.Command {
 
 	cmd.PersistentFlags().BoolVar(&config.Settings.LockFile, "lockfile", true, "read .terraform.lock.hcl if exist")
 
-	// Output-values flags enable injecting actual Terraform output values
-	// (from `terraform output -json`) into the documentation, giving readers
+	// Output-values flags enable injecting actual Terraform output values (from
+	// `terraform output -json`) into the documentation, giving readers
 	// visibility into current state alongside the schema.
 	cmd.PersistentFlags().
 		BoolVar(

@@ -7,11 +7,12 @@
 // You may obtain a copy of the License at the LICENSE file in
 // the root directory of this source tree.
 
-package format
+package format // lint:allow_naming_conflict_stdlib lint:no_dupe
 
 import (
 	"bytes"
 	jsonsdk "encoding/json"
+	"fmt"
 	"strings"
 
 	"github.com/northwood-labs/taco-docs/print"
@@ -20,7 +21,7 @@ import (
 
 // json represents JSON format.
 //
-// WHY: JSON output enables programmatic consumption of module documentation—CI
+// JSON output enables programmatic consumption of module documentation—CI
 // pipelines, custom renderers, and automation tools can parse it without
 // scraping Markdown. It's the canonical machine-readable format.
 type json struct {
@@ -29,11 +30,17 @@ type json struct {
 	config *print.Config
 }
 
+func init() { // lint:allow_init
+	register(map[string]initializerFn{
+		"json": asInitializer(NewJSON),
+	})
+}
+
 // NewJSON returns new instance of JSON.
 //
-// WHY: canRender is false because JSON's structure is dictated by the encoder;
+// canRender is false because JSON's structure is dictated by the encoder;
 // custom content templates would produce invalid JSON.
-func NewJSON(config *print.Config) *json {
+func NewJSON(config *print.Config) *json { // lint:allow_unexported_return
 	return &json{
 		generator: newGenerator(config, false),
 		config:    config,
@@ -42,28 +49,23 @@ func NewJSON(config *print.Config) *json {
 
 // Generate a Terraform module as json.
 //
-// WHY: copySections is called first to honor the user's show/hide configuration,
+// copySections is called first to honor the user's show/hide configuration,
 // then the filtered module is serialized. SetEscapeHTML defers to the user's
-// escape setting so HTML entities in descriptions aren't mangled unless requested.
+// escape setting so HTML entities in descriptions aren't mangled unless
+// requested.
 func (j *json) Generate(module *terraform.Module) error {
-	copy := copySections(j.config, module)
+	sections := copySections(j.config, module)
 
 	buffer := new(bytes.Buffer)
 	encoder := jsonsdk.NewEncoder(buffer)
 	encoder.SetIndent("", "  ")
 	encoder.SetEscapeHTML(j.config.Settings.Escape)
 
-	if err := encoder.Encode(copy); err != nil {
-		return err
+	if err := encoder.Encode(sections); err != nil {
+		return fmt.Errorf("encoding module as JSON: %w", err)
 	}
 
 	j.funcs(withContent(strings.TrimSuffix(buffer.String(), "\n")))
 
 	return nil
-}
-
-func init() {
-	register(map[string]initializerFn{
-		"json": NewJSON,
-	})
 }

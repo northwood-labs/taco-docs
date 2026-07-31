@@ -12,10 +12,10 @@ package cli
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	assertpkg "github.com/go-openapi/testify/assert"
 )
 
-// WHY: Verifies cobra command annotations are correctly constructed. These annotations are used by
+// Verifies cobra command annotations are correctly constructed. These annotations are used by
 // the CLI framework to identify formatter subcommands and their associated command strings.
 func TestCommandAnnotations(t *testing.T) {
 	tests := []struct {
@@ -37,7 +37,7 @@ func TestCommandAnnotations(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert := assert.New(t)
+			assert := assertpkg.New(t)
 			actual := Annotations(tt.command)
 			assert.Equal(tt.command, actual["command"])
 			assert.Equal("formatter", actual["kind"])

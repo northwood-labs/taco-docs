@@ -7,10 +7,11 @@
 // You may obtain a copy of the License at the LICENSE file in
 // the root directory of this source tree.
 
-package format
+package format // lint:allow_naming_conflict_stdlib lint:no_dupe
 
 import (
 	"embed"
+	"fmt"
 	gotemplate "text/template"
 
 	"github.com/northwood-labs/taco-docs/print"
@@ -23,10 +24,10 @@ var markdownDocumentFS embed.FS
 
 // markdownDocument represents Markdown Document format.
 //
-// WHY: For modules with lengthy descriptions, complex types, or many
-// validation rules, a table becomes unreadable. The document format
-// gives each input/output its own subsection with full-width rendering,
-// making verbose documentation scannable via a table of contents.
+// For modules with lengthy descriptions, complex types, or many validation
+// rules, a table becomes unreadable. The document format gives each
+// input/output its own subsection with full-width rendering, making verbose
+// documentation scannable via a table of contents.
 type markdownDocument struct {
 	*generator
 
@@ -34,15 +35,24 @@ type markdownDocument struct {
 	template *template.Template
 }
 
+func init() { // lint:allow_init
+	register(map[string]initializerFn{
+		"markdown document": asInitializer(NewMarkdownDocument),
+		"markdown doc":      asInitializer(NewMarkdownDocument),
+		"md document":       asInitializer(NewMarkdownDocument),
+		"md doc":            asInitializer(NewMarkdownDocument),
+	})
+}
+
 // NewMarkdownDocument returns new instance of Markdown Document.
-func NewMarkdownDocument(config *print.Config) *markdownDocument {
+func NewMarkdownDocument(config *print.Config) *markdownDocument { // lint:allow_unexported_return
 	items := readTemplateItems(markdownDocumentFS, "markdown_document")
 
 	tt := template.New(config, items...)
 	tt.CustomFunc(gotemplate.FuncMap{
-		// WHY: Multi-line types/values need fenced code blocks (```hcl)
-		// for proper syntax highlighting in document view, unlike the
-		// table format which uses inline backticks for compactness.
+		// Multi-line types/values need fenced code blocks (```hcl) for proper
+		// syntax highlighting in document view, unlike the table format which
+		// uses inline backticks for compactness.
 		"type": func(t string) string {
 			result, extraline := PrintFencedCodeBlock(t, "hcl")
 			if !extraline {
@@ -63,9 +73,8 @@ func NewMarkdownDocument(config *print.Config) *markdownDocument {
 
 			return result
 		},
-		// WHY: The "Required" badge is only shown when the user opts
-		// in via config, since it adds noise for modules where most
-		// inputs are optional.
+		// The "Required" badge is only shown when the user opts in via config,
+		// since it adds noise for modules where most inputs are optional.
 		"isRequired": func() bool {
 			return config.Settings.Required
 		},
@@ -83,7 +92,7 @@ func (d *markdownDocument) Generate(module *terraform.Module) error {
 	err := d.forEach(func(name string) (string, error) {
 		rendered, err := d.template.Render(name, module)
 		if err != nil {
-			return "", err
+			return "", fmt.Errorf("rendering template %q: %w", name, err)
 		}
 
 		return sanitize(rendered), nil
@@ -91,14 +100,9 @@ func (d *markdownDocument) Generate(module *terraform.Module) error {
 
 	d.funcs(withModule(module))
 
-	return err
-}
+	if err != nil {
+		return fmt.Errorf("generating markdown document: %w", err)
+	}
 
-func init() {
-	register(map[string]initializerFn{
-		"markdown document": NewMarkdownDocument,
-		"markdown doc":      NewMarkdownDocument,
-		"md document":       NewMarkdownDocument,
-		"md doc":            NewMarkdownDocument,
-	})
+	return nil
 }
