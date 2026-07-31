@@ -29,6 +29,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com), adheres t
 * [`909d4d5`](https://github.com/northwood-labs/taco-docs/commit/909d4d598c5a1f67e9bcb4559bf47985293e9781): **terraform**: Added provider function support ([@pillatipriyanka](https://github.com/pillatipriyanka))
 * [`cb0dcdb`](https://github.com/northwood-labs/taco-docs/commit/cb0dcdb4a68b543588179143a142e074ecc9e3b0): Sanitize bare URLs to Markdown format ([@liammoat](https://github.com/liammoat))
 * [`eee490a`](https://github.com/northwood-labs/taco-docs/commit/eee490a0338c33a6cbc221834191f9a12f11a6e8): Modernize codebase with MIT license, Go stdlib updates, and formatting improvements. ([@skyzyx](https://github.com/skyzyx))
+* [`72b0195`](https://github.com/northwood-labs/taco-docs/commit/72b0195fe3354498bfe90041cfd3b1570ac61c37): Modernize code patterns and improve linting configuration. ([@skyzyx](https://github.com/skyzyx))
 
 ### <!-- 1 -->:bug: Bug Fixes
 
@@ -532,4 +533,4 @@ The format is based on [Keep a Changelog](https://keepachangelog.com), adheres t
 * [`ba2b483`](https://github.com/northwood-labs/taco-docs/commit/ba2b4831ca44a0c9780886cc8f066e7630f8e92f): Actually print head comment ([@yields](https://github.com/yields))
 * [`7616408`](https://github.com/northwood-labs/taco-docs/commit/7616408eac153f1d0cd307a44fab2890ea9d0170): Wrap default values ([@yields](https://github.com/yields))
 
-<p>Generated on 2026-07-24.</p>
+<p>Generated on 2026-07-31.</p>
