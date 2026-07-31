@@ -50,6 +50,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com), adheres t
 * [`18b7d51`](https://github.com/northwood-labs/taco-docs/commit/18b7d51a785925286ddb68d51e6201f56252183b): Update copyright headers and simplify code. ([@skyzyx](https://github.com/skyzyx))
 * [`b642e29`](https://github.com/northwood-labs/taco-docs/commit/b642e29e3a7368447ad5c257baf9b8ac778b8d4b): Remove GitHub workflows and archive configuration files. ([@skyzyx](https://github.com/skyzyx))
 * [`2a109bb`](https://github.com/northwood-labs/taco-docs/commit/2a109bbb0c7f2d17828a3cf7c359f309431554c7): Rebrand project as taco-docs. ([@skyzyx](https://github.com/skyzyx))
+* [`278d5ce`](https://github.com/northwood-labs/taco-docs/commit/278d5ce68580365493bf8b6524833b9f1b87764c): Add refactoring commit to .git-blame-ignore-revs. ([@skyzyx](https://github.com/skyzyx))
 
 ### Ops
 
