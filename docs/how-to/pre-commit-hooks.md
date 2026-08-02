@@ -10,41 +10,35 @@ toc: false
 
 Since `v0.12.0`
 
-With [`pre-commit`], you can ensure your Terraform module documentation is kept
-up-to-date each time you make a commit.
+With [`pre-commit`], you can ensure your Terraform module documentation is kept up-to-date each time you make a commit.
 
-1. simply create or update a `.pre-commit-config.yaml`
-in the root of your Git repo with at least the following content:
+1. Simply create or update a `.pre-commit-config.yaml` in the root of your Git repo with at least the following content:
 
-   ```yaml
-   repos:
-     - repo: https://github.com/northwood-labs/taco-docs
-       rev: "<VERSION, TAG, OR SHA TO USE>"             # e.g., "v0.11.2"
-       hooks:
-         - id: terraform-docs-go
-           args: ["ARGS", "TO PASS", "INCLUDING PATH"]  # e.g., ["--output-file", "README.md", "./mymodule/path"]
-   ```
+    ```yaml
+    repos:
+      - repo: https://github.com/northwood-labs/taco-docs
+        rev: "<VERSION, TAG, OR SHA TO USE>"             # e.g., "v0.11.2"
+        hooks:
+          - id: terraform-docs-go
+            args: ["ARGS", "TO PASS", "INCLUDING PATH"]  # e.g., ["--output-file", "README.md", "./mymodule/path"]
+    ```
 
    {{< alert type="info" >}}
    You can also include more than one entry under `hooks:` to update multiple docs.
    Just be sure to adjust the `args:` to pass the path you want Terraform-docs to scan.
    {{< /alert >}}
 
-2. install [`pre-commit`] and run `pre-commit install` to activate the hooks.
+2. Install [`pre-commit`] and run `pre-commit install` to activate the hooks.
 
-3. make a Terraform change, `git add` and `git commit`.
-pre-commit will regenerate your Terraform docs, after which you can
-rerun `git add` and `git commit` to commit the code and doc changes together.
+3. Make a Terraform change, `git add` and `git commit`. `pre-commit` will regenerate your Terraform docs, after which you can rerun `git add` and `git commit` to commit the code and doc changes together.
 
 You can also regenerate the docs manually by running `pre-commit -a terraform-docs`.
 
 ## Pre-commit via docker
 
-The pre-commit hook can also be run via Docker, for those who don't have Go installed.
-Just use `id: terraform-docs-docker` in the previous example.
+The pre-commit hook can also be run via Docker, for those who don't have Go installed. Just use `id: terraform-docs-docker` in the previous example.
 
-This will build the Docker image from the repo, which can be quite slow.
-To download the pre-built image instead, change your `.pre-commit-config.yaml` to:
+This will build the Docker image from the repo, which can be quite slow. To download the pre-built image instead, change your `.pre-commit-config.yaml` to:
 
 ```yaml
 repos:
@@ -60,9 +54,7 @@ repos:
 
 ## Git hook
 
-A simple git hook (`.git/hooks/pre-commit`) added to your local Terraform
-repository can keep your Terraform module documentation up to date whenever you
-make a commit. See also [git hooks] documentation.
+A simple git hook (`.git/hooks/pre-commit`) added to your local Terraform repository can keep your Terraform module documentation up to date whenever you make a commit. See also [git hooks] documentation.
 
 ```sh
 #!/bin/sh
@@ -76,8 +68,7 @@ done
 ```
 
 {{< alert type="warning" >}}
-This is very basic and highly simplified version of [pre-commit-Terraform](https://github.com/antonbabenko/pre-commit-terraform).
-Please refer to it for complete examples and guides.
+This is very basic and highly simplified version of [pre-commit-Terraform](https://github.com/antonbabenko/pre-commit-terraform). Please refer to it for complete examples and guides.
 {{< /alert >}}
 
 [git hooks]: https://git-scm.com/book/en/v2/Customizing-Git-Git-Hooks

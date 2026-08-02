@@ -110,4 +110,8 @@ Exclude = [
   "standard\\.mk$",
   "yarn\\.lock$",
   # @config-manager:end excludes
+
+  "examples/",
+  "format/",
+  "scripts/docs/format\\.tmpl",
 ]

@@ -93,7 +93,10 @@
     "pnpm-workspace\\.yaml$",
     "poetry\\.lock$",
     "standard\\.mk$",
-    "yarn\\.lock$"
+    "yarn\\.lock$",
+    "examples/",
+    "format/",
+    "scripts/docs/format\\.tmpl"
   ],
   "IgnoreDefaults": true,
   "NoColor": false,
