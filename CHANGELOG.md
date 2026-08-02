@@ -18,6 +18,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com), adheres t
 * [`4de00bf`](https://github.com/northwood-labs/taco-docs/commit/4de00bf2713c96b02caa9f87b67bae4079685634): Add taco-docs fork documentation with PR merge status. ([@skyzyx](https://github.com/skyzyx))
 * [`63681a3`](https://github.com/northwood-labs/taco-docs/commit/63681a362ff473c6c1f9c5710a7b7f7c9ab05aaf): Add comprehensive architectural documentation with design rationale. ([@skyzyx](https://github.com/skyzyx))
 * [`0393399`](https://github.com/northwood-labs/taco-docs/commit/039339967ede18dc7e2a7bf9f754ca88847bebc8): Standardize documentation formatting and capitalization. ([@skyzyx](https://github.com/skyzyx))
+* [`2b57543`](https://github.com/northwood-labs/taco-docs/commit/2b575435197feaba705d82546a708dc1546a3742): Add comprehensive architecture and agent guidance documentation. ([@skyzyx](https://github.com/skyzyx))
 
 ### :tractor: Refactor
 
@@ -534,4 +535,4 @@ The format is based on [Keep a Changelog](https://keepachangelog.com), adheres t
 * [`ba2b483`](https://github.com/northwood-labs/taco-docs/commit/ba2b4831ca44a0c9780886cc8f066e7630f8e92f): Actually print head comment ([@yields](https://github.com/yields))
 * [`7616408`](https://github.com/northwood-labs/taco-docs/commit/7616408eac153f1d0cd307a44fab2890ea9d0170): Wrap default values ([@yields](https://github.com/yields))
 
-<p>Generated on 2026-07-31.</p>
+<p>Generated on 2026-08-02.</p>
