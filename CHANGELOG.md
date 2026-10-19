@@ -19,6 +19,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com), adheres t
 * [`63681a3`](https://github.com/northwood-labs/taco-docs/commit/63681a362ff473c6c1f9c5710a7b7f7c9ab05aaf): Add comprehensive architectural documentation with design rationale. ([@skyzyx](https://github.com/skyzyx))
 * [`0393399`](https://github.com/northwood-labs/taco-docs/commit/039339967ede18dc7e2a7bf9f754ca88847bebc8): Standardize documentation formatting and capitalization. ([@skyzyx](https://github.com/skyzyx))
 * [`2b57543`](https://github.com/northwood-labs/taco-docs/commit/2b575435197feaba705d82546a708dc1546a3742): Add comprehensive architecture and agent guidance documentation. ([@skyzyx](https://github.com/skyzyx))
+* [`171eb75`](https://github.com/northwood-labs/taco-docs/commit/171eb75f11fb0bf4935d58e0107d7505973ee450): Add reusable DAG architecture diagram tool. ([@skyzyx](https://github.com/skyzyx))
+
+### :dependabot: Building and Dependencies
+
+* [`82e1239`](https://github.com/northwood-labs/taco-docs/commit/82e12398db4545c8fb197371feb6e73029c8b0c0): **deps**: Bump `google.golang.org/grpc` ([#2](@REPO/issues/2)) ([@dependabot](https://github.com/dependabot))
 
 ### :tractor: Refactor
 
@@ -216,7 +221,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com), adheres t
 
 ### :books: Documentation
 
-* [`3f4630c`](https://github.com/northwood-labs/taco-docs/commit/3f4630c0be51581d3aa3a4303baa3e457e74e48d): Document `terraform-docs` + `ohmyzsh` usage ([@darkandrew7](https://github.com/darkandrew7))
+* [`3f4630c`](https://github.com/northwood-labs/taco-docs/commit/3f4630c0be51581d3aa3a4303baa3e457e74e48d): Document `terraform-docs` + `ohmyzsh` usage ([@andylinzie](https://github.com/andylinzie))
 
 ### :test_tube: Testing
 
@@ -350,7 +355,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com), adheres t
 
 ### <!-- 0 -->:rocket: Features
 
-* [`37375db`](https://github.com/northwood-labs/taco-docs/commit/37375db2832d4f32df7d737535c99ff61f8531bc): Add support for AsciiDoc renderer ([#241](@REPO/issues/241)) ([@rdelcampog](https://github.com/rdelcampog))
+* [`37375db`](https://github.com/northwood-labs/taco-docs/commit/37375db2832d4f32df7d737535c99ff61f8531bc): Add support for AsciiDoc renderer ([#241](@REPO/issues/241)) ()
 * [`b25909b`](https://github.com/northwood-labs/taco-docs/commit/b25909b5375b2dd347ebc45c68a0493bfa3704bc): Add new flag to sort inputs by type ([#246](@REPO/issues/246)) ([@khos2ow](https://github.com/khos2ow))
 * [`b397b7d`](https://github.com/northwood-labs/taco-docs/commit/b397b7d46b41e22be1e9d2048ae6758a375f5dff): Add support for TOML renderer ([#197](@REPO/issues/197)) ([@khos2ow](https://github.com/khos2ow))
 * [`e040439`](https://github.com/northwood-labs/taco-docs/commit/e0404399a7fd33ac44e74e6c352155fd515cba6a): Add new flags: --show, --show-all, --hide-all ([#267](@REPO/issues/267)) ([@khos2ow](https://github.com/khos2ow))
@@ -535,4 +540,4 @@ The format is based on [Keep a Changelog](https://keepachangelog.com), adheres t
 * [`ba2b483`](https://github.com/northwood-labs/taco-docs/commit/ba2b4831ca44a0c9780886cc8f066e7630f8e92f): Actually print head comment ([@yields](https://github.com/yields))
 * [`7616408`](https://github.com/northwood-labs/taco-docs/commit/7616408eac153f1d0cd307a44fab2890ea9d0170): Wrap default values ([@yields](https://github.com/yields))
 
-<p>Generated on 2026-08-02.</p>
+<p>Generated on 2026-10-19.</p>
