@@ -4,12 +4,12 @@ A comprehensive walkthrough of taco-docs internals: every entry point, initializ
 
 ## Entry points
 
-| Entry point      | File                             | Purpose                                            |
-|------------------|----------------------------------|----------------------------------------------------|
-| Process start    | `main.go`                        | Calls `cmd.Execute()`, translates error to exit(1) |
-| CLI execution    | `cmd/root.go`                    | Builds command tree, dispatches to cobra           |
-| Config-only read | `print/config.go` `ReadConfig()` | Standalone config loading for tests/plugins        |
-| Plugin server    | `plugin/server.go` `Serve()`     | Entry point for plugin binaries                    |
+| Entry point      | File                             | Purpose                                               |
+|------------------|----------------------------------|-------------------------------------------------------|
+| Process start    | `main.go`                        | Calls `cmd.Execute()`, translates error to `exit(1)`. |
+| CLI execution    | `cmd/root.go`                    | Builds command tree, dispatches to cobra.             |
+| Config-only read | `print/config.go` `ReadConfig()` | Standalone config loading for tests/plugins.          |
+| Plugin server    | `plugin/server.go` `Serve()`     | Entry point for plugin binaries.                      |
 
 ## CLI startup and initialization flow
 

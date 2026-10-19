@@ -136,7 +136,7 @@ assertFileRuleEqual(t, &FileRuleInput{
 
 `revive` flags boolean parameters that switch between two code paths inside a function. Renaming the parameter does not fix the diagnostic — the type and usage pattern are what the linter checks.
 
-The fix is to wrap the bool in a named options struct so the call site is self-documenting and the parameter is no longer a bare boolean. See [[Code conventions — Function parameters]] for the full pattern.
+The fix is to wrap the bool in a named options struct so the call site is self-documenting and the parameter is no longer a bare boolean. See Code conventions — Function parameters for the full pattern.
 
 ```go
 // Wrong — bare bool control flag

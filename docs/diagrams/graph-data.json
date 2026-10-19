@@ -1,0 +1,52 @@
+{
+  "title": "taco-docs Architecture",
+  "subtitle": "Directed Acyclic Graph — component calling relationships",
+  "layers": [
+    { "id": "cli", "label": "CLI Layer", "fill": "#1f3a5f", "stroke": "#388bfd" },
+    { "id": "processing", "label": "Processing", "fill": "#1a3a2a", "stroke": "#56d364" },
+    { "id": "infra", "label": "Infrastructure", "fill": "#2d1f4e", "stroke": "#d2a8ff" },
+    { "id": "external", "label": "External I/O", "fill": "#3d1f1f", "stroke": "#f78166" }
+  ],
+  "nodes": [
+    { "id": "main", "parentIds": [], "label": "main.go", "sublabel": "Process entry point", "layer": "cli" },
+    { "id": "cmd-execute", "parentIds": ["main"], "label": "cmd.Execute()", "sublabel": "Build CLI tree, run cobra", "layer": "cli" },
+    { "id": "cmd-new-command", "parentIds": ["cmd-execute"], "label": "cmd.NewCommand()", "sublabel": "Root command + subcommands", "layer": "cli" },
+    { "id": "cmd-subcommands", "parentIds": ["cmd-new-command"], "label": "cmd/<format>/", "sublabel": "markdown, json, yaml, toml, xml, etc.", "layer": "cli" },
+    { "id": "runtime-prerun", "parentIds": ["cmd-new-command", "cmd-subcommands"], "label": "Runtime.PreRunEFunc", "sublabel": "Config resolution + validation", "layer": "cli" },
+    { "id": "runtime-run", "parentIds": ["runtime-prerun"], "label": "Runtime.RunEFunc", "sublabel": "Module discovery + orchestration", "layer": "cli" },
+
+    { "id": "generate-content", "parentIds": ["runtime-run"], "label": "generateContent()", "sublabel": "Core pipeline: load → format → write", "layer": "processing" },
+    { "id": "terraform-load", "parentIds": ["generate-content"], "label": "terraform.LoadWithOptions", "sublabel": "Parse .tf files → Module struct", "layer": "processing" },
+    { "id": "load-module", "parentIds": ["terraform-load"], "label": "loadModule()", "sublabel": "terraform-config-inspect + fixups", "layer": "processing" },
+    { "id": "load-items", "parentIds": ["terraform-load"], "label": "loadModuleItems()", "sublabel": "Inputs, outputs, providers, resources", "layer": "processing" },
+    { "id": "load-provider-funcs", "parentIds": ["load-items"], "label": "loadProviderFunctions", "sublabel": "HCL AST walk for provider::*::*", "layer": "processing" },
+    { "id": "load-comments", "parentIds": ["load-items"], "label": "loadComments()", "sublabel": "Fallback description from # comments", "layer": "processing" },
+    { "id": "sort-items", "parentIds": ["terraform-load"], "label": "sortItems()", "sublabel": "Apply user sort preferences", "layer": "processing" },
+    { "id": "format-new", "parentIds": ["generate-content"], "label": "format.New()", "sublabel": "Factory → concrete formatter", "layer": "processing" },
+    { "id": "format-registry", "parentIds": ["format-new"], "label": "format registry", "sublabel": "init() self-registration map", "layer": "processing" },
+    { "id": "formatter-generate", "parentIds": ["format-new"], "label": "formatter.Generate()", "sublabel": "Render sections via templates", "layer": "processing" },
+    { "id": "generator-foreach", "parentIds": ["formatter-generate"], "label": "generator.forEach()", "sublabel": "Iterate sections → render each", "layer": "processing" },
+    { "id": "formatter-render", "parentIds": ["formatter-generate"], "label": "formatter.Render()", "sublabel": "Apply content template (if any)", "layer": "processing" },
+    { "id": "template-engine", "parentIds": ["generator-foreach", "formatter-render"], "label": "template.Template", "sublabel": "Go text/template + sprig + builtins", "layer": "processing" },
+
+    { "id": "print-config", "parentIds": ["cmd-new-command", "runtime-prerun", "terraform-load", "format-new"], "label": "print.Config", "sublabel": "Central config model (shared pointer)", "layer": "infra" },
+    { "id": "viper-read", "parentIds": ["runtime-prerun"], "label": "viper.ReadInConfig", "sublabel": "YAML config file search + decode", "layer": "infra" },
+    { "id": "version-check", "parentIds": ["runtime-prerun"], "label": "checkConstraint()", "sublabel": "Semver version validation", "layer": "infra" },
+    { "id": "write-content", "parentIds": ["generate-content"], "label": "writeContent()", "sublabel": "Route output to stdout or file", "layer": "infra" },
+    { "id": "file-writer", "parentIds": ["write-content"], "label": "fileWriter", "sublabel": "inject / replace mode + check mode", "layer": "infra" },
+    { "id": "stdout-writer", "parentIds": ["write-content"], "label": "stdoutWriter", "sublabel": "Print to os.Stdout", "layer": "infra" },
+    { "id": "plugin-discover", "parentIds": ["generate-content"], "label": "plugin.Discover()", "sublabel": "Scan for tfdocs-format-* binaries", "layer": "infra" },
+    { "id": "plugin-client", "parentIds": ["plugin-discover"], "label": "plugin.Client", "sublabel": "RPC Execute(Module, Config)", "layer": "infra" },
+    { "id": "reader-lines", "parentIds": ["load-comments", "load-items"], "label": "reader.Lines", "sublabel": "Line-by-line file extraction", "layer": "infra" },
+    { "id": "internal-types", "parentIds": ["load-items", "terraform-load"], "label": "internal/types", "sublabel": "TypeOf, ValueOf, String wrappers", "layer": "infra" },
+    { "id": "internal-version", "parentIds": ["cmd-new-command", "version-check"], "label": "internal/version", "sublabel": "Core(), Full(), Short()", "layer": "infra" },
+
+    { "id": "tf-config-inspect", "parentIds": ["load-module"], "label": "tfconfig.LoadModule", "sublabel": "HashiCorp terraform-config-inspect", "layer": "external" },
+    { "id": "hcl-parser", "parentIds": ["load-module", "load-provider-funcs"], "label": "hcl/v2 parser", "sublabel": "HCL AST parsing + traversal", "layer": "external" },
+    { "id": "http-fetch", "parentIds": ["load-items"], "label": "HTTP fetch", "sublabel": "Remote header/footer content", "layer": "external" },
+    { "id": "terraform-output", "parentIds": ["load-items"], "label": "terraform output -json", "sublabel": "Runtime output values (subprocess)", "layer": "external" },
+    { "id": "lock-file", "parentIds": ["load-items"], "label": ".terraform.lock.hcl", "sublabel": "Provider version resolution", "layer": "external" },
+    { "id": "filesystem", "parentIds": ["file-writer", "reader-lines"], "label": "Filesystem", "sublabel": "Read .tf files, write docs", "layer": "external" },
+    { "id": "plugin-subprocess", "parentIds": ["plugin-client"], "label": "Plugin subprocess", "sublabel": "External binary via go-plugin RPC", "layer": "external" }
+  ]
+}
